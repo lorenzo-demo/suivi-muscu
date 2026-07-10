@@ -1,0 +1,14 @@
+{
+  "name": "Suivi Muscu",
+  "short_name": "Muscu",
+  "description": "Suivi de séances de musculation — cycle 6 semaines",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#14161A",
+  "theme_color": "#14161A",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

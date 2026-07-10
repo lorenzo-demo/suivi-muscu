@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#14161A">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Suivi Muscu">
+
+<title>Suivi Muscu — Cycle 6 semaines</title>
+<style>
+  :root {
+    --bg: #14161A;
+    --surface: #1E2127;
+    --surface2: #262A31;
+    --text: #EDEFF2;
+    --muted: #8B919C;
+    --line: #31363F;
+    --accent: #3FA65C;      /* défaut : hypertrophie */
+    --accent-dim: #2A4534;
+    --danger: #E05445;
+    --radius: 14px;
+  }
+  [data-bloc="force"] { --accent: #E05445; --accent-dim: #4A2521; }
+  [data-bloc="hyp"]   { --accent: #3FA65C; --accent-dim: #21402B; }
+  [data-bloc="end"]   { --accent: #3D7FD9; --accent-dim: #1F3454; }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));
+    overscroll-behavior-y: contain;
+  }
+  .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+
+  header.app {
+    padding: 18px 16px 10px;
+    display:flex; align-items:baseline; justify-content:space-between;
+  }
+  header.app h1 { font-size: 18px; font-weight: 800; letter-spacing:.02em; }
+  header.app .week { font-size: 13px; color: var(--muted); }
+
+  .screen { display:none; padding: 0 14px 20px; }
+  .screen.active { display:block; }
+  .screen::after { content:""; display:block; height:130px; }
+
+  /* ---- Sélecteurs séance / bloc ---- */
+  .seg { display:flex; gap:8px; margin:10px 0; }
+  .seg button {
+    flex:1; padding:12px 6px; border:1px solid var(--line); border-radius: var(--radius);
+    background: var(--surface); color: var(--muted); font-size:14px; font-weight:600;
+  }
+  .seg button.on { background: var(--accent-dim); border-color: var(--accent); color: var(--text); }
+
+  .bloc-seg button.on { color:#fff; }
+
+  /* ---- Cartes exercice ---- */
+  .exo {
+    background: var(--surface); border:1px solid var(--line); border-radius: var(--radius);
+    margin: 10px 0; overflow:hidden;
+  }
+  .exo-head { display:flex; justify-content:space-between; align-items:center; padding:13px 14px; }
+  .exo-head h3 { font-size:15.5px; font-weight:700; line-height:1.25; padding-right:8px; }
+  .exo-target { text-align:right; flex-shrink:0; }
+  .exo-target .charge { font-size:19px; font-weight:800; color: var(--accent); }
+  .exo-target .detail { font-size:12px; color: var(--muted); }
+  .exo-note { padding: 0 14px 10px; font-size:12.5px; color: var(--muted); }
+
+  .sets { border-top:1px solid var(--line); }
+  .set-row {
+    display:grid; grid-template-columns: 24px 1.25fr 1fr 64px;
+    gap:6px; align-items:center; padding:9px 10px; border-bottom:1px solid var(--line);
+  }
+  .set-row:last-child { border-bottom:none; }
+  .set-idx { color: var(--muted); font-size:13px; font-weight:700; text-align:center; }
+  .stepper { display:flex; align-items:center; background: var(--surface2); border-radius:10px; overflow:hidden; }
+  .stepper button {
+    width:32px; flex-shrink:0; height:44px; border:none; background:transparent; color:var(--muted);
+    font-size:22px; font-weight:600;
+  }
+  .stepper input {
+    flex:1; width:100%; min-width:0; height:44px; border:none; background:transparent; color:var(--text);
+    text-align:center; font-size:16px; font-weight:700; padding:0;
+    appearance:textfield; -moz-appearance:textfield;
+  }
+  .stepper input::-webkit-outer-spin-button,
+  .stepper input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+  .stepper input:focus { outline:none; }
+  .set-ok {
+    height:44px; border:none; border-radius:10px; font-size:15px; font-weight:800;
+    background: var(--surface2); color: var(--muted);
+  }
+  .set-ok.done { background: var(--accent); color:#fff; }
+
+  .col-labels {
+    display:grid; grid-template-columns: 24px 1.25fr 1fr 64px; gap:6px;
+    padding: 6px 10px 2px; font-size:11px; color:var(--muted);
+    text-transform:uppercase; letter-spacing:.06em;
+  }
+  .col-labels span:nth-child(2), .col-labels span:nth-child(3) { text-align:center; }
+  .col-labels span:last-child { text-align:center; }
+
+  /* ---- Outils exercice : repos + séries ---- */
+  .exo-tools {
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:9px 12px; border-top:1px solid var(--line); background:rgba(0,0,0,.12);
+    flex-wrap:wrap;
+  }
+  .rest-ctl { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+  .rest-ctl .rest-val { font-size:24px; font-weight:800; min-width:64px; color:var(--text); }
+  .mini-step { display:flex; align-items:center; background:var(--surface2); border-radius:9px; overflow:hidden; }
+  .mini-step button { width:32px; height:38px; border:none; background:transparent; color:var(--muted); font-size:19px; font-weight:700; }
+  .mini-step .u { font-size:10.5px; color:var(--muted); font-weight:700; min-width:26px; text-align:center; }
+  .play-btn {
+    width:46px; height:42px; border:none; border-radius:10px;
+    background: var(--accent); color:#fff; font-size:18px; font-weight:800;
+  }
+  .series-ctl { display:flex; align-items:center; gap:5px; }
+  .series-ctl button {
+    width:38px; height:38px; border:1px solid var(--line); border-radius:9px;
+    background:var(--surface2); color:var(--text); font-size:19px; font-weight:700;
+  }
+  .series-ctl .lbl { font-size:12px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+
+  /* ---- Cartes info échauffement / étirements ---- */
+  .info-card {
+    background: var(--accent-dim); border:1px solid var(--accent); border-radius: var(--radius);
+    padding:13px 14px; margin:10px 0;
+  }
+  .info-card h3 { font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:var(--accent); margin-bottom:6px; }
+  [data-bloc] .info-card h3 { color: var(--text); }
+  .info-card p { font-size:13.5px; line-height:1.55; color:var(--text); }
+  .info-card p + p { margin-top:6px; }
+
+  .finish {
+    width:100%; margin-top:14px; margin-bottom:120px; padding:16px; border:none; border-radius: var(--radius);
+    background: var(--accent); color:#fff; font-size:17px; font-weight:800;
+  }
+  .finish:disabled { opacity:.45; }
+
+  .hint { font-size:13px; color:var(--muted); line-height:1.45; margin:8px 2px; }
+
+  /* ---- Chrono repos ---- */
+  #restbar {
+    position: fixed; left:0; right:0;
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+    transform: translateY(150%);
+    transition: transform .25s ease; z-index: 30;
+    background: var(--accent); color:#fff; display:flex; align-items:center;
+    justify-content:space-between; padding: 12px 18px;
+  }
+  #restbar.show { transform: translateY(0); }
+  #restbar .t { font-size:30px; font-weight:800; }
+  #restbar .lbl { font-size:13px; opacity:.9; }
+  #restbar button {
+    border:none; background:rgba(255,255,255,.18); color:#fff; border-radius:10px;
+    padding:10px 14px; font-size:14px; font-weight:700; margin-left:8px;
+  }
+
+  /* ---- Historique ---- */
+  .histo-item {
+    background: var(--surface); border:1px solid var(--line); border-radius: var(--radius);
+    padding: 13px 14px; margin:10px 0;
+  }
+  .histo-item .top { display:flex; justify-content:space-between; margin-bottom:4px; }
+  .histo-item .date { font-weight:700; font-size:14.5px; }
+  .histo-item .tag {
+    font-size:11.5px; font-weight:800; padding:3px 9px; border-radius:99px; color:#fff;
+  }
+  .tag.force { background:#E05445; } .tag.hyp { background:#3FA65C; } .tag.end { background:#3D7FD9; }
+  .histo-item .sum { font-size:13px; color:var(--muted); }
+  .histo-item .del { margin-top:8px; background:none; border:none; color:var(--danger); font-size:13px; font-weight:600; padding:0; }
+
+  /* ---- Progression ---- */
+  .prog-card {
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:13px 14px; margin:10px 0;
+  }
+  .prog-card .row1 { display:flex; justify-content:space-between; align-items:baseline; }
+  .prog-card h3 { font-size:14.5px; font-weight:700; }
+  .prog-card .rm { font-size:20px; font-weight:800; color:var(--accent); }
+  .prog-card .sub { font-size:12px; color:var(--muted); margin-top:2px; }
+  .prog-card canvas { width:100%; height:56px; margin-top:8px; display:block; }
+  .zones { display:flex; gap:6px; margin-top:9px; }
+  .zones div {
+    flex:1; text-align:center; font-size:12px; padding:7px 2px; border-radius:9px;
+    background:var(--surface2); color:var(--muted);
+  }
+  .zones b { display:block; font-size:14.5px; color:var(--text); }
+
+  /* ---- Réglages ---- */
+  .setting {
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px; margin:10px 0;
+  }
+  .setting h3 { font-size:15px; margin-bottom:8px; }
+  .setting p { font-size:13px; color:var(--muted); line-height:1.5; margin-bottom:10px; }
+  .setting .btnrow { display:flex; gap:8px; }
+  .btn {
+    padding:12px 16px; border-radius:10px; border:1px solid var(--line);
+    background:var(--surface2); color:var(--text); font-size:14.5px; font-weight:700;
+  }
+  .btn.warn { color: var(--danger); border-color: var(--danger); background:transparent; }
+  .bw-row { display:flex; align-items:center; gap:10px; }
+  .bw-row input {
+    width:90px; height:46px; border:1px solid var(--line); border-radius:10px;
+    background:var(--surface2); color:var(--text); text-align:center; font-size:18px; font-weight:800;
+  }
+
+  /* ---- Nav ---- */
+  nav {
+    position:fixed; bottom:0; left:0; right:0; z-index:40;
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    display:flex; background:var(--surface); border-top:1px solid var(--line);
+  }
+  nav button {
+    flex:1; border:none; background:transparent; color:var(--muted);
+    font-size:11.5px; font-weight:700; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:3px;
+  }
+  nav button.on { color: var(--accent); }
+  nav .ic { font-size:21px; line-height:1; }
+
+  .empty { text-align:center; color:var(--muted); font-size:14px; padding:40px 20px; line-height:1.6; }
+  .toast {
+    position:fixed; top:14px; left:50%; transform:translateX(-50%) translateY(-80px);
+    background:var(--surface2); border:1px solid var(--accent); color:var(--text);
+    padding:11px 18px; border-radius:99px; font-size:14px; font-weight:600;
+    transition:transform .3s ease; z-index:60; white-space:nowrap;
+  }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body data-bloc="hyp">
+
+<header class="app">
+  <h1>Suivi Muscu</h1>
+  <span class="week" id="cycleInfo"></span>
+</header>
+
+<!-- ================= SÉANCE ================= -->
+<div class="screen active" id="scr-seance">
+  <div class="seg" id="seanceSeg"></div>
+  <div class="seg bloc-seg" id="blocSeg"></div>
+  <div class="hint" id="blocHint"></div>
+  <div id="exoList"></div>
+  <button class="finish" id="finishBtn">Terminer et enregistrer la séance</button>
+</div>
+
+<!-- ================= HISTORIQUE ================= -->
+<div class="screen" id="scr-histo">
+  <div id="histoList"></div>
+</div>
+
+<!-- ================= PROGRESSION ================= -->
+<div class="screen" id="scr-prog">
+  <div class="hint">1RM estimé (moyenne Epley / Brzycki) à partir de ta meilleure série enregistrée par exercice. Les zones de charge se recalculent automatiquement.</div>
+  <div id="progList"></div>
+</div>
+
+<!-- ================= RÉGLAGES ================= -->
+<div class="screen" id="scr-reglages">
+  <div class="setting">
+    <h3>Poids de corps</h3>
+    <p>Utilisé pour calculer la charge réelle des tractions et dips assistés (charge = poids de corps − assistance).</p>
+    <div class="bw-row">
+      <input type="number" id="bwInput" inputmode="decimal" step="0.5">
+      <span style="color:var(--muted)">kg</span>
+      <button class="btn" id="bwSave">Enregistrer</button>
+    </div>
+  </div>
+  <div class="setting">
+    <h3>Sauvegarde des données</h3>
+    <p>Les données vivent dans le stockage local du navigateur. Exporte régulièrement un fichier JSON (surtout avant de vider le cache ou changer de navigateur).</p>
+    <div class="btnrow">
+      <button class="btn" id="exportBtn">Exporter (JSON)</button>
+      <button class="btn" id="importBtn">Importer</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none">
+    </div>
+  </div>
+  <div class="setting">
+    <h3>Cycle</h3>
+    <p>Date de début du cycle de 6 semaines (sert à afficher la semaine en cours et à suggérer le bon bloc).</p>
+    <div class="bw-row">
+      <input type="date" id="cycleStart" style="width:170px; font-size:15px;">
+      <button class="btn" id="cycleSave">OK</button>
+    </div>
+  </div>
+  <div class="setting">
+    <h3>Recalcul du 1RM</h3>
+    <p>Si vous voulez recalculer le 1RM à partir de votre historique, cliquez ici. Les estimations initiales sont remises à zéro et le 1RM de chaque exercice est reconstruit uniquement à partir de vos séances enregistrées (meilleure série de 1 à 15 reps). Un exercice sans aucune séance enregistrée conserve son estimation de départ.</p>
+    <button class="btn" id="recalcBtn">Recalculer le 1RM depuis l'historique</button>
+  </div>
+  <div class="setting">
+    <h3>Zone de danger</h3>
+    <p>Efface tout l'historique et les réglages (le programme préchargé est conservé).</p>
+    <button class="btn warn" id="resetBtn">Réinitialiser toutes les données</button>
+  </div>
+</div>
+
+<!-- Chrono repos -->
+<div id="restbar">
+  <div>
+    <div class="t num" id="restTime">0:00</div>
+    <div class="lbl">Repos avant la prochaine série</div>
+  </div>
+  <div>
+    <button id="restPlus">+30s</button>
+    <button id="restStop">Stop</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<nav>
+  <button data-scr="seance" class="on"><span class="ic">🏋️</span>Séance</button>
+  <button data-scr="histo"><span class="ic">📅</span>Historique</button>
+  <button data-scr="prog"><span class="ic">📈</span>Progression</button>
+  <button data-scr="reglages"><span class="ic">⚙️</span>Réglages</button>
+</nav>
+
+<script>
+"use strict";
+
+/* ==================== PROGRAMME PRÉCHARGÉ ==================== */
+/* type: 'charge' = charge externe | 'assist' = machine assistée (valeur = assistance retirée)
+   'pdc' = poids du corps / non chiffré. oneRm: 1RM estimé initial (charge effective).
+   Pour 'assist', les cibles sont exprimées en ASSISTANCE (négatif = aide). */
+const PROGRAM = [
+  {
+    id: "s1", name: "Bas du corps",
+    exos: [
+      { id:"presse",  name:"Presse à cuisse inclinée", type:"charge", oneRm:199,
+        t:{force:{c:169,r:"5-6",s:5,rest:150}, hyp:{c:149,r:"8-12",s:4,rest:90}, end:{c:109,r:"20-25",s:3,rest:50}} },
+      { id:"hip",     name:"Hip thrust", type:"charge", oneRm:40,
+        t:{force:{c:34,r:"5-6",s:5,rest:150}, hyp:{c:30,r:"8-12",s:4,rest:90}, end:{c:22,r:"20-25",s:3,rest:50}} },
+      { id:"extj",    name:"Extension jambes (quadriceps)", type:"charge", oneRm:66, warn:"1RM estimé sur 13 reps : démarre un cran en dessous en bloc Force.",
+        t:{force:{c:56,r:"5-6",s:4,rest:120}, hyp:{c:50,r:"8-12",s:3,rest:75}, end:{c:36,r:"20-25",s:3,rest:45}} },
+      { id:"flexj",   name:"Flexion jambes (ischios)", type:"charge", oneRm:61, warn:"1RM estimé sur 15 reps : démarre un cran en dessous en bloc Force.",
+        t:{force:{c:52,r:"5-6",s:4,rest:120}, hyp:{c:46,r:"8-12",s:3,rest:75}, end:{c:34,r:"20-25",s:3,rest:45}} },
+      { id:"mollets", name:"Mollets debout", type:"charge", oneRm:null, warn:"Pas de 1RM connu : teste une charge proche de l'échec et note-la.",
+        t:{force:{c:null,r:"6-8",s:4,rest:90}, hyp:{c:null,r:"12-15",s:3,rest:60}, end:{c:null,r:"20-25",s:3,rest:45}} },
+      { id:"superman",name:"Superman (gainage lombaire)", type:"pdc", oneRm:null,
+        t:{force:{c:0,r:"8-10 lent",s:3,rest:60}, hyp:{c:0,r:"12-15",s:3,rest:45}, end:{c:0,r:"20",s:3,rest:40}} },
+      { id:"crunch",  name:"Crunch", type:"pdc", oneRm:null,
+        t:{force:{c:0,r:"10-12",s:3,rest:60}, hyp:{c:0,r:"15-20",s:3,rest:45}, end:{c:0,r:"25-30",s:3,rest:40}} },
+    ]
+  },
+  {
+    id: "s2", name: "Haut 1 · Pectoraux",
+    exos: [
+      { id:"pompes",  name:"Pompes", type:"pdc", oneRm:null,
+        t:{force:{c:0,r:"6-8 lestées",s:4,rest:120}, hyp:{c:0,r:"12-15",s:4,rest:90}, end:{c:0,r:"25-30",s:3,rest:45}} },
+      { id:"devinc",  name:"Développé incliné haltères (total 2 haltères)", type:"charge", oneRm:50, warn:"1RM estimé sur 15 reps (surestimé). Charge = total des 2 haltères.",
+        t:{force:{c:42.5,r:"5-6",s:5,rest:150}, hyp:{c:37.5,r:"8-12",s:4,rest:90}, end:{c:27.5,r:"20-25",s:3,rest:50}} },
+      { id:"devcou",  name:"Développé couché", type:"charge", oneRm:66.5,
+        t:{force:{c:56.5,r:"5-6",s:5,rest:150}, hyp:{c:50,r:"8-12",s:4,rest:90}, end:{c:37,r:"20-25",s:3,rest:50}} },
+      { id:"dips",    name:"Dips assistés (assistance)", type:"assist", oneRm:85,
+        t:{force:{c:15,r:"5-6",s:4,rest:120}, hyp:{c:23,r:"8-12",s:3,rest:90}, end:{c:40,r:"20-25",s:3,rest:50}} },
+      { id:"triceps", name:"Extension triceps à la poulie", type:"charge", oneRm:42, warn:"Petite articulation : prudence en Force, démarre à 33-34 kg.",
+        t:{force:{c:34,r:"6-8",s:4,rest:90}, hyp:{c:31.5,r:"8-12",s:3,rest:75}, end:{c:23,r:"20-25",s:3,rest:45}} },
+      { id:"releves", name:"Relevés de genoux suspendus", type:"pdc", oneRm:null,
+        t:{force:{c:0,r:"8-10 lent",s:3,rest:60}, hyp:{c:0,r:"12-15",s:3,rest:60}, end:{c:0,r:"20",s:3,rest:45}} },
+      { id:"lomb",    name:"Extension dorsale lombaire", type:"pdc", oneRm:null,
+        t:{force:{c:0,r:"10-12",s:3,rest:60}, hyp:{c:0,r:"15",s:3,rest:60}, end:{c:0,r:"20-25",s:3,rest:45}} },
+    ]
+  },
+  {
+    id: "s3", name: "Haut 2 · Dorsaux",
+    exos: [
+      { id:"tractions",name:"Tractions assistées (assistance)", type:"assist", oneRm:75,
+        t:{force:{c:23,r:"5-6",s:5,rest:150}, hyp:{c:31,r:"8-12",s:4,rest:90}, end:{c:46,r:"20-25",s:3,rest:50}} },
+      { id:"tir1b",   name:"Tirage à un bras (haltère, par bras)", type:"charge", oneRm:34,
+        t:{force:{c:29,r:"5-6",s:4,rest:120}, hyp:{c:25.5,r:"8-12",s:3,rest:90}, end:{c:19,r:"20-25",s:3,rest:50}} },
+      { id:"tirh",    name:"Tirage horizontal prise large", type:"charge", oneRm:71.5,
+        t:{force:{c:61,r:"5-6",s:4,rest:120}, hyp:{c:54,r:"8-12",s:4,rest:90}, end:{c:39,r:"20-25",s:3,rest:50}} },
+      { id:"tirv",    name:"Tirage vertical prise large", type:"charge", oneRm:81,
+        t:{force:{c:69,r:"5-6",s:4,rest:120}, hyp:{c:61,r:"8-12",s:4,rest:90}, end:{c:45,r:"20-25",s:3,rest:50}} },
+      { id:"curl",    name:"Biceps curl", type:"charge", oneRm:35.5,
+        t:{force:{c:30,r:"6-8",s:4,rest:90}, hyp:{c:27,r:"8-12",s:3,rest:75}, end:{c:20,r:"20-25",s:3,rest:45}} },
+      { id:"planche", name:"Planche + touché épaule", type:"pdc", oneRm:null,
+        t:{force:{c:0,r:"8-10 /côté",s:3,rest:60}, hyp:{c:0,r:"45 sec",s:3,rest:45}, end:{c:0,r:"60 sec+",s:3,rest:40}} },
+    ]
+  }
+];
+
+const BLOCS = {
+  force: { label:"Force",        pct:.85, weeks:"sem. 3-4", hint:"80-87% 1RM · 5-6 reps · repos 2-3 min. Séries d'approche : 1 légère (12-15) puis 1 à ~55% du poids de travail." },
+  hyp:   { label:"Hypertrophie", pct:.75, weeks:"sem. 1-2", hint:"70-80% 1RM · 8-12 reps · repos 90 s. 1 série d'approche légère par exercice." },
+  end:   { label:"Endurance",    pct:.55, weeks:"sem. 5-6", hint:"50-60% 1RM · 20-25 reps · repos 45-60 s. Pas de série d'approche nécessaire." }
+};
+const BLOC_ORDER = ["hyp","force","end"];
+
+/* Échauffement spécifique par bloc + étirements par séance */
+const WARMUP = {
+  force: "Échauffement Force : 5-8 min tapis/vélo léger, puis mobilité articulaire 3-5 min (épaules, hanches, chevilles). Avant chaque exercice : 1 série technique légère (12-15 reps) puis 1 série à ~55% du poids de travail (5-6 reps).",
+  hyp:   "Échauffement Hypertrophie : 5 min tapis de course + 3-5 min mobilité ciblée sur les groupes du jour. Avant chaque exercice : 1 série d'approche légère (10-12 reps).",
+  end:   "Échauffement Endurance : 5 min tapis de course + 2-3 min mobilité rapide. Pas de série d'approche : la 1ère série (déjà légère) sert d'échauffement."
+};
+const COOLDOWN = {
+  s1: "Étirements bas du corps : quadriceps (talon-fesse), ischios (jambe tendue), fessiers (pigeon ou figure 4), mollets (contre un mur), psoas (fente basse), lombaires (dos rond/chat).",
+  s2: "Étirements haut du corps 1 : pectoraux (bras contre encadrement de porte), triceps (coude au-dessus de la tête), épaules (bras croisé devant), abdos (cobra doux), lombaires (dos rond).",
+  s3: "Étirements haut du corps 2 : dorsaux (suspension légère à la barre ou étirement bras tendus penché), biceps (bras tendu paume vers l'avant contre un mur), avant-bras (flexion/extension du poignet), trapèzes (inclinaison de la tête)."
+};
+const COOLDOWN_BLOC = {
+  force: "Après du lourd : 5 min de marche/vélo doux d'abord, puis étirements LÉGERS uniquement (pas d'étirements intenses juste après des charges lourdes).",
+  hyp:   "Étirements légers à modérés, 5-10 min sur les muscles travaillés.",
+  end:   "Le système nerveux est peu sollicité : tu peux faire des étirements plus profonds (8-10 min) + foam roller si dispo."
+};
+
+/* ==================== ÉTAT & STOCKAGE ==================== */
+const LS_KEY = "suiviMuscu.v1";
+
+function defaultState() {
+  return {
+    bodyweight: 87,
+    cycleStart: new Date().toISOString().slice(0,10),
+    logs: [],            // {id, date, sessionId, bloc, entries:{exoId:[{w,r,done}]}}
+    draft: null,         // séance en cours non terminée {sessionIdx, bloc, entries, ts}
+    restPref: {},        // "exoId.bloc" -> repos personnalisé en secondes
+    oneRmOverride: {}    // exoId -> 1RM recalculé
+  };
+}
+let S = load();
+function load() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) return Object.assign(defaultState(), JSON.parse(raw));
+  } catch(e) { console.warn("localStorage indisponible :", e); }
+  return defaultState();
+}
+function save() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(S)); }
+  catch(e) { toast("⚠ Sauvegarde impossible (mode file:// ?)"); }
+}
+
+/* état de la séance en cours — sauvegardé automatiquement à chaque modification */
+let cur = { sessionIdx: 0, bloc: suggestedBloc(), entries: {}, rest: {} };
+let draftRestored = false;
+if (S.draft && S.draft.entries) {
+  cur = { sessionIdx: S.draft.sessionIdx, bloc: S.draft.bloc, entries: S.draft.entries, rest: S.draft.rest || {} };
+  draftRestored = true;
+}
+function saveDraft() {
+  const hasData = Object.values(cur.entries).some(sets => sets.some(s => s.done));
+  S.draft = hasData ? { sessionIdx: cur.sessionIdx, bloc: cur.bloc, entries: cur.entries, rest: cur.rest, ts: Date.now() } : null;
+  save();
+}
+function clearDraft() { S.draft = null; save(); }
+
+/* ==================== HELPERS ==================== */
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 2200);
+}
+function epley(w,r){ return r<=1 ? w : w*(1+r/30); }
+function brzycki(w,r){ return r<=1 ? w : (r<37 ? w*36/(37-r) : w*2); }
+function estRm(w,r){ return (epley(w,r)+brzycki(w,r))/2; }
+function round05(x){ return Math.round(x*2)/2; }
+function effLoad(exo, val) { // charge réelle soulevée
+  return exo.type === "assist" ? S.bodyweight - val : val;
+}
+function currentRm(exo) {
+  return S.oneRmOverride[exo.id] ?? exo.oneRm;
+}
+function getRest(exo) {
+  return S.restPref[exo.id+"."+cur.bloc] ?? exo.t[cur.bloc].rest;
+}
+function setRest(exo, sec) {
+  sec = Math.max(0, Math.min(15*60+55, sec));
+  S.restPref[exo.id+"."+cur.bloc] = sec;
+  save();
+  return sec;
+}
+function fmtRest(sec) {
+  return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0");
+}
+function weekOfCycle() {
+  const d0 = new Date(S.cycleStart+"T00:00:00");
+  const diff = Math.floor((Date.now()-d0.getTime())/(7*864e5));
+  return ((diff % 6)+6)%6 + 1; // 1..6, boucle
+}
+function suggestedBloc() {
+  const w = weekOfCycle();
+  return w<=2 ? "hyp" : (w<=4 ? "force" : "end");
+}
+
+/* ==================== NAVIGATION ==================== */
+$$("nav button").forEach(b => b.addEventListener("click", () => {
+  $$("nav button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");
+  $$(".screen").forEach(x=>x.classList.remove("active"));
+  $("#scr-"+b.dataset.scr).classList.add("active");
+  if (b.dataset.scr==="histo") renderHisto();
+  if (b.dataset.scr==="prog") renderProg();
+  if (b.dataset.scr==="reglages") renderReglages();
+}));
+
+/* ==================== ÉCRAN SÉANCE ==================== */
+function hasProgress() {
+  return Object.values(cur.entries).some(sets => sets.some(s => s.done));
+}
+function renderSeanceSelectors() {
+  const seg = $("#seanceSeg"); seg.innerHTML = "";
+  PROGRAM.forEach((s,i) => {
+    const b = document.createElement("button");
+    b.textContent = s.name;
+    if (i===cur.sessionIdx) b.classList.add("on");
+    b.onclick = () => {
+      if (i===cur.sessionIdx) return;
+      if (hasProgress() && !confirm("Changer de séance effacera les séries en cours. Continuer ?")) return;
+      cur.sessionIdx=i; cur.entries={}; clearDraft(); renderSeance();
+    };
+    seg.appendChild(b);
+  });
+  const bseg = $("#blocSeg"); bseg.innerHTML = "";
+  BLOC_ORDER.forEach(k => {
+    const b = document.createElement("button");
+    b.textContent = BLOCS[k].label + (suggestedBloc()===k ? " ●" : "");
+    if (k===cur.bloc) b.classList.add("on");
+    b.onclick = () => {
+      if (k===cur.bloc) return;
+      if (hasProgress() && !confirm("Changer de bloc effacera les séries en cours. Continuer ?")) return;
+      cur.bloc=k; cur.entries={}; clearDraft(); renderSeance();
+    };
+    bseg.appendChild(b);
+  });
+  document.body.dataset.bloc = cur.bloc;
+  $("#blocHint").textContent = BLOCS[cur.bloc].hint;
+  $("#cycleInfo").textContent = "Semaine "+weekOfCycle()+"/6 · bloc conseillé : "+BLOCS[suggestedBloc()].label;
+}
+
+function targetLabel(exo, bloc) {
+  const t = exo.t[bloc];
+  if (exo.type==="pdc") return {main:"PDC", sub:t.r+" × "+t.s};
+  if (t.c==null) return {main:"à tester", sub:t.r+" × "+t.s};
+  if (exo.type==="assist") {
+    return {main:"−"+t.c+" kg", sub:"("+round05(S.bodyweight-t.c)+" kg soulevés) · "+t.r+" × "+t.s};
+  }
+  return {main:t.c+" kg", sub:t.r+" × "+t.s};
+}
+
+function buildExoCard(exo) {
+  const t = exo.t[cur.bloc];
+  if (!cur.entries[exo.id]) {
+    const initW = exo.type==="pdc" ? 0 : (t.c ?? 0);
+    cur.entries[exo.id] = Array.from({length:t.s}, ()=>({w:initW, r:parseInt(t.r)||10, done:false}));
+  }
+  const card = document.createElement("div"); card.className="exo";
+  const tl = targetLabel(exo, cur.bloc);
+  const rest = getRest(exo);
+  card.innerHTML = `
+    <div class="exo-head">
+      <h3>${exo.name}</h3>
+      <div class="exo-target">
+        <div class="charge num">${tl.main}</div>
+        <div class="detail">${tl.sub}</div>
+      </div>
+    </div>
+    ${exo.warn ? `<div class="exo-note">⚠ ${exo.warn}</div>` : ""}
+    <div class="col-labels"><span></span><span>${exo.type==="assist"?"Assist. (kg)":"Poids (kg)"}</span><span>Reps</span><span>Fait</span></div>
+    <div class="sets"></div>
+    <div class="exo-tools">
+      <div class="rest-ctl">
+        <b class="num rest-val">${fmtRest(rest)}</b>
+        <div class="mini-step">
+          <button data-a="m-">−</button><span class="u">min</span><button data-a="m+">+</button>
+        </div>
+        <div class="mini-step">
+          <button data-a="s-">−</button><span class="u">sec</span><button data-a="s+">+</button>
+        </div>
+        <button class="play-btn" data-a="play" title="Lancer le repos">▶</button>
+      </div>
+      <div class="series-ctl">
+        <span class="lbl">Séries</span>
+        <button data-a="ser-">−</button>
+        <button data-a="ser+">+</button>
+      </div>
+    </div>`;
+  const setsEl = card.querySelector(".sets");
+  cur.entries[exo.id].forEach((st, i) => setsEl.appendChild(buildSetRow(exo, st, i)));
+
+  /* --- contrôle du repos (bornes : 0 à 15 min 55 s, pas de 1 min / 5 s) --- */
+  const restVal = card.querySelector(".rest-val");
+  function bump(delta) {
+    const v = setRest(exo, getRest(exo)+delta);
+    restVal.textContent = fmtRest(v);
+  }
+  card.querySelector('[data-a="m-"]').onclick = ()=>bump(-60);
+  card.querySelector('[data-a="m+"]').onclick = ()=>bump(+60);
+  card.querySelector('[data-a="s-"]').onclick = ()=>bump(-5);
+  card.querySelector('[data-a="s+"]').onclick = ()=>bump(+5);
+  card.querySelector('[data-a="play"]').onclick = ()=>{
+    const v = getRest(exo);
+    if (v<=0) { toast("Repos à 0:00 — augmente d'abord la durée"); return; }
+    startRest(v);
+  };
+
+  /* --- ajout / retrait de série (reconstruit seulement cette carte) --- */
+  card.querySelector('[data-a="ser+"]').onclick = () => {
+    const sets = cur.entries[exo.id];
+    if (sets.length>=10) { toast("Maximum 10 séries"); return; }
+    const last = sets[sets.length-1];
+    sets.push({w:last?last.w:0, r:last?last.r:10, done:false});
+    saveDraft();
+    card.replaceWith(buildExoCard(exo));
+  };
+  card.querySelector('[data-a="ser-"]').onclick = () => {
+    const sets = cur.entries[exo.id];
+    if (sets.length<=1) { toast("Minimum 1 série"); return; }
+    const last = sets[sets.length-1];
+    if (last.done && !confirm("La dernière série est validée. La supprimer quand même ?")) return;
+    sets.pop();
+    saveDraft();
+    card.replaceWith(buildExoCard(exo));
+  };
+  return card;
+}
+
+function buildSetRow(exo, st, i) {
+  const row = document.createElement("div"); row.className="set-row";
+  row.innerHTML = `
+    <div class="set-idx">${i+1}</div>
+    <div class="stepper">
+      <button data-a="w-">−</button>
+      <input type="number" inputmode="decimal" step="0.5" value="${st.w}">
+      <button data-a="w+">+</button>
+    </div>
+    <div class="stepper">
+      <button data-a="r-">−</button>
+      <input type="number" inputmode="numeric" step="1" value="${st.r}">
+      <button data-a="r+">+</button>
+    </div>
+    <button class="set-ok ${st.done?"done":""}">${st.done?"✓":"OK"}</button>`;
+  const [wIn, rIn] = row.querySelectorAll("input");
+  row.querySelector('[data-a="w-"]').onclick = ()=>{ wIn.value = Math.max(0, (+wIn.value)-2.5); st.w=+wIn.value; saveDraft(); };
+  row.querySelector('[data-a="w+"]').onclick = ()=>{ wIn.value = (+wIn.value)+2.5; st.w=+wIn.value; saveDraft(); };
+  row.querySelector('[data-a="r-"]').onclick = ()=>{ rIn.value = Math.max(0, (+rIn.value)-1); st.r=+rIn.value; saveDraft(); };
+  row.querySelector('[data-a="r+"]').onclick = ()=>{ rIn.value = (+rIn.value)+1; st.r=+rIn.value; saveDraft(); };
+  wIn.onchange = ()=>{ st.w = +wIn.value || 0; saveDraft(); };
+  rIn.onchange = ()=>{ st.r = +rIn.value || 0; saveDraft(); };
+  const okBtn = row.querySelector(".set-ok");
+  okBtn.onclick = () => {
+    st.done = !st.done;
+    okBtn.classList.toggle("done", st.done);
+    okBtn.textContent = st.done ? "✓" : "OK";
+    saveDraft();
+    if (st.done) startRest(getRest(exo));
+  };
+  return row;
+}
+
+function renderSeance() {
+  renderSeanceSelectors();
+  const list = $("#exoList"); list.innerHTML = "";
+  const sess = PROGRAM[cur.sessionIdx];
+
+  /* Carte échauffement en tête de séance */
+  const warm = document.createElement("div"); warm.className="info-card";
+  warm.innerHTML = `<h3>🔥 Échauffement</h3><p>${WARMUP[cur.bloc]}</p>`;
+  list.appendChild(warm);
+
+  sess.exos.forEach(exo => list.appendChild(buildExoCard(exo)));
+
+  /* Carte étirements en fin de séance */
+  const cool = document.createElement("div"); cool.className="info-card";
+  cool.innerHTML = `<h3>🧘 Retour au calme &amp; étirements</h3><p>${COOLDOWN_BLOC[cur.bloc]}</p><p>${COOLDOWN[sess.id]}</p>`;
+  list.appendChild(cool);
+}
+
+$("#finishBtn").onclick = () => {
+  const sess = PROGRAM[cur.sessionIdx];
+  const entries = {};
+  let any = false;
+  sess.exos.forEach(exo => {
+    const done = (cur.entries[exo.id]||[]).filter(s=>s.done && s.r>0);
+    if (done.length) { entries[exo.id] = done.map(s=>({w:s.w,r:s.r})); any = true; }
+  });
+  if (!any) { toast("Aucune série validée"); return; }
+  S.logs.unshift({ id: Date.now(), date: new Date().toISOString(), sessionId: sess.id, bloc: cur.bloc, entries });
+  recomputeRms();
+  S.draft = null;
+  save();
+  stopRest();
+  cur.entries = {};
+  renderSeance();
+  toast("Séance enregistrée 💪");
+};
+
+/* ==================== RECALCUL 1RM ==================== */
+function recomputeRms() {
+  PROGRAM.forEach(sess => sess.exos.forEach(exo => {
+    if (exo.type==="pdc") return;
+    let best = exo.oneRm ?? 0;
+    S.logs.forEach(log => {
+      const sets = log.entries[exo.id]; if (!sets) return;
+      sets.forEach(s => {
+        if (s.r<1 || s.r>15) return;  // hors zone fiable
+        const rm = estRm(effLoad(exo, s.w), s.r);
+        if (rm > best) best = rm;
+      });
+    });
+    if (best>0) S.oneRmOverride[exo.id] = Math.round(best*10)/10;
+  }));
+}
+/* Reset complet : ignore les estimations initiales, repart uniquement de l'historique.
+   Si un exercice n'a aucune série enregistrée, il retombe sur son 1RM initial. */
+function recomputeFromHistoryOnly() {
+  S.oneRmOverride = {};
+  PROGRAM.forEach(sess => sess.exos.forEach(exo => {
+    if (exo.type==="pdc") return;
+    let best = 0;
+    S.logs.forEach(log => {
+      const sets = log.entries[exo.id]; if (!sets) return;
+      sets.forEach(s => {
+        if (s.r<1 || s.r>15) return;
+        const rm = estRm(effLoad(exo, s.w), s.r);
+        if (rm > best) best = rm;
+      });
+    });
+    if (best>0) S.oneRmOverride[exo.id] = Math.round(best*10)/10;
+  }));
+}
+
+/* ==================== CHRONO REPOS ==================== */
+let restT = 0, restIv = null;
+let audioCtx = null;
+function beep() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    const t0 = audioCtx.currentTime;
+    for (let i=0; i<3; i++) {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.connect(g); g.connect(audioCtx.destination);
+      o.frequency.value = 880;
+      g.gain.setValueAtTime(0, t0 + i*0.5);
+      g.gain.linearRampToValueAtTime(.3, t0 + i*0.5 + .02);
+      g.gain.setValueAtTime(.3, t0 + i*0.5 + .3);
+      g.gain.linearRampToValueAtTime(0, t0 + i*0.5 + .35);
+      o.start(t0 + i*0.5); o.stop(t0 + i*0.5 + .4);
+    }
+  } catch(e){}
+  if (navigator.vibrate) navigator.vibrate([300,150,300,150,300]);
+}
+function startRest(sec) {
+  stopRest();
+  try { // déblocage audio Android : doit être initié par un geste utilisateur
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+  } catch(e){}
+  restT = sec;
+  $("#restbar").classList.add("show");
+  drawRest();
+  restIv = setInterval(()=>{
+    restT--;
+    drawRest();
+    if (restT<=0) { beep(); stopRest(); }
+  }, 1000);
+}
+function drawRest(){
+  const m = Math.floor(restT/60), s = String(restT%60).padStart(2,"0");
+  $("#restTime").textContent = m+":"+s;
+}
+function stopRest(){
+  clearInterval(restIv); restIv = null;
+  $("#restbar").classList.remove("show");
+}
+$("#restStop").onclick = stopRest;
+$("#restPlus").onclick = ()=>{ restT+=30; drawRest(); };
+
+/* ==================== HISTORIQUE ==================== */
+function renderHisto() {
+  const el = $("#histoList"); el.innerHTML = "";
+  if (!S.logs.length) {
+    el.innerHTML = `<div class="empty">Aucune séance enregistrée pour le moment.<br>Valide tes séries puis « Terminer » pour créer l'historique.</div>`;
+    return;
+  }
+  S.logs.forEach(log => {
+    const sess = PROGRAM.find(s=>s.id===log.sessionId);
+    const d = new Date(log.date);
+    const nSets = Object.values(log.entries).reduce((a,v)=>a+v.length,0);
+    const vol = Object.entries(log.entries).reduce((a,[exoId,sets])=>{
+      const exo = sess?.exos.find(e=>e.id===exoId);
+      if (!exo || exo.type==="pdc") return a;
+      return a + sets.reduce((x,s)=>x+effLoad(exo,s.w)*s.r,0);
+    },0);
+    const item = document.createElement("div"); item.className="histo-item";
+    item.innerHTML = `
+      <div class="top">
+        <span class="date">${d.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"})} · ${sess?.name??"?"}</span>
+        <span class="tag ${log.bloc}">${BLOCS[log.bloc].label}</span>
+      </div>
+      <div class="sum num">${nSets} séries validées · volume ≈ ${Math.round(vol)} kg</div>
+      <button class="del">Supprimer</button>`;
+    item.querySelector(".del").onclick = () => {
+      if (!confirm("Supprimer cette séance de l'historique ?")) return;
+      S.logs = S.logs.filter(l=>l.id!==log.id);
+      recomputeRms(); save(); renderHisto();
+    };
+    el.appendChild(item);
+  });
+}
+
+/* ==================== PROGRESSION ==================== */
+function rmHistory(exo) {
+  // meilleure estimation 1RM par séance (ordre chronologique)
+  const pts = [];
+  [...S.logs].reverse().forEach(log => {
+    const sets = log.entries[exo.id]; if (!sets) return;
+    let best = 0;
+    sets.forEach(s => { if (s.r>=1 && s.r<=15) best = Math.max(best, estRm(effLoad(exo,s.w), s.r)); });
+    if (best>0) pts.push(best);
+  });
+  return pts;
+}
+function sparkline(cv, pts, color) {
+  const dpr = window.devicePixelRatio||1;
+  const w = cv.clientWidth*dpr, h = cv.clientHeight*dpr;
+  cv.width=w; cv.height=h;
+  const ctx = cv.getContext("2d");
+  if (pts.length<2) {
+    ctx.fillStyle = "#8B919C"; ctx.font = (11*dpr)+"px system-ui";
+    ctx.fillText(pts.length===1 ? "1 point — continue pour voir la courbe" : "Pas encore de données", 4*dpr, h/2);
+    return;
+  }
+  const min = Math.min(...pts), max = Math.max(...pts);
+  const pad = 6*dpr, span = (max-min)||1;
+  ctx.strokeStyle = color; ctx.lineWidth = 2.2*dpr; ctx.lineJoin="round";
+  ctx.beginPath();
+  pts.forEach((p,i)=>{
+    const x = pad + i*(w-2*pad)/(pts.length-1);
+    const y = h-pad - (p-min)/span*(h-2*pad);
+    i? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+  });
+  ctx.stroke();
+}
+function renderProg() {
+  const el = $("#progList"); el.innerHTML = "";
+  const accent = getComputedStyle(document.body).getPropertyValue("--accent").trim();
+  PROGRAM.forEach(sess => sess.exos.forEach(exo => {
+    if (exo.type==="pdc") return;
+    const rm = currentRm(exo);
+    const card = document.createElement("div"); card.className="prog-card";
+    const zones = rm ? `
+      <div class="zones">
+        <div>Force<b class="num">${fmtZone(exo, rm*.85)}</b></div>
+        <div>Hypertrophie<b class="num">${fmtZone(exo, rm*.75)}</b></div>
+        <div>Endurance<b class="num">${fmtZone(exo, rm*.55)}</b></div>
+      </div>` : "";
+    card.innerHTML = `
+      <div class="row1"><h3>${exo.name}</h3><span class="rm num">${rm? rm+" kg" : "—"}</span></div>
+      <div class="sub">${sess.name} · 1RM ${S.oneRmOverride[exo.id]!=null?"recalculé sur tes séances":"initial (estimation de départ)"}</div>
+      <canvas></canvas>${zones}`;
+    el.appendChild(card);
+    sparkline(card.querySelector("canvas"), rmHistory(exo), accent);
+  }));
+}
+function fmtZone(exo, load) {
+  if (exo.type==="assist") {
+    const assist = round05(S.bodyweight - load);
+    return (assist>0? "−"+assist : "+"+(-assist))+" kg";
+  }
+  return round05(load)+" kg";
+}
+
+/* ==================== RÉGLAGES ==================== */
+function renderReglages() {
+  $("#bwInput").value = S.bodyweight;
+  $("#cycleStart").value = S.cycleStart;
+}
+$("#bwSave").onclick = () => {
+  const v = parseFloat($("#bwInput").value);
+  if (!v || v<30 || v>250) { toast("Valeur invalide"); return; }
+  S.bodyweight = v; save(); renderSeance(); toast("Poids de corps : "+v+" kg");
+};
+$("#cycleSave").onclick = () => {
+  const v = $("#cycleStart").value;
+  if (!v) return;
+  S.cycleStart = v; save(); renderSeance(); toast("Début de cycle mis à jour");
+};
+$("#exportBtn").onclick = () => {
+  const blob = new Blob([JSON.stringify(S,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "suivi-muscu-"+new Date().toISOString().slice(0,10)+".json";
+  a.click(); URL.revokeObjectURL(a.href);
+};
+$("#importBtn").onclick = () => $("#importFile").click();
+$("#importFile").onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const data = JSON.parse(rd.result);
+      if (!data.logs || !Array.isArray(data.logs)) throw new Error("format");
+      S = Object.assign(defaultState(), data);
+      recomputeRms(); save();
+      renderSeance(); toast("Données importées ✓");
+    } catch(err) { toast("Fichier invalide"); }
+  };
+  rd.readAsText(f);
+  e.target.value = "";
+};
+$("#recalcBtn").onclick = () => {
+  if (!S.logs.length) { toast("Aucune séance dans l'historique"); return; }
+  if (!confirm("Remettre à zéro les 1RM et les recalculer uniquement depuis votre historique de séances ?")) return;
+  recomputeFromHistoryOnly();
+  save();
+  toast("1RM recalculés depuis l'historique ✓");
+};
+$("#resetBtn").onclick = () => {
+  if (!confirm("Effacer TOUT l'historique et les réglages ? (irréversible — pense à exporter avant)")) return;
+  S = defaultState(); save(); cur.entries = {};
+  renderSeance(); toast("Données réinitialisées");
+};
+
+/* ==================== INIT ==================== */
+recomputeRms();
+renderSeance();
+if (draftRestored) {
+  const dt = S.draft && S.draft.ts ? new Date(S.draft.ts).toLocaleDateString("fr-FR",{day:"numeric",month:"short"}) : "";
+  toast("Séance en cours restaurée"+(dt? " ("+dt+")" : ""));
+}
+
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
