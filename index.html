@@ -442,6 +442,12 @@ const COOLDOWN_BLOC = {
 const LS_KEY = "suiviMuscu.v1"; // clé conservée pour compat ; le contenu porte schemaVersion
 const CURRENT_SCHEMA_VERSION = 2;
 const DEFAULT_PROGRAM_ID = "defaut";
+/* SEED_VERSION : à incrémenter à CHAQUE fois que seedProgramSessions() change (nouvel
+   exercice, réordonnancement, cibles modifiées...). C'est ce qui permet de repousser les
+   mises à jour du programme par défaut vers les appareils qui ont déjà un state v2 en
+   localStorage — schemaVersion à lui seul ne suffit pas, car un state déjà en v2 n'est
+   jamais retouché par la migration sinon. */
+const SEED_VERSION = 3;
 
 function defaultState() {
   return {
@@ -453,7 +459,7 @@ function defaultState() {
     restPref: {},        // "exoId.bloc" -> repos personnalisé en secondes
     oneRmOverride: {},   // exoId -> 1RM recalculé
     programs: [           // liste de programmes (1 seul pour l'instant)
-      { id: DEFAULT_PROGRAM_ID, name: "Split 3 jours (Force / Hypertrophie / Endurance)", sessions: seedProgramSessions() }
+      { id: DEFAULT_PROGRAM_ID, name: "Split 3 jours (Force / Hypertrophie / Endurance)", sessions: seedProgramSessions(), seedVersion: SEED_VERSION }
     ],
     activeProgramId: DEFAULT_PROGRAM_ID
   };
@@ -462,7 +468,10 @@ function defaultState() {
 /* Migre un objet state chargé (localStorage ou import JSON) vers le schema courant.
    - Ancien format (pas de schemaVersion / schemaVersion < 2, pas de "programs") :
      conserve historique + 1RM + repos perso, ajoute le programme seed.
-   - Format déjà à jour : complète simplement les clés manquantes (rétro-compat future). */
+   - Format déjà à jour : complète les clés manquantes, ET resynchronise le contenu du
+     programme par défaut si le code a évolué depuis (nouveaux exercices, etc.) — sans
+     jamais toucher à logs / oneRmOverride / restPref / bodyweight, qui sont indépendants
+     de la définition du programme (indexés par exoId, pas par référence à l'exercice). */
 function migrate(data) {
   const base = defaultState();
   const merged = Object.assign(base, data || {});
@@ -473,6 +482,13 @@ function migrate(data) {
   if (!merged.activeProgramId || !merged.programs.some(p => p.id === merged.activeProgramId)) {
     merged.activeProgramId = merged.programs[0].id;
   }
+  // Resync du programme PAR DÉFAUT si son contenu (seedVersion) est plus vieux que le code actuel.
+  merged.programs = merged.programs.map(p => {
+    if (p.id === DEFAULT_PROGRAM_ID && (!p.seedVersion || p.seedVersion < SEED_VERSION)) {
+      return { ...p, sessions: seedProgramSessions(), seedVersion: SEED_VERSION };
+    }
+    return p;
+  });
   merged.schemaVersion = CURRENT_SCHEMA_VERSION;
   return merged;
 }
