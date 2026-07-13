@@ -331,11 +331,15 @@
 <script>
 "use strict";
 
-/* ==================== PROGRAMME PRÉCHARGÉ ==================== */
+/* ==================== PROGRAMME PRÉCHARGÉ (SEED) ==================== */
 /* type: 'charge' = charge externe | 'assist' = machine assistée (valeur = assistance retirée)
    'pdc' = poids du corps / non chiffré. oneRm: 1RM estimé initial (charge effective).
-   Pour 'assist', les cibles sont exprimées en ASSISTANCE (négatif = aide). */
-const PROGRAM = [
+   Pour 'assist', les cibles sont exprimées en ASSISTANCE (négatif = aide).
+   noRm: true = jamais utilisé pour calculer/afficher un 1RM (exercice santé, toujours léger).
+   Cette fonction retourne un tableau FRAIS à chaque appel (pas de référence partagée entre
+   le seed par défaut et un éventuel futur programme dupliqué). */
+function seedProgramSessions() {
+return [
   {
     id: "s1", name: "Bas du corps",
     exos: [
@@ -364,6 +368,9 @@ const PROGRAM = [
         t:{force:{c:42.5,r:"5-6",s:5,rest:150}, hyp:{c:37.5,r:"8-12",s:4,rest:90}, end:{c:27.5,r:"20-25",s:3,rest:50}} },
       { id:"devcou",  name:"Développé couché", type:"charge", oneRm:66.5,
         t:{force:{c:56.5,r:"5-6",s:5,rest:150}, hyp:{c:50,r:"8-12",s:4,rest:90}, end:{c:37,r:"20-25",s:3,rest:50}} },
+      { id:"devmil",  name:"Développé militaire haltères (total 2 haltères)", type:"charge", oneRm:null,
+        warn:"Pas de 1RM connu : teste une charge proche de l'échec et note-la (départ conseillé ≈10-12 kg/haltère en hypertrophie).",
+        t:{force:{c:null,r:"5-6",s:4,rest:120}, hyp:{c:null,r:"8-12",s:3,rest:90}, end:{c:null,r:"20-25",s:3,rest:50}} },
       { id:"dips",    name:"Dips assistés (assistance)", type:"assist", oneRm:85,
         t:{force:{c:15,r:"5-6",s:4,rest:120}, hyp:{c:23,r:"8-12",s:3,rest:90}, end:{c:40,r:"20-25",s:3,rest:50}} },
       { id:"triceps", name:"Extension triceps à la poulie", type:"charge", oneRm:42, warn:"Petite articulation : prudence en Force, démarre à 33-34 kg.",
@@ -385,6 +392,9 @@ const PROGRAM = [
         t:{force:{c:61,r:"5-6",s:4,rest:120}, hyp:{c:54,r:"8-12",s:4,rest:90}, end:{c:39,r:"20-25",s:3,rest:50}} },
       { id:"tirv",    name:"Tirage vertical prise large", type:"charge", oneRm:81,
         t:{force:{c:69,r:"5-6",s:4,rest:120}, hyp:{c:61,r:"8-12",s:4,rest:90}, end:{c:45,r:"20-25",s:3,rest:50}} },
+      { id:"facepull",name:"Face pull à la poulie", type:"charge", oneRm:null, noRm:true,
+        warn:"Exercice de santé d'épaule : reste TOUJOURS léger (12-15 reps), même en bloc Force. Jamais utilisé pour calculer un 1RM.",
+        t:{force:{c:null,r:"12-15",s:3,rest:45}, hyp:{c:null,r:"12-15",s:3,rest:45}, end:{c:null,r:"12-15",s:3,rest:45}} },
       { id:"curl",    name:"Biceps curl", type:"charge", oneRm:35.5,
         t:{force:{c:30,r:"6-8",s:4,rest:90}, hyp:{c:27,r:"8-12",s:3,rest:75}, end:{c:20,r:"20-25",s:3,rest:45}} },
       { id:"planche", name:"Planche + touché épaule", type:"pdc", oneRm:null,
@@ -392,6 +402,7 @@ const PROGRAM = [
     ]
   }
 ];
+}
 
 const BLOCS = {
   force: { label:"Force",        pct:.85, weeks:"sem. 3-4", hint:"80-87% 1RM · 5-6 reps · repos 2-3 min. Séries d'approche : 1 légère (12-15) puis 1 à ~55% du poids de travail." },
@@ -418,23 +429,55 @@ const COOLDOWN_BLOC = {
 };
 
 /* ==================== ÉTAT & STOCKAGE ==================== */
-const LS_KEY = "suiviMuscu.v1";
+/* Le programme (séances/exercices) vit maintenant DANS le state localStorage
+   (S.programs), plus seulement en dur dans le code. Structure prête pour gérer
+   plusieurs programmes plus tard (S.programs = tableau, S.activeProgramId choisit
+   celui affiché) ; pour l'instant un seul programme préchargé (seed). */
+const LS_KEY = "suiviMuscu.v1"; // clé conservée pour compat ; le contenu porte schemaVersion
+const CURRENT_SCHEMA_VERSION = 2;
+const DEFAULT_PROGRAM_ID = "defaut";
 
 function defaultState() {
   return {
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     bodyweight: 87,
     cycleStart: new Date().toISOString().slice(0,10),
     logs: [],            // {id, date, sessionId, bloc, entries:{exoId:[{w,r,done}]}}
     draft: null,         // séance en cours non terminée {sessionIdx, bloc, entries, ts}
     restPref: {},        // "exoId.bloc" -> repos personnalisé en secondes
-    oneRmOverride: {}    // exoId -> 1RM recalculé
+    oneRmOverride: {},   // exoId -> 1RM recalculé
+    programs: [           // liste de programmes (1 seul pour l'instant)
+      { id: DEFAULT_PROGRAM_ID, name: "Split 3 jours (Force / Hypertrophie / Endurance)", sessions: seedProgramSessions() }
+    ],
+    activeProgramId: DEFAULT_PROGRAM_ID
   };
 }
+
+/* Migre un objet state chargé (localStorage ou import JSON) vers le schema courant.
+   - Ancien format (pas de schemaVersion / schemaVersion < 2, pas de "programs") :
+     conserve historique + 1RM + repos perso, ajoute le programme seed.
+   - Format déjà à jour : complète simplement les clés manquantes (rétro-compat future). */
+function migrate(data) {
+  const base = defaultState();
+  const merged = Object.assign(base, data || {});
+  // Si les données importées/anciennes n'avaient pas de "programs" valide, on garde le seed déjà posé par defaultState().
+  if (!Array.isArray(merged.programs) || merged.programs.length === 0) {
+    merged.programs = base.programs;
+  }
+  if (!merged.activeProgramId || !merged.programs.some(p => p.id === merged.activeProgramId)) {
+    merged.activeProgramId = merged.programs[0].id;
+  }
+  merged.schemaVersion = CURRENT_SCHEMA_VERSION;
+  return merged;
+}
+
 let S = load();
+let PROGRAM; // séances du programme actif — synchronisé depuis S.programs via syncProgram()
+syncProgram();
 function load() {
   try {
     const raw = localStorage.getItem(LS_KEY);
-    if (raw) return Object.assign(defaultState(), JSON.parse(raw));
+    if (raw) return migrate(JSON.parse(raw));
   } catch(e) { console.warn("localStorage indisponible :", e); }
   return defaultState();
 }
@@ -442,6 +485,10 @@ function save() {
   try { localStorage.setItem(LS_KEY, JSON.stringify(S)); }
   catch(e) { toast("⚠ Sauvegarde impossible (mode file:// ?)"); }
 }
+function activeProgram() {
+  return S.programs.find(p => p.id === S.activeProgramId) || S.programs[0];
+}
+function syncProgram() { PROGRAM = activeProgram().sessions; }
 
 /* état de la séance en cours — sauvegardé automatiquement à chaque modification */
 let cur = { sessionIdx: 0, bloc: suggestedBloc(), entries: {}, rest: {} };
@@ -644,8 +691,8 @@ function buildSetRow(exo, st, i) {
     </div>
     <button class="set-ok ${st.done?"done":""}">${st.done?"✓":"OK"}</button>`;
   const [wIn, rIn] = row.querySelectorAll("input");
-  row.querySelector('[data-a="w-"]').onclick = ()=>{ wIn.value = Math.max(0, (+wIn.value)-2.5); st.w=+wIn.value; saveDraft(); };
-  row.querySelector('[data-a="w+"]').onclick = ()=>{ wIn.value = (+wIn.value)+2.5; st.w=+wIn.value; saveDraft(); };
+  row.querySelector('[data-a="w-"]').onclick = ()=>{ wIn.value = Math.max(0, (+wIn.value)-1); st.w=+wIn.value; saveDraft(); };
+  row.querySelector('[data-a="w+"]').onclick = ()=>{ wIn.value = (+wIn.value)+1; st.w=+wIn.value; saveDraft(); };
   row.querySelector('[data-a="r-"]').onclick = ()=>{ rIn.value = Math.max(0, (+rIn.value)-1); st.r=+rIn.value; saveDraft(); };
   row.querySelector('[data-a="r+"]').onclick = ()=>{ rIn.value = (+rIn.value)+1; st.r=+rIn.value; saveDraft(); };
   wIn.onchange = ()=>{ st.w = +wIn.value || 0; saveDraft(); };
@@ -701,7 +748,7 @@ $("#finishBtn").onclick = () => {
 /* ==================== RECALCUL 1RM ==================== */
 function recomputeRms() {
   PROGRAM.forEach(sess => sess.exos.forEach(exo => {
-    if (exo.type==="pdc") return;
+    if (exo.type==="pdc" || exo.noRm) return;
     let best = exo.oneRm ?? 0;
     S.logs.forEach(log => {
       const sets = log.entries[exo.id]; if (!sets) return;
@@ -719,7 +766,7 @@ function recomputeRms() {
 function recomputeFromHistoryOnly() {
   S.oneRmOverride = {};
   PROGRAM.forEach(sess => sess.exos.forEach(exo => {
-    if (exo.type==="pdc") return;
+    if (exo.type==="pdc" || exo.noRm) return;
     let best = 0;
     S.logs.forEach(log => {
       const sets = log.entries[exo.id]; if (!sets) return;
@@ -850,6 +897,14 @@ function renderProg() {
   const accent = getComputedStyle(document.body).getPropertyValue("--accent").trim();
   PROGRAM.forEach(sess => sess.exos.forEach(exo => {
     if (exo.type==="pdc") return;
+    if (exo.noRm) {
+      const card = document.createElement("div"); card.className="prog-card";
+      card.innerHTML = `
+        <div class="row1"><h3>${exo.name}</h3><span class="rm num">—</span></div>
+        <div class="sub">${sess.name} · léger volontairement (exercice de santé, jamais chiffré en 1RM)</div>`;
+      el.appendChild(card);
+      return;
+    }
     const rm = currentRm(exo);
     const card = document.createElement("div"); card.className="prog-card";
     const zones = rm ? `
@@ -904,7 +959,8 @@ $("#importFile").onchange = e => {
     try {
       const data = JSON.parse(rd.result);
       if (!data.logs || !Array.isArray(data.logs)) throw new Error("format");
-      S = Object.assign(defaultState(), data);
+      S = migrate(data); // gère aussi bien un export v2 récent qu'un ancien export v1 sans "programs"
+      syncProgram();
       recomputeRms(); save();
       renderSeance(); toast("Données importées ✓");
     } catch(err) { toast("Fichier invalide"); }
@@ -921,7 +977,7 @@ $("#recalcBtn").onclick = () => {
 };
 $("#resetBtn").onclick = () => {
   if (!confirm("Effacer TOUT l'historique et les réglages ? (irréversible — pense à exporter avant)")) return;
-  S = defaultState(); save(); cur.entries = {};
+  S = defaultState(); syncProgram(); save(); cur.entries = {};
   renderSeance(); toast("Données réinitialisées");
 };
 
