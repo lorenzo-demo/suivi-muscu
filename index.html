@@ -130,6 +130,15 @@
   }
   .series-ctl .lbl { font-size:12px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
 
+  .exo-notes { padding:0 12px 12px; }
+  .notes-input {
+    width:100%; min-height:38px; max-height:160px; resize:vertical;
+    background: var(--surface2); border:1px solid var(--line); border-radius:10px;
+    color: var(--text); font-size:13.5px; font-family:inherit; padding:9px 11px; line-height:1.4;
+  }
+  .notes-input::placeholder { color: var(--muted); }
+  .notes-input:focus { outline:none; border-color: var(--accent); }
+
   /* ---- Cartes info échauffement / étirements ---- */
   .info-card {
     background: var(--accent-dim); border:1px solid var(--accent); border-radius: var(--radius);
@@ -178,6 +187,15 @@
   .tag.force { background:#E05445; } .tag.hyp { background:#3FA65C; } .tag.end { background:#3D7FD9; }
   .histo-item .sum { font-size:13px; color:var(--muted); }
   .histo-item .del { margin-top:8px; background:none; border:none; color:var(--danger); font-size:13px; font-weight:600; padding:0; }
+  .histo-actions { display:flex; align-items:center; justify-content:space-between; margin-top:8px; }
+  .toggle-detail { background:none; border:none; color:var(--accent); font-size:13px; font-weight:700; padding:0; }
+  .histo-detail { display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--line); }
+  .histo-detail.show { display:block; }
+  .histo-exo { padding:6px 0; }
+  .histo-exo + .histo-exo { border-top:1px dashed var(--line); }
+  .histo-exo-name { font-size:13px; font-weight:700; }
+  .histo-exo-sets { font-size:12.5px; color:var(--muted); margin-top:1px; }
+  .histo-exo-note { font-size:12.5px; color:var(--text); margin-top:3px; font-style:italic; }
 
   /* ---- Progression ---- */
   .prog-card {
@@ -314,6 +332,7 @@
     <div class="lbl">Repos avant la prochaine série</div>
   </div>
   <div>
+    <button id="restMinus">-30s</button>
     <button id="restPlus">+30s</button>
     <button id="restStop">Stop</button>
   </div>
@@ -513,15 +532,16 @@ function activeProgram() {
 function syncProgram() { PROGRAM = activeProgram().sessions; }
 
 /* état de la séance en cours — sauvegardé automatiquement à chaque modification */
-let cur = { sessionIdx: 0, bloc: suggestedBloc(), entries: {}, rest: {} };
+let cur = { sessionIdx: 0, bloc: suggestedBloc(), entries: {}, rest: {}, notes: {} };
 let draftRestored = false;
 if (S.draft && S.draft.entries) {
-  cur = { sessionIdx: S.draft.sessionIdx, bloc: S.draft.bloc, entries: S.draft.entries, rest: S.draft.rest || {} };
+  cur = { sessionIdx: S.draft.sessionIdx, bloc: S.draft.bloc, entries: S.draft.entries, rest: S.draft.rest || {}, notes: S.draft.notes || {} };
   draftRestored = true;
 }
 function saveDraft() {
-  const hasData = Object.values(cur.entries).some(sets => sets.some(s => s.done));
-  S.draft = hasData ? { sessionIdx: cur.sessionIdx, bloc: cur.bloc, entries: cur.entries, rest: cur.rest, ts: Date.now() } : null;
+  const hasSets = Object.values(cur.entries).some(sets => sets.some(s => s.done));
+  const hasNotes = Object.values(cur.notes).some(t => t && t.trim());
+  S.draft = (hasSets || hasNotes) ? { sessionIdx: cur.sessionIdx, bloc: cur.bloc, entries: cur.entries, rest: cur.rest, notes: cur.notes, ts: Date.now() } : null;
   save();
 }
 function clearDraft() { S.draft = null; save(); }
@@ -537,6 +557,14 @@ function epley(w,r){ return r<=1 ? w : w*(1+r/30); }
 function brzycki(w,r){ return r<=1 ? w : (r<37 ? w*36/(37-r) : w*2); }
 function estRm(w,r){ return (epley(w,r)+brzycki(w,r))/2; }
 function round05(x){ return Math.round(x*2)/2; }
+function round25(x){ return Math.round(x/2.5)*2.5; }
+function escHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function debounce(fn, ms){
+  let h;
+  return (...a) => { clearTimeout(h); h = setTimeout(()=>fn(...a), ms); };
+}
 function effLoad(exo, val) { // charge réelle soulevée
   return exo.type === "assist" ? S.bodyweight - val : val;
 }
@@ -589,7 +617,7 @@ function renderSeanceSelectors() {
     b.onclick = () => {
       if (i===cur.sessionIdx) return;
       if (hasProgress() && !confirm("Changer de séance effacera les séries en cours. Continuer ?")) return;
-      cur.sessionIdx=i; cur.entries={}; clearDraft(); renderSeance();
+      cur.sessionIdx=i; cur.entries={}; cur.notes={}; clearDraft(); renderSeance();
     };
     seg.appendChild(b);
   });
@@ -601,7 +629,7 @@ function renderSeanceSelectors() {
     b.onclick = () => {
       if (k===cur.bloc) return;
       if (hasProgress() && !confirm("Changer de bloc effacera les séries en cours. Continuer ?")) return;
-      cur.bloc=k; cur.entries={}; clearDraft(); renderSeance();
+      cur.bloc=k; cur.entries={}; cur.notes={}; clearDraft(); renderSeance();
     };
     bseg.appendChild(b);
   });
@@ -610,20 +638,33 @@ function renderSeanceSelectors() {
   $("#cycleInfo").textContent = "Semaine "+weekOfCycle()+"/6 · bloc conseillé : "+BLOCS[suggestedBloc()].label;
 }
 
+// Charge cible dynamique (kg), calculée depuis le 1RM courant (initial ou recalculé) et le
+// pourcentage du bloc (BLOCS[bloc].pct : 85% force / 75% hyp / 55% end), arrondie à 2.5 kg.
+// Pour un exercice assisté (tractions/dips), renvoie l'ASSISTANCE cible (valeur à régler sur
+// la machine), pas la charge effective. Renvoie null si aucun 1RM connu ("à tester") ou PDC.
+function computeTargetCharge(exo, bloc) {
+  if (exo.type === "pdc") return null;
+  const rm = currentRm(exo);
+  if (rm == null) return null;
+  const target = rm * BLOCS[bloc].pct;
+  return exo.type === "assist" ? round25(S.bodyweight - target) : round25(target);
+}
+
 function targetLabel(exo, bloc) {
   const t = exo.t[bloc];
   if (exo.type==="pdc") return {main:"PDC", sub:t.r+" × "+t.s};
-  if (t.c==null) return {main:"à tester", sub:t.r+" × "+t.s};
+  const c = computeTargetCharge(exo, bloc);
+  if (c==null) return {main:"à tester", sub:t.r+" × "+t.s};
   if (exo.type==="assist") {
-    return {main:"−"+t.c+" kg", sub:"("+round05(S.bodyweight-t.c)+" kg soulevés) · "+t.r+" × "+t.s};
+    return {main:"−"+c+" kg", sub:"("+round05(S.bodyweight-c)+" kg soulevés) · "+t.r+" × "+t.s};
   }
-  return {main:t.c+" kg", sub:t.r+" × "+t.s};
+  return {main:c+" kg", sub:t.r+" × "+t.s};
 }
 
 function buildExoCard(exo) {
   const t = exo.t[cur.bloc];
   if (!cur.entries[exo.id]) {
-    const initW = exo.type==="pdc" ? 0 : (t.c ?? 0);
+    const initW = exo.type==="pdc" ? 0 : (computeTargetCharge(exo, cur.bloc) ?? 0);
     cur.entries[exo.id] = Array.from({length:t.s}, ()=>({w:initW, r:parseInt(t.r)||10, done:false}));
   }
   const card = document.createElement("div"); card.className="exo";
@@ -656,6 +697,9 @@ function buildExoCard(exo) {
         <button data-a="ser-">−</button>
         <button data-a="ser+">+</button>
       </div>
+    </div>
+    <div class="exo-notes">
+      <textarea class="notes-input" rows="1" placeholder="Commentaire, sensations sur cet exercice…">${escHtml(cur.notes[exo.id]||"")}</textarea>
     </div>`;
   const setsEl = card.querySelector(".sets");
   cur.entries[exo.id].forEach((st, i) => setsEl.appendChild(buildSetRow(exo, st, i)));
@@ -675,6 +719,11 @@ function buildExoCard(exo) {
     if (v<=0) { toast("Repos à 0:00 — augmente d'abord la durée"); return; }
     startRest(v);
   };
+
+  /* --- commentaire / sensations : sauvegarde discrète (debounce) dans le brouillon --- */
+  const notesEl = card.querySelector(".notes-input");
+  const saveNote = debounce(() => { cur.notes[exo.id] = notesEl.value; saveDraft(); }, 400);
+  notesEl.addEventListener("input", saveNote);
 
   /* --- ajout / retrait de série (reconstruit seulement cette carte) --- */
   card.querySelector('[data-a="ser+"]').onclick = () => {
@@ -757,12 +806,22 @@ $("#finishBtn").onclick = () => {
     if (done.length) { entries[exo.id] = done.map(s=>({w:s.w,r:s.r})); any = true; }
   });
   if (!any) { toast("Aucune série validée"); return; }
-  S.logs.unshift({ id: Date.now(), date: new Date().toISOString(), sessionId: sess.id, bloc: cur.bloc, entries });
+  // Notes/sensations par exercice : on garde celles qui ont du texte, même si l'exercice
+  // n'a pas de série validée (ex. "épaule sensible, j'ai sauté cet exo").
+  const notes = {};
+  sess.exos.forEach(exo => {
+    const t = (cur.notes[exo.id]||"").trim();
+    if (t) notes[exo.id] = t;
+  });
+  const log = { id: Date.now(), date: new Date().toISOString(), sessionId: sess.id, bloc: cur.bloc, entries };
+  if (Object.keys(notes).length) log.notes = notes;
+  S.logs.unshift(log);
   recomputeRms();
   S.draft = null;
   save();
   stopRest();
   cur.entries = {};
+  cur.notes = {};
   renderSeance();
   toast("Séance enregistrée 💪");
 };
@@ -847,6 +906,7 @@ function stopRest(){
 }
 $("#restStop").onclick = stopRest;
 $("#restPlus").onclick = ()=>{ restT+=30; drawRest(); };
+$("#restMinus").onclick = ()=>{ restT = Math.max(0, restT-30); drawRest(); if (restT<=0) stopRest(); };
 
 /* ==================== HISTORIQUE ==================== */
 function renderHisto() {
@@ -871,7 +931,36 @@ function renderHisto() {
         <span class="tag ${log.bloc}">${BLOCS[log.bloc].label}</span>
       </div>
       <div class="sum num">${nSets} séries validées · volume ≈ ${Math.round(vol)} kg</div>
-      <button class="del">Supprimer</button>`;
+      <div class="histo-detail"></div>
+      <div class="histo-actions">
+        <button class="toggle-detail">Voir le détail ▾</button>
+        <button class="del">Supprimer</button>
+      </div>`;
+    const detailEl = item.querySelector(".histo-detail");
+    const toggleBtn = item.querySelector(".toggle-detail");
+    let expanded = false;
+    function buildDetail() {
+      // Ordre = celui du programme (pas l'ordre d'insertion de l'objet), plus lisible.
+      const exoIds = sess ? sess.exos.map(e=>e.id).filter(id=>log.entries[id] || (log.notes && log.notes[id]))
+                           : Object.keys(log.entries);
+      detailEl.innerHTML = exoIds.map(exoId => {
+        const exo = sess?.exos.find(e=>e.id===exoId);
+        const sets = log.entries[exoId];
+        const setsTxt = sets ? sets.map(s => exo?.type==="pdc" ? `${s.r} reps` : `${s.w} kg × ${s.r}`).join(" · ") : "—";
+        const note = log.notes && log.notes[exoId];
+        return `<div class="histo-exo">
+          <div class="histo-exo-name">${exo?.name ?? exoId}</div>
+          <div class="histo-exo-sets">${setsTxt}</div>
+          ${note ? `<div class="histo-exo-note">💬 ${escHtml(note)}</div>` : ""}
+        </div>`;
+      }).join("");
+    }
+    toggleBtn.onclick = () => {
+      expanded = !expanded;
+      if (expanded && !detailEl.dataset.built) { buildDetail(); detailEl.dataset.built = "1"; }
+      detailEl.classList.toggle("show", expanded);
+      toggleBtn.textContent = expanded ? "Masquer le détail ▴" : "Voir le détail ▾";
+    };
     item.querySelector(".del").onclick = () => {
       if (!confirm("Supprimer cette séance de l'historique ?")) return;
       S.logs = S.logs.filter(l=>l.id!==log.id);
@@ -995,16 +1084,22 @@ $("#recalcBtn").onclick = () => {
   if (!confirm("Remettre à zéro les 1RM et les recalculer uniquement depuis votre historique de séances ?")) return;
   recomputeFromHistoryOnly();
   save();
+  renderSeance(); // les charges cibles affichées dépendent du 1RM courant : re-render immédiat
   toast("1RM recalculés depuis l'historique ✓");
 };
 $("#resetBtn").onclick = () => {
   if (!confirm("Effacer TOUT l'historique et les réglages ? (irréversible — pense à exporter avant)")) return;
-  S = defaultState(); syncProgram(); save(); cur.entries = {};
+  S = defaultState(); syncProgram(); save(); cur.entries = {}; cur.notes = {};
   renderSeance(); toast("Données réinitialisées");
 };
 
 /* ==================== INIT ==================== */
-recomputeRms();
+/* Pas de recomputeRms() ici : le 1RM courant (S.oneRmOverride) est déjà celui persisté en
+   localStorage. Le recalculer au chargement écraserait un recalcul manuel (recalcBtn) fait
+   depuis un autre appareil/session, ou tout simplement rejouerait un calcul déjà à jour à
+   chaque ouverture pour rien. Le recalcul n'a lieu que sur deux actions explicites :
+   - la fin d'une séance (finishBtn) → recomputeRms() (ajoute la nouvelle séance au calcul)
+   - le bouton "Recalculer depuis l'historique" (recalcBtn) → recomputeFromHistoryOnly() */
 renderSeance();
 if (draftRestored) {
   const dt = S.draft && S.draft.ts ? new Date(S.draft.ts).toLocaleDateString("fr-FR",{day:"numeric",month:"short"}) : "";
