@@ -197,6 +197,11 @@
   .histo-exo-sets { font-size:12.5px; color:var(--muted); margin-top:1px; }
   .histo-exo-note { font-size:12.5px; color:var(--text); margin-top:3px; font-style:italic; }
 
+  .prog-hist-row { display:flex; align-items:center; gap:10px; padding:6px 0; }
+  .prog-hist-row + .prog-hist-row { border-top:1px dashed var(--line); }
+  .prog-hist-date { font-size:12.5px; color:var(--muted); flex:1; }
+  .prog-hist-val { font-size:13px; font-weight:700; }
+
   /* ---- Progression ---- */
   .prog-card {
     background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
@@ -423,7 +428,7 @@ return [
       { id:"curl",    name:"Biceps curl", type:"charge", oneRm:35.5,
         t:{force:{c:30,r:"6-8",s:4,rest:90}, hyp:{c:27,r:"8-12",s:3,rest:75}, end:{c:20,r:"20-25",s:3,rest:45}} },
       { id:"planche", name:"Planche + touché épaule", type:"pdc", oneRm:null,
-        t:{force:{c:0,r:"8-10 /côté",s:3,rest:60}, hyp:{c:0,r:"45 sec",s:3,rest:45}, end:{c:0,r:"60 sec+",s:3,rest:40}} },
+        t:{force:{c:0,r:"8-10 /côté",s:3,rest:60}, hyp:{c:0,r:"45 sec",s:3,rest:45,unit:"sec"}, end:{c:0,r:"60 sec+",s:3,rest:40,unit:"sec"}} },
     ]
   }
 ];
@@ -534,17 +539,44 @@ function syncProgram() { PROGRAM = activeProgram().sessions; }
 /* état de la séance en cours — sauvegardé automatiquement à chaque modification */
 let cur = { sessionIdx: 0, bloc: suggestedBloc(), entries: {}, rest: {}, notes: {} };
 let draftRestored = false;
+/* curTouched : vrai dès la moindre interaction (poids/reps saisis, note tapée, série
+   ajoutée...), MÊME si aucune série n'est encore marquée "Fait". Avant ce correctif,
+   saveDraft() ne persistait le brouillon que si une série était validée — donc tant que
+   l'utilisateur n'avait pas encore tapé "OK" une première fois, rien n'était écrit en
+   localStorage. Sur iPhone, si Safari/le PWA recharge la page en arrière-plan (gestion
+   mémoire agressive côté iOS) pendant cette fenêtre, toutes les saisies en cours étaient
+   perdues au retour. */
+let curTouched = false;
 if (S.draft && S.draft.entries) {
   cur = { sessionIdx: S.draft.sessionIdx, bloc: S.draft.bloc, entries: S.draft.entries, rest: S.draft.rest || {}, notes: S.draft.notes || {} };
   draftRestored = true;
+  curTouched = true;
+  refreshUndoneTargets(); // les séries pas encore validées reprennent la cible ACTUELLE (1RM/perf courants), pas l'ancienne saisie
+}
+/* Recale les séries non validées d'une séance restaurée sur la cible actuelle : poids depuis
+   le 1RM courant pour les exos à charge, reps depuis la dernière perf loggée pour les exos au
+   poids du corps. Les séries déjà validées (données réelles) ne sont jamais touchées. Appelée
+   uniquement à la restauration d'un brouillon — PAS à chaque rendu, pour ne pas écraser une
+   saisie manuelle en cours pendant une séance active (ex. après un ajout/retrait de série). */
+function refreshUndoneTargets() {
+  PROGRAM.forEach(sess => sess.exos.forEach(exo => {
+    const sets = cur.entries[exo.id]; if (!sets) return;
+    const t = exo.t[cur.bloc]; if (!t) return;
+    if (exo.type === "pdc") {
+      const r = lastSessionBestReps(exo, cur.bloc);
+      if (r!=null) sets.forEach(st => { if (!st.done) st.r = r; });
+    } else {
+      const w = computeTargetCharge(exo, cur.bloc) ?? 0;
+      sets.forEach(st => { if (!st.done) st.w = w; });
+    }
+  }));
 }
 function saveDraft() {
-  const hasSets = Object.values(cur.entries).some(sets => sets.some(s => s.done));
-  const hasNotes = Object.values(cur.notes).some(t => t && t.trim());
-  S.draft = (hasSets || hasNotes) ? { sessionIdx: cur.sessionIdx, bloc: cur.bloc, entries: cur.entries, rest: cur.rest, notes: cur.notes, ts: Date.now() } : null;
+  curTouched = true; // saveDraft() n'est appelée que depuis une vraie interaction utilisateur
+  S.draft = { sessionIdx: cur.sessionIdx, bloc: cur.bloc, entries: cur.entries, rest: cur.rest, notes: cur.notes, ts: Date.now() };
   save();
 }
-function clearDraft() { S.draft = null; save(); }
+function clearDraft() { S.draft = null; curTouched = false; save(); }
 
 /* ==================== HELPERS ==================== */
 const $ = s => document.querySelector(s);
@@ -650,11 +682,31 @@ function computeTargetCharge(exo, bloc) {
   return exo.type === "assist" ? round25(S.bodyweight - target) : round25(target);
 }
 
+// Meilleure performance (reps, ou secondes pour un exo chronométré comme la planche) sur la
+// dernière séance loggée pour CE bloc précis (force/hyp/end ont des cibles de reps différentes
+// par nature, donc on ne mélange pas les blocs). Renvoie null si jamais loggé dans ce bloc.
+function lastSessionBestReps(exo, bloc) {
+  for (const log of S.logs) {
+    if (log.bloc !== bloc) continue;
+    const sets = log.entries[exo.id];
+    if (sets && sets.length) return Math.max(...sets.map(s=>s.r));
+  }
+  return null;
+}
+
 function targetLabel(exo, bloc) {
   const t = exo.t[bloc];
-  if (exo.type==="pdc") return {main:"PDC", sub:t.r+" × "+t.s};
+  if (exo.type==="pdc") {
+    const last = lastSessionBestReps(exo, bloc);
+    const unit = t.unit==="sec" ? " sec" : " reps";
+    return { main: last!=null ? last+unit : "—", sub: t.r+" × "+t.s };
+  }
   const c = computeTargetCharge(exo, bloc);
-  if (c==null) return {main:"à tester", sub:t.r+" × "+t.s};
+  if (c==null) {
+    // noRm (ex: face pull) : jamais chiffré, volontairement — pas de "à tester" trompeur.
+    // Un exo "charge" normal juste jamais encore loggé garde "à tester" (invite à tester une charge).
+    return exo.noRm ? {main:"—", sub:t.r+" × "+t.s} : {main:"à tester", sub:t.r+" × "+t.s};
+  }
   if (exo.type==="assist") {
     return {main:"−"+c+" kg", sub:"("+round05(S.bodyweight-c)+" kg soulevés) · "+t.r+" × "+t.s};
   }
@@ -665,7 +717,8 @@ function buildExoCard(exo) {
   const t = exo.t[cur.bloc];
   if (!cur.entries[exo.id]) {
     const initW = exo.type==="pdc" ? 0 : (computeTargetCharge(exo, cur.bloc) ?? 0);
-    cur.entries[exo.id] = Array.from({length:t.s}, ()=>({w:initW, r:parseInt(t.r)||10, done:false}));
+    const initR = exo.type==="pdc" ? (lastSessionBestReps(exo, cur.bloc) ?? (parseInt(t.r)||10)) : (parseInt(t.r)||10);
+    cur.entries[exo.id] = Array.from({length:t.s}, ()=>({w:initW, r:initR, done:false}));
   }
   const card = document.createElement("div"); card.className="exo";
   const tl = targetLabel(exo, cur.bloc);
@@ -679,7 +732,7 @@ function buildExoCard(exo) {
       </div>
     </div>
     ${exo.warn ? `<div class="exo-note">⚠ ${exo.warn}</div>` : ""}
-    <div class="col-labels"><span></span><span>${exo.type==="assist"?"Assist. (kg)":"Poids (kg)"}</span><span>Reps</span><span>Fait</span></div>
+    <div class="col-labels"><span></span><span>${exo.type==="assist"?"Assist. (kg)":"Poids (kg)"}</span><span>${t.unit==="sec"?"Secondes":"Reps"}</span><span>Fait</span></div>
     <div class="sets"></div>
     <div class="exo-tools">
       <div class="rest-ctl">
@@ -862,7 +915,13 @@ function recomputeFromHistoryOnly() {
 }
 
 /* ==================== CHRONO REPOS ==================== */
-let restT = 0, restIv = null;
+/* Le décompte n'est PAS basé sur le nombre de tops du setInterval : les navigateurs/OS
+   mobiles suspendent (throttle) les timers JS quand l'écran se verrouille, ce qui gèlerait
+   l'affichage pendant la veille. On calcule donc le temps restant à partir d'un horodatage
+   de fin absolu (Date.now() + durée), recalculé à chaque tick ET au réveil de l'app
+   (visibilitychange/pageshow/focus) — le chrono "rattrape" instantanément le bon temps dès
+   le déverrouillage, et sonne tout de suite si le temps était déjà écoulé pendant la veille. */
+let restT = 0, restIv = null, restEndAt = 0;
 let audioCtx = null;
 function beep() {
   try {
@@ -887,26 +946,35 @@ function startRest(sec) {
     audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
     if (audioCtx.state === "suspended") audioCtx.resume();
   } catch(e){}
+  restEndAt = Date.now() + sec*1000;
   restT = sec;
   $("#restbar").classList.add("show");
   drawRest();
-  restIv = setInterval(()=>{
-    restT--;
-    drawRest();
-    if (restT<=0) { beep(); stopRest(); }
-  }, 1000);
+  restIv = setInterval(tickRest, 1000);
+}
+function tickRest() {
+  restT = Math.max(0, Math.round((restEndAt - Date.now())/1000));
+  drawRest();
+  if (restT<=0) { beep(); stopRest(); }
 }
 function drawRest(){
   const m = Math.floor(restT/60), s = String(restT%60).padStart(2,"0");
   $("#restTime").textContent = m+":"+s;
 }
 function stopRest(){
-  clearInterval(restIv); restIv = null;
+  clearInterval(restIv); restIv = null; restEndAt = 0;
   $("#restbar").classList.remove("show");
 }
 $("#restStop").onclick = stopRest;
-$("#restPlus").onclick = ()=>{ restT+=30; drawRest(); };
-$("#restMinus").onclick = ()=>{ restT = Math.max(0, restT-30); drawRest(); if (restT<=0) stopRest(); };
+$("#restPlus").onclick = ()=>{ if (!restIv) return; restEndAt += 30000; tickRest(); };
+$("#restMinus").onclick = ()=>{ if (!restIv) return; restEndAt = Math.max(Date.now(), restEndAt-30000); tickRest(); };
+
+/* Recalcul immédiat au réveil de l'app (écran déverrouillé, onglet repassé au premier plan,
+   retour depuis le bfcache iOS) — sans ça l'affichage resterait figé sur la dernière valeur
+   connue jusqu'au prochain top (potentiellement plusieurs secondes de décalage visible). */
+document.addEventListener("visibilitychange", () => { if (document.visibilityState==="visible" && restIv) tickRest(); });
+window.addEventListener("focus", () => { if (restIv) tickRest(); });
+window.addEventListener("pageshow", () => { if (restIv) tickRest(); });
 
 /* ==================== HISTORIQUE ==================== */
 function renderHisto() {
@@ -946,7 +1014,8 @@ function renderHisto() {
       detailEl.innerHTML = exoIds.map(exoId => {
         const exo = sess?.exos.find(e=>e.id===exoId);
         const sets = log.entries[exoId];
-        const setsTxt = sets ? sets.map(s => exo?.type==="pdc" ? `${s.r} reps` : `${s.w} kg × ${s.r}`).join(" · ") : "—";
+        const isSec = exo?.type==="pdc" && exo.t[log.bloc]?.unit==="sec";
+        const setsTxt = sets ? sets.map(s => isSec ? `${s.r} sec` : exo?.type==="pdc" ? `${s.r} reps` : `${s.w} kg × ${s.r}`).join(" · ") : "—";
         const note = log.notes && log.notes[exoId];
         return `<div class="histo-exo">
           <div class="histo-exo-name">${exo?.name ?? exoId}</div>
@@ -972,15 +1041,43 @@ function renderHisto() {
 
 /* ==================== PROGRESSION ==================== */
 function rmHistory(exo) {
-  // meilleure estimation 1RM par séance (ordre chronologique)
+  // meilleure estimation 1RM par séance (avec date/bloc), ordre chronologique
   const pts = [];
   [...S.logs].reverse().forEach(log => {
     const sets = log.entries[exo.id]; if (!sets) return;
     let best = 0;
     sets.forEach(s => { if (s.r>=1 && s.r<=15) best = Math.max(best, estRm(effLoad(exo,s.w), s.r)); });
-    if (best>0) pts.push(best);
+    if (best>0) pts.push({date: log.date, bloc: log.bloc, value: Math.round(best*10)/10});
   });
   return pts;
+}
+// Équivalent de rmHistory pour les exos au poids du corps : meilleure perf (reps, ou secondes
+// pour un exo chronométré type planche) par séance, avec date/bloc, ordre chronologique.
+function repHistory(exo) {
+  const pts = [];
+  [...S.logs].reverse().forEach(log => {
+    const sets = log.entries[exo.id]; if (!sets) return;
+    pts.push({date: log.date, bloc: log.bloc, value: Math.max(...sets.map(s=>s.r))});
+  });
+  return pts;
+}
+function bestByBloc(hist) {
+  const res = {};
+  hist.forEach(p => { if (res[p.bloc]==null || p.value>res[p.bloc]) res[p.bloc]=p.value; });
+  return res;
+}
+// Liste "date · bloc · valeur" (plus récent en premier) pour le détail dépliable d'une carte
+// Progression. unitFn(bloc) renvoie le suffixe à afficher (" kg", " reps", " sec"...).
+function buildProgHistList(hist, unitFn) {
+  if (!hist.length) return `<div class="empty" style="margin:0;padding:8px 0;">Pas encore de données.</div>`;
+  return [...hist].reverse().map(p => {
+    const d = new Date(p.date);
+    return `<div class="prog-hist-row">
+      <span class="prog-hist-date">${d.toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"2-digit"})}</span>
+      <span class="tag ${p.bloc}">${BLOCS[p.bloc].label}</span>
+      <span class="prog-hist-val num">${p.value}${unitFn(p.bloc)}</span>
+    </div>`;
+  }).join("");
 }
 function sparkline(cv, pts, color) {
   const dpr = window.devicePixelRatio||1;
@@ -1007,7 +1104,27 @@ function renderProg() {
   const el = $("#progList"); el.innerHTML = "";
   const accent = getComputedStyle(document.body).getPropertyValue("--accent").trim();
   PROGRAM.forEach(sess => sess.exos.forEach(exo => {
-    if (exo.type==="pdc") return;
+    if (exo.type==="pdc") {
+      const hist = repHistory(exo);
+      const best = bestByBloc(hist);
+      const unitFor = bloc => (exo.t[bloc]?.unit==="sec" ? " sec" : " reps");
+      const zones = hist.length ? `
+        <div class="zones">
+          <div>Force<b class="num">${best.force!=null? best.force+unitFor("force") : "—"}</b></div>
+          <div>Hypertrophie<b class="num">${best.hyp!=null? best.hyp+unitFor("hyp") : "—"}</b></div>
+          <div>Endurance<b class="num">${best.end!=null? best.end+unitFor("end") : "—"}</b></div>
+        </div>` : "";
+      const card = document.createElement("div"); card.className="prog-card";
+      card.innerHTML = `
+        <div class="row1"><h3>${exo.name}</h3></div>
+        <div class="sub">${sess.name} · meilleure performance par bloc (poids du corps)</div>
+        ${zones}
+        <button class="toggle-detail">Voir l'historique ▾</button>
+        <div class="histo-detail"></div>`;
+      wireProgToggle(card, () => buildProgHistList(hist, unitFor));
+      el.appendChild(card);
+      return;
+    }
     if (exo.noRm) {
       const card = document.createElement("div"); card.className="prog-card";
       card.innerHTML = `
@@ -1017,6 +1134,7 @@ function renderProg() {
       return;
     }
     const rm = currentRm(exo);
+    const hist = rmHistory(exo);
     const card = document.createElement("div"); card.className="prog-card";
     const zones = rm ? `
       <div class="zones">
@@ -1027,10 +1145,25 @@ function renderProg() {
     card.innerHTML = `
       <div class="row1"><h3>${exo.name}</h3><span class="rm num">${rm? rm+" kg" : "—"}</span></div>
       <div class="sub">${sess.name} · 1RM ${S.oneRmOverride[exo.id]!=null?"recalculé sur tes séances":"initial (estimation de départ)"}</div>
-      <canvas></canvas>${zones}`;
+      <canvas></canvas>${zones}
+      <button class="toggle-detail">Voir l'historique ▾</button>
+      <div class="histo-detail"></div>`;
+    wireProgToggle(card, () => buildProgHistList(hist, ()=>" kg"));
     el.appendChild(card);
-    sparkline(card.querySelector("canvas"), rmHistory(exo), accent);
+    sparkline(card.querySelector("canvas"), hist.map(p=>p.value), accent);
   }));
+}
+// Câble le bouton "Voir l'historique" d'une carte Progression (construction paresseuse du détail).
+function wireProgToggle(card, buildHtml) {
+  const detailEl = card.querySelector(".histo-detail");
+  const toggleBtn = card.querySelector(".toggle-detail");
+  let expanded = false;
+  toggleBtn.onclick = () => {
+    expanded = !expanded;
+    if (expanded && !detailEl.dataset.built) { detailEl.innerHTML = buildHtml(); detailEl.dataset.built = "1"; }
+    detailEl.classList.toggle("show", expanded);
+    toggleBtn.textContent = expanded ? "Masquer l'historique ▴" : "Voir l'historique ▾";
+  };
 }
 function fmtZone(exo, load) {
   if (exo.type==="assist") {
