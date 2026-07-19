@@ -1,6 +1,6 @@
 {
-  "name": "Suivi Muscu",
-  "short_name": "Muscu",
+  "name": "Suivi Muscu Coach",
+  "short_name": "MuscuCoach",
   "description": "Suivi de séances de musculation — cycle 6 semaines",
   "start_url": "./index.html",
   "scope": "./",

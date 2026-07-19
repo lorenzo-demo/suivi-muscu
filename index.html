@@ -2,16 +2,16 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#14161A">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Suivi Muscu">
+<meta name="apple-mobile-web-app-title" content="Muscu Coach">
 
-<title>Suivi Muscu — Cycle 6 semaines</title>
+<title>Suivi Muscu Coach — Cycle 6 semaines</title>
 <style>
   :root {
     --bg: #14161A;
@@ -42,7 +42,7 @@
   .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
 
   header.app {
-    padding: 18px 16px 10px;
+    padding: calc(18px + env(safe-area-inset-top, 0px)) 16px 10px;
     display:flex; align-items:baseline; justify-content:space-between;
   }
   header.app h1 { font-size: 18px; font-weight: 800; letter-spacing:.02em; }
@@ -197,6 +197,25 @@
   .histo-exo-sets { font-size:12.5px; color:var(--muted); margin-top:1px; }
   .histo-exo-note { font-size:12.5px; color:var(--text); margin-top:3px; font-style:italic; }
 
+  .exo-advice {
+    margin: 0 12px 8px; padding: 8px 11px; border-radius: 10px;
+    background: var(--accent-dim); color: var(--text); font-size: 12.5px; line-height:1.4;
+  }
+  .effort-ctl { display:flex; align-items:center; gap:6px; margin-top:8px; }
+  .effort-lbl { font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-right:2px; }
+  .effort-ctl button {
+    flex:1; padding:7px 0; border-radius:9px; border:1px solid var(--line);
+    background:var(--surface2); color:var(--muted); font-size:12.5px; font-weight:700;
+  }
+  .effort-ctl button.on { background:var(--accent-dim); color:var(--text); border-color:var(--accent); }
+  .effort-badge { font-size:11px; font-weight:700; padding:1px 7px; border-radius:8px; margin-left:6px; border:1px solid var(--line); color:var(--muted); }
+
+  .guide h2 { font-size:16px; margin:18px 0 8px; }
+  .guide h2:first-child { margin-top:6px; }
+  .guide p { font-size:13.5px; line-height:1.55; color:var(--text); margin:0 0 10px; }
+  .guide ol { margin:0 0 10px 18px; padding:0; }
+  .guide li { font-size:13.5px; line-height:1.55; margin-bottom:5px; }
+
   .prog-hist-row { display:flex; align-items:center; gap:10px; padding:6px 0; }
   .prog-hist-row + .prog-hist-row { border-top:1px dashed var(--line); }
   .prog-hist-date { font-size:12.5px; color:var(--muted); flex:1; }
@@ -255,7 +274,7 @@
 
   .empty { text-align:center; color:var(--muted); font-size:14px; padding:40px 20px; line-height:1.6; }
   .toast {
-    position:fixed; top:14px; left:50%; transform:translateX(-50%) translateY(-80px);
+    position:fixed; top:calc(14px + env(safe-area-inset-top, 0px)); left:50%; transform:translateX(-50%) translateY(-80px);
     background:var(--surface2); border:1px solid var(--accent); color:var(--text);
     padding:11px 18px; border-radius:99px; font-size:14px; font-weight:600;
     transition:transform .3s ease; z-index:60; white-space:nowrap;
@@ -264,13 +283,68 @@
 </style>
 </head>
 <body data-bloc="hyp">
+<script>
+/* Filet de sécurité : ce script minuscule (syntaxe volontairement ancienne, compatible tout
+   navigateur) s'exécute AVANT l'app. Si le script principal plante — erreur d'exécution,
+   fichier corrompu/tronqué, navigateur trop ancien — l'erreur s'affiche à l'écran au lieu
+   d'une page blanche muette. */
+window.__bootOk = false;
+window.addEventListener("error", function(e){
+  if (window.__bootOk) return; // l'app a démarré : les erreurs mineures ne bloquent pas tout
+  var d = document.getElementById("bootError") || document.createElement("div");
+  d.id = "bootError";
+  d.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:99999;background:#B3261E;color:#fff;padding:14px;font:13px/1.5 monospace;white-space:pre-wrap;word-break:break-word;";
+  d.textContent = "⚠ ERREUR AU DÉMARRAGE — montre ce message à ton assistant :\n"
+    + (e.message || "erreur inconnue")
+    + (e.filename ? "\nfichier: " + e.filename.split("/").pop() : "")
+    + (e.lineno ? " ligne " + e.lineno + (e.colno ? ":" + e.colno : "") : "");
+  document.body.appendChild(d);
+});
+/* Chien de garde : un fichier tronqué (balise <script> jamais fermée) est ignoré en silence
+   par le navigateur — aucune erreur n'est émise. Si l'app n'a pas démarré après 1,5 s, on
+   l'affiche quand même. */
+setTimeout(function(){
+  if (window.__bootOk || document.getElementById("bootError")) return;
+  var d = document.createElement("div");
+  d.id = "bootError";
+  d.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:99999;background:#B3261E;color:#fff;padding:14px;font:13px/1.5 monospace;white-space:pre-wrap;";
+  d.textContent = "⚠ L'application n'a pas démarré (aucune erreur émise).\nCauses probables : fichier incomplet/corrompu (re-télécharge et re-décompresse le zip), ou JavaScript bloqué par le navigateur/une extension.\nMontre ce message à ton assistant.";
+  document.body.appendChild(d);
+}, 1500);
+</script>
 
 <header class="app">
-  <h1>Suivi Muscu</h1>
+  <h1>Suivi Muscu <span style="color:var(--accent)">Coach</span></h1>
   <span class="week" id="cycleInfo"></span>
 </header>
 
 <!-- ================= SÉANCE ================= -->
+<div class="screen" id="scr-guide">
+  <div class="guide">
+    <h2>📖 L'application en bref</h2>
+    <p>Suivi Muscu Coach est un carnet d'entraînement intelligent pour un split 3 séances (bas du corps, pectoraux/épaules, dos/bras), organisé en cycle de 6 semaines alternant trois blocs : <b>Force</b> (5-6 reps, lourd), <b>Hypertrophie</b> (8-12 reps) et <b>Endurance</b> (20-25 reps). À chaque séance, l'app te propose un poids et un nombre de répétitions par série, calculés depuis tes séances précédentes — tu n'as plus qu'à exécuter, valider, et corriger si la réalité en décide autrement. Tout est stocké sur ton téléphone uniquement : pense à exporter tes données de temps en temps (onglet Réglages).</p>
+    <p><b>Avant ta première séance :</b> ouvre l'onglet ⚙️ Réglages pour entrer <b>ton poids</b> et <b>ta date de début de cycle</b>. Le poids sert à calculer la charge réellement soulevée sur les exercices assistés (tractions, dips) ; la date lance la planification — toutes les 3 séances enregistrées, l'app passe à la semaine suivante du cycle et t'indique le bloc conseillé en haut de l'écran Séance.</p>
+
+    <h2>🧠 Sur quoi elle s'appuie</h2>
+    <p>Le moteur applique la <b>surcharge progressive par double progression</b> : à poids constant, tu ajoutes des répétitions de séance en séance ; quand toutes tes séries atteignent le plafond de la fourchette, l'app monte la charge du plus petit palier réel de ton matériel et prédit combien de répétitions tu tiendras avec la nouvelle charge (formule d'Epley). Garde-fous : jamais plus de <b>+10 %</b> d'une montée à l'autre, jamais de baisse automatique sur une seule mauvaise séance, et certains exercices de santé (face pull) volontairement maintenus légers. Ces choix s'appuient sur la littérature scientifique : progresser en charge ou en répétitions produit des gains comparables (Plotkin et al., 2022), le volume hebdomadaire par muscle suit une relation dose-réponse (Schoenfeld et al., 2017), et le volume du programme est calibré sur les repères MEV/MAV (Israetel, Renaissance Periodization). Ton ressenti (<b>Facile / Correct / Limite</b>) module la vitesse de progression, sur le principe de l'autorégulation.</p>
+
+    <h2>🎯 Déterminer ton 1RM (sans jamais le tester à 100 %)</h2>
+    <p>Le 1RM est la charge que tu ne peux soulever qu'une seule fois. Bonne nouvelle : tu n'as pas besoin de le tester réellement — un vrai test à 100 % est risqué et inutile, surtout en reprise. L'app l'estime à partir de n'importe quelle série de 1 à 15 répétitions menée proche de l'échec. Pour un exercice marqué « à tester » :</p>
+    <ol>
+      <li>Échauffe-toi progressivement (2-3 séries légères).</li>
+      <li>Choisis une charge avec laquelle tu penses tenir <b>5 à 8 répétitions propres</b>.</li>
+      <li>Fais ta série en t'arrêtant quand il te reste 1-2 répétitions en réserve.</li>
+      <li>Si tu dépasses 12-15 reps facilement, c'était trop léger : monte franchement à la série suivante.</li>
+      <li>Enregistre ta séance — le 1RM estimé se calcule automatiquement et s'affine ensuite à chaque séance.</li>
+    </ol>
+    <p>Les 2-3 premières séances servent de calibrage : normal que les cibles bougent un peu au début.</p>
+
+    <h2>🌱 Débutant ou en reprise ? La technique d'abord</h2>
+    <p>Si tu débutes ou reprends après une longue pause, la priorité des premières semaines n'est pas la charge : c'est d'<b>apprendre l'exécution correcte de chaque mouvement</b>. Travaille léger, amplitude complète, tempo contrôlé, et ne monte en charge que si la technique reste identique de la première à la dernière répétition — une charge qui dégrade ta technique n'entraîne pas le muscle visé, elle entraîne tes compensations. Fais vérifier tes mouvements par un coach de ta salle sur les exercices techniques (développé couché, hip thrust, tirages). Apprends aussi à distinguer l'inconfort musculaire de l'effort, normal, d'une douleur articulaire, qui est un signal d'arrêt. Enfin, ne t'inquiète pas si les charges semblent modestes : les progressions initiales sont surtout nerveuses — ton système apprend à recruter tes muscles — et elles viendront vite.</p>
+    <p><b>Quels blocs quand on débute ?</b> Pendant tes 2-3 premiers mois, contente-toi des blocs <b>Hypertrophie</b> et <b>Endurance</b>, même si l'app te conseille le bloc Force : les charges proches de 85 % du maximum exigent une technique déjà bien ancrée. Tu ajouteras la Force ensuite — tu n'y perds rien, l'hypertrophie construit aussi la force chez le débutant.</p>
+  </div>
+</div>
+
 <div class="screen active" id="scr-seance">
   <div class="seg" id="seanceSeg"></div>
   <div class="seg bloc-seg" id="blocSeg"></div>
@@ -296,7 +370,7 @@
     <h3>Poids de corps</h3>
     <p>Utilisé pour calculer la charge réelle des tractions et dips assistés (charge = poids de corps − assistance).</p>
     <div class="bw-row">
-      <input type="number" id="bwInput" inputmode="decimal" step="0.5">
+      <input type="number" id="bwInput" inputmode="decimal" step="0.5" placeholder="Entrez votre poids">
       <span style="color:var(--muted)">kg</span>
       <button class="btn" id="bwSave">Enregistrer</button>
     </div>
@@ -328,6 +402,7 @@
     <p>Efface tout l'historique et les réglages (le programme préchargé est conservé).</p>
     <button class="btn warn" id="resetBtn">Réinitialiser toutes les données</button>
   </div>
+  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Coach — build 2026-07-19-d</p>
 </div>
 
 <!-- Chrono repos -->
@@ -346,6 +421,7 @@
 <div class="toast" id="toast"></div>
 
 <nav>
+  <button data-scr="guide"><span class="ic">📖</span>Guide</button>
   <button data-scr="seance" class="on"><span class="ic">🏋️</span>Séance</button>
   <button data-scr="histo"><span class="ic">📅</span>Historique</button>
   <button data-scr="prog"><span class="ic">📈</span>Progression</button>
@@ -367,18 +443,17 @@ return [
   {
     id: "s1", name: "Bas du corps",
     exos: [
-      { id:"presse",  name:"Presse à cuisse inclinée", type:"charge", oneRm:199,
+      { id:"presse",  name:"Presse à cuisse inclinée", type:"charge", oneRm:null,
         t:{force:{c:169,r:"5-6",s:5,rest:150}, hyp:{c:149,r:"8-12",s:4,rest:90}, end:{c:109,r:"20-25",s:3,rest:50}} },
-      { id:"hip",     name:"Hip thrust", type:"charge", oneRm:40,
+      { id:"hip",     name:"Hip thrust", type:"charge", oneRm:null,
         t:{force:{c:34,r:"5-6",s:5,rest:150}, hyp:{c:30,r:"8-12",s:4,rest:90}, end:{c:22,r:"20-25",s:3,rest:50}} },
-      { id:"extj",    name:"Extension jambes (quadriceps)", type:"charge", oneRm:66, warn:"1RM estimé sur 13 reps : démarre un cran en dessous en bloc Force.",
+      { id:"extj",    name:"Extension jambes (quadriceps)", type:"charge", oneRm:null, 
         t:{force:{c:56,r:"5-6",s:4,rest:120}, hyp:{c:50,r:"8-12",s:3,rest:75}, end:{c:36,r:"20-25",s:3,rest:45}} },
-      { id:"flexj",   name:"Flexion jambes (ischios)", type:"charge", oneRm:61, warn:"1RM estimé sur 15 reps : démarre un cran en dessous en bloc Force.",
+      { id:"flexj",   name:"Flexion jambes (ischios)", type:"charge", oneRm:null, 
         t:{force:{c:52,r:"5-6",s:4,rest:120}, hyp:{c:46,r:"8-12",s:3,rest:75}, end:{c:34,r:"20-25",s:3,rest:45}} },
-      { id:"mollets", name:"Mollets debout", type:"charge", oneRm:null, warn:"Pas de 1RM connu : teste une charge proche de l'échec et note-la.",
-        t:{force:{c:null,r:"6-8",s:4,rest:90}, hyp:{c:null,r:"12-15",s:3,rest:60}, end:{c:null,r:"20-25",s:3,rest:45}} },
+      { id:"mollets", name:"Mollets debout", type:"charge", oneRm:null,         t:{force:{c:null,r:"6-8",s:4,rest:90}, hyp:{c:null,r:"12-15",s:3,rest:60}, end:{c:null,r:"20-25",s:3,rest:45}} },
       { id:"molletsassis", name:"Mollets assis (soléaire)", type:"charge", oneRm:null,
-        warn:"Pas de 1RM connu : teste une charge proche de l'échec et note-la. Genou fléchi = travail du soléaire, complémentaire des mollets debout (gastrocnémien).",
+        warn:"Genou fléchi = travail du soléaire, complémentaire des mollets debout (gastrocnémien).",
         t:{force:{c:null,r:"6-8",s:3,rest:60}, hyp:{c:null,r:"12-15",s:3,rest:60}, end:{c:null,r:"20-25",s:3,rest:60}} },
       { id:"superman",name:"Superman (gainage lombaire)", type:"pdc", oneRm:null,
         t:{force:{c:0,r:"8-10 lent",s:3,rest:60}, hyp:{c:0,r:"12-15",s:3,rest:45}, end:{c:0,r:"20",s:3,rest:40}} },
@@ -391,19 +466,19 @@ return [
     exos: [
       { id:"pompes",  name:"Pompes", type:"pdc", oneRm:null,
         t:{force:{c:0,r:"6-8 lestées",s:4,rest:120}, hyp:{c:0,r:"12-15",s:4,rest:90}, end:{c:0,r:"25-30",s:3,rest:45}} },
-      { id:"devinc",  name:"Développé incliné haltères (total 2 haltères)", type:"charge", oneRm:50, warn:"1RM estimé sur 15 reps (surestimé). Charge = total des 2 haltères.",
+      { id:"devinc", incr:4,  name:"Développé incliné haltères (total 2 haltères)", type:"charge", oneRm:null, warn:"Charge = total des 2 haltères.",
         t:{force:{c:42.5,r:"5-6",s:5,rest:150}, hyp:{c:37.5,r:"8-12",s:4,rest:90}, end:{c:27.5,r:"20-25",s:3,rest:50}} },
-      { id:"devcou",  name:"Développé couché", type:"charge", oneRm:66.5,
+      { id:"devcou",  name:"Développé couché", type:"charge", oneRm:null,
         t:{force:{c:56.5,r:"5-6",s:5,rest:150}, hyp:{c:50,r:"8-12",s:4,rest:90}, end:{c:37,r:"20-25",s:3,rest:50}} },
-      { id:"devmil",  name:"Développé militaire haltères (total 2 haltères)", type:"charge", oneRm:null,
-        warn:"Pas de 1RM connu : teste une charge proche de l'échec et note-la (départ conseillé ≈10-12 kg/haltère en hypertrophie).",
+      { id:"devmil", incr:4, name:"Développé militaire haltères (total 2 haltères)", type:"charge", oneRm:null,
+        warn:"Départ conseillé ≈ 10-12 kg par haltère (20-24 kg au total).",
         t:{force:{c:null,r:"5-6",s:4,rest:120}, hyp:{c:null,r:"8-12",s:3,rest:90}, end:{c:null,r:"20-25",s:3,rest:50}} },
-      { id:"elat",    name:"Élévations latérales haltères", type:"charge", oneRm:null,
-        warn:"Pas de 1RM connu : teste une charge légère à modérée et note-la. Isolation stricte : reste strict, ne va pas trop lourd (risque de conflit d'épaule si tu triches avec l'élan).",
+      { id:"elat", incr:4, name:"Élévations latérales haltères", type:"charge", oneRm:null,
+        warn:"Isolation stricte : léger à modéré, sans élan (risque de conflit d'épaule).",
         t:{force:{c:null,r:"8-10",s:3,rest:60}, hyp:{c:null,r:"12-15",s:3,rest:60}, end:{c:null,r:"20-25",s:3,rest:60}} },
-      { id:"dips",    name:"Dips assistés (assistance)", type:"assist", oneRm:85,
+      { id:"dips",    name:"Dips assistés (assistance)", type:"assist", oneRm:null,
         t:{force:{c:15,r:"5-6",s:4,rest:120}, hyp:{c:23,r:"8-12",s:3,rest:90}, end:{c:40,r:"20-25",s:3,rest:50}} },
-      { id:"triceps", name:"Extension triceps à la poulie", type:"charge", oneRm:42, warn:"Petite articulation : prudence en Force, démarre à 33-34 kg.",
+      { id:"triceps", name:"Extension triceps à la poulie", type:"charge", oneRm:null, warn:"Petite articulation : prudence en bloc Force, ne force jamais la montée.",
         t:{force:{c:34,r:"6-8",s:4,rest:90}, hyp:{c:31.5,r:"8-12",s:3,rest:75}, end:{c:23,r:"20-25",s:3,rest:45}} },
       { id:"releves", name:"Relevés de genoux suspendus", type:"pdc", oneRm:null,
         t:{force:{c:0,r:"8-10 lent",s:3,rest:60}, hyp:{c:0,r:"12-15",s:3,rest:60}, end:{c:0,r:"20",s:3,rest:45}} },
@@ -414,18 +489,18 @@ return [
   {
     id: "s3", name: "Haut 2 · Dorsaux",
     exos: [
-      { id:"tractions",name:"Tractions assistées (assistance)", type:"assist", oneRm:75,
+      { id:"tractions",name:"Tractions assistées (assistance)", type:"assist", oneRm:null,
         t:{force:{c:23,r:"5-6",s:5,rest:150}, hyp:{c:31,r:"8-12",s:4,rest:90}, end:{c:46,r:"20-25",s:3,rest:50}} },
-      { id:"tir1b",   name:"Tirage à un bras (haltère, par bras)", type:"charge", oneRm:34,
+      { id:"tir1b", incr:2,   name:"Tirage à un bras (haltère, par bras)", type:"charge", oneRm:null,
         t:{force:{c:29,r:"5-6",s:4,rest:120}, hyp:{c:25.5,r:"8-12",s:3,rest:90}, end:{c:19,r:"20-25",s:3,rest:50}} },
-      { id:"tirh",    name:"Tirage horizontal prise large", type:"charge", oneRm:71.5,
+      { id:"tirh",    name:"Tirage horizontal prise large", type:"charge", oneRm:null,
         t:{force:{c:61,r:"5-6",s:4,rest:120}, hyp:{c:54,r:"8-12",s:4,rest:90}, end:{c:39,r:"20-25",s:3,rest:50}} },
-      { id:"tirv",    name:"Tirage vertical prise large", type:"charge", oneRm:81,
+      { id:"tirv",    name:"Tirage vertical prise large", type:"charge", oneRm:null,
         t:{force:{c:69,r:"5-6",s:4,rest:120}, hyp:{c:61,r:"8-12",s:4,rest:90}, end:{c:45,r:"20-25",s:3,rest:50}} },
       { id:"facepull",name:"Face pull à la poulie", type:"charge", oneRm:null, noRm:true,
         warn:"Exercice de santé d'épaule : reste TOUJOURS léger (12-15 reps), même en bloc Force. Jamais utilisé pour calculer un 1RM.",
         t:{force:{c:null,r:"12-15",s:3,rest:45}, hyp:{c:null,r:"12-15",s:3,rest:45}, end:{c:null,r:"12-15",s:3,rest:45}} },
-      { id:"curl",    name:"Biceps curl", type:"charge", oneRm:35.5,
+      { id:"curl",    name:"Biceps curl", type:"charge", oneRm:null,
         t:{force:{c:30,r:"6-8",s:4,rest:90}, hyp:{c:27,r:"8-12",s:3,rest:75}, end:{c:20,r:"20-25",s:3,rest:45}} },
       { id:"planche", name:"Planche + touché épaule", type:"pdc", oneRm:null,
         t:{force:{c:0,r:"8-10 /côté",s:3,rest:60}, hyp:{c:0,r:"45 sec",s:3,rest:45,unit:"sec"}, end:{c:0,r:"60 sec+",s:3,rest:40,unit:"sec"}} },
@@ -463,7 +538,8 @@ const COOLDOWN_BLOC = {
    (S.programs), plus seulement en dur dans le code. Structure prête pour gérer
    plusieurs programmes plus tard (S.programs = tableau, S.activeProgramId choisit
    celui affiché) ; pour l'instant un seul programme préchargé (seed). */
-const LS_KEY = "suiviMuscu.v1"; // clé conservée pour compat ; le contenu porte schemaVersion
+const LS_KEY = "suiviMuscuCoach.v1"; // clé PROPRE au fork (même origine GitHub Pages = localStorage partagé avec l'app d'origine)
+const LEGACY_LS_KEY = "suiviMuscu.v1"; // au 1er lancement, on IMPORTE (copie, sans toucher) les données de l'app d'origine
 const CURRENT_SCHEMA_VERSION = 2;
 const DEFAULT_PROGRAM_ID = "defaut";
 /* SEED_VERSION : à incrémenter à CHAQUE fois que seedProgramSessions() change (nouvel
@@ -471,13 +547,13 @@ const DEFAULT_PROGRAM_ID = "defaut";
    mises à jour du programme par défaut vers les appareils qui ont déjà un state v2 en
    localStorage — schemaVersion à lui seul ne suffit pas, car un state déjà en v2 n'est
    jamais retouché par la migration sinon. */
-const SEED_VERSION = 3;
+const SEED_VERSION = 5;
 
 function defaultState() {
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
-    bodyweight: 87,
-    cycleStart: new Date().toISOString().slice(0,10),
+    bodyweight: null,   // à régler par l'utilisateur dans ⚙️ Réglages (sert aux exos assistés)
+    cycleStart: null,   // idem : date de début de cycle — tant qu'absente, pas de planification de blocs
     logs: [],            // {id, date, sessionId, bloc, entries:{exoId:[{w,r,done}]}}
     draft: null,         // séance en cours non terminée {sessionIdx, bloc, entries, ts}
     restPref: {},        // "exoId.bloc" -> repos personnalisé en secondes
@@ -520,9 +596,15 @@ function migrate(data) {
 let S = load();
 let PROGRAM; // séances du programme actif — synchronisé depuis S.programs via syncProgram()
 syncProgram();
+
+/* Constante du moteur de progression déclarée ICI (et non près du moteur, plus bas) : avec
+   `const`, y accéder avant la ligne de déclaration lève "Cannot access before initialization".
+   Or refreshUndoneTargets() ci-dessous appelle le moteur DÈS le chargement quand une séance
+   est en cours — donc la constante doit exister avant. */
+const PLAFOND_HYP = 15; // hypertrophie : au-delà de 15 reps, Epley décroche — on doit monter
 function load() {
   try {
-    const raw = localStorage.getItem(LS_KEY);
+    const raw = localStorage.getItem(LS_KEY) || localStorage.getItem(LEGACY_LS_KEY);
     if (raw) return migrate(JSON.parse(raw));
   } catch(e) { console.warn("localStorage indisponible :", e); }
   return defaultState();
@@ -537,7 +619,7 @@ function activeProgram() {
 function syncProgram() { PROGRAM = activeProgram().sessions; }
 
 /* état de la séance en cours — sauvegardé automatiquement à chaque modification */
-let cur = { sessionIdx: 0, bloc: suggestedBloc(), entries: {}, rest: {}, notes: {} };
+let cur = { sessionIdx: 0, bloc: suggestedBloc(), entries: {}, rest: {}, notes: {}, effort: {} };
 let draftRestored = false;
 /* curTouched : vrai dès la moindre interaction (poids/reps saisis, note tapée, série
    ajoutée...), MÊME si aucune série n'est encore marquée "Fait". Avant ce correctif,
@@ -548,7 +630,7 @@ let draftRestored = false;
    perdues au retour. */
 let curTouched = false;
 if (S.draft && S.draft.entries) {
-  cur = { sessionIdx: S.draft.sessionIdx, bloc: S.draft.bloc, entries: S.draft.entries, rest: S.draft.rest || {}, notes: S.draft.notes || {} };
+  cur = { sessionIdx: S.draft.sessionIdx, bloc: S.draft.bloc, entries: S.draft.entries, rest: S.draft.rest || {}, notes: S.draft.notes || {}, effort: S.draft.effort || {} };
   draftRestored = true;
   curTouched = true;
   refreshUndoneTargets(); // les séries pas encore validées reprennent la cible ACTUELLE (1RM/perf courants), pas l'ancienne saisie
@@ -562,10 +644,10 @@ function refreshUndoneTargets() {
   PROGRAM.forEach(sess => sess.exos.forEach(exo => {
     const sets = cur.entries[exo.id]; if (!sets) return;
     const t = exo.t[cur.bloc]; if (!t) return;
-    if (exo.type === "pdc") {
-      const r = lastSessionBestReps(exo, cur.bloc);
-      if (r!=null) sets.forEach(st => { if (!st.done) st.r = r; });
-    } else {
+    const rec = recommend(exo, cur.bloc);
+    if (rec) {
+      sets.forEach((st,i) => { if (!st.done) { st.w = rec.w; st.r = rec.targets[Math.min(i, rec.targets.length-1)]; } });
+    } else if (exo.type !== "pdc") {
       const w = computeTargetCharge(exo, cur.bloc) ?? 0;
       sets.forEach(st => { if (!st.done) st.w = w; });
     }
@@ -573,7 +655,7 @@ function refreshUndoneTargets() {
 }
 function saveDraft() {
   curTouched = true; // saveDraft() n'est appelée que depuis une vraie interaction utilisateur
-  S.draft = { sessionIdx: cur.sessionIdx, bloc: cur.bloc, entries: cur.entries, rest: cur.rest, notes: cur.notes, ts: Date.now() };
+  S.draft = { sessionIdx: cur.sessionIdx, bloc: cur.bloc, entries: cur.entries, rest: cur.rest, notes: cur.notes, effort: cur.effort, ts: Date.now() };
   save();
 }
 function clearDraft() { S.draft = null; curTouched = false; save(); }
@@ -597,11 +679,34 @@ function debounce(fn, ms){
   let h;
   return (...a) => { clearTimeout(h); h = setTimeout(()=>fn(...a), ms); };
 }
-function effLoad(exo, val) { // charge réelle soulevée
-  return exo.type === "assist" ? S.bodyweight - val : val;
+function effLoad(exo, val) { // charge réelle soulevée ; null si assisté sans poids de corps réglé
+  if (exo.type !== "assist") return val;
+  return S.bodyweight ? S.bodyweight - val : null;
 }
 function currentRm(exo) {
   return S.oneRmOverride[exo.id] ?? exo.oneRm;
+}
+/* 1RM LISSÉ pour l'affichage Progression et le rattrapage "facile" : max des estimations des
+   3 dernières séances où l'exo a été fait (tous blocs). Le max (plutôt que la moyenne) colle à
+   une phase de progression rapide et ignore une mauvaise journée, tout en évitant qu'une seule
+   série chanceuse ne fasse bondir la valeur au-delà de ce que 3 séances confirment. Retombe sur
+   currentRm() si moins d'une estimation exploitable. */
+function smoothedRm(exo) {
+  if (exo.type==="pdc" || exo.noRm) return null;
+  const ests = [];
+  for (const log of [...S.logs].sort((a,b)=>new Date(b.date)-new Date(a.date))) {
+    const sets = log.entries[exo.id]; if (!sets) continue;
+    let best = 0;
+    sets.forEach(s => { const el = effLoad(exo,s.w); if (el!=null && s.r>=1 && s.r<=15) best = Math.max(best, estRm(el, s.r)); });
+    if (best>0) ests.push(best);
+    if (ests.length>=3) break;
+  }
+  if (!ests.length) return currentRm(exo) ?? null;
+  return Math.round(Math.max(...ests)*10)/10;
+}
+// Nombre de séances (tous blocs) où l'exo a été loggé — sert à marquer un 1RM "provisoire" (< 3).
+function sessionsWithExo(exo) {
+  return S.logs.filter(l => l.entries[exo.id] && l.entries[exo.id].length).length;
 }
 function getRest(exo) {
   return S.restPref[exo.id+"."+cur.bloc] ?? exo.t[cur.bloc].rest;
@@ -615,13 +720,22 @@ function setRest(exo, sec) {
 function fmtRest(sec) {
   return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0");
 }
-function weekOfCycle() {
+/* Semaine de cycle comptée en SÉANCES EFFECTUÉES depuis la date de début (3 séances = 1
+   semaine), pas en semaines calendaires : une semaine chargée ou des vacances ne décalent
+   plus la planification — tu reprends le cycle exactement là où tu l'as laissé. */
+function sessionsSinceCycleStart() {
+  if (!S.cycleStart) return null;
   const d0 = new Date(S.cycleStart+"T00:00:00");
-  const diff = Math.floor((Date.now()-d0.getTime())/(7*864e5));
-  return ((diff % 6)+6)%6 + 1; // 1..6, boucle
+  return S.logs.filter(l => new Date(l.date) >= d0).length;
+}
+function weekOfCycle() {
+  const n = sessionsSinceCycleStart();
+  if (n === null) return null;
+  return (Math.floor(n/3) % 6) + 1; // 1..6, boucle tous les 6×3 = 18 séances
 }
 function suggestedBloc() {
   const w = weekOfCycle();
+  if (w === null) return "hyp"; // pas de date réglée : défaut raisonnable
   return w<=2 ? "hyp" : (w<=4 ? "force" : "end");
 }
 
@@ -649,7 +763,7 @@ function renderSeanceSelectors() {
     b.onclick = () => {
       if (i===cur.sessionIdx) return;
       if (hasProgress() && !confirm("Changer de séance effacera les séries en cours. Continuer ?")) return;
-      cur.sessionIdx=i; cur.entries={}; cur.notes={}; clearDraft(); renderSeance();
+      cur.sessionIdx=i; cur.entries={}; cur.notes={}; cur.effort={}; clearDraft(); renderSeance();
     };
     seg.appendChild(b);
   });
@@ -661,13 +775,15 @@ function renderSeanceSelectors() {
     b.onclick = () => {
       if (k===cur.bloc) return;
       if (hasProgress() && !confirm("Changer de bloc effacera les séries en cours. Continuer ?")) return;
-      cur.bloc=k; cur.entries={}; cur.notes={}; clearDraft(); renderSeance();
+      cur.bloc=k; cur.entries={}; cur.notes={}; cur.effort={}; clearDraft(); renderSeance();
     };
     bseg.appendChild(b);
   });
   document.body.dataset.bloc = cur.bloc;
   $("#blocHint").textContent = BLOCS[cur.bloc].hint;
-  $("#cycleInfo").textContent = "Semaine "+weekOfCycle()+"/6 · bloc conseillé : "+BLOCS[suggestedBloc()].label;
+  $("#cycleInfo").textContent = (!S.bodyweight || !S.cycleStart)
+    ? "⚙️ Règle ton poids et ta date de début de cycle dans Réglages"
+    : "Semaine "+weekOfCycle()+"/6 · bloc conseillé : "+BLOCS[suggestedBloc()].label;
 }
 
 // Charge cible dynamique (kg), calculée depuis le 1RM courant (initial ou recalculé) et le
@@ -679,7 +795,8 @@ function computeTargetCharge(exo, bloc) {
   const rm = currentRm(exo);
   if (rm == null) return null;
   const target = rm * BLOCS[bloc].pct;
-  return exo.type === "assist" ? round25(S.bodyweight - target) : round25(target);
+  if (exo.type === "assist") return S.bodyweight ? round25(S.bodyweight - target) : null;
+  return round25(target);
 }
 
 // Meilleure performance (reps, ou secondes pour un exo chronométré comme la planche) sur la
@@ -694,12 +811,223 @@ function lastSessionBestReps(exo, bloc) {
   return null;
 }
 
+/* ==================== MOTEUR DE PROGRESSION ====================
+   Double progression pilotée par la DERNIÈRE séance du même exercice dans le MÊME bloc :
+   - une série sous le plancher        -> consolider (même poids, viser le plancher partout)
+   - dans la fourchette                -> +1 rep par série (+2 si "facile", +0 si "limite")
+   - tout au plafond                   -> monter de l'incrément réel SI l'atterrissage prédit
+                                          (Epley à e1RM constant : r2 = w1(30+r1)/w2 − 30)
+                                          reste ≥ plancher ; sinon étendre le plafond (hyp,
+                                          jusqu'à 15) ; sinon tenir le poids + avertir (choix user)
+   - dépassement massif (≥ plafond+3 partout) -> montée immédiate bornée à +10 % d'e1RM
+   Le e1RM ne pilote PLUS la charge de séance en séance : il ne sert qu'à l'amorçage (exo
+   jamais loggé dans ce bloc), aux changements de bloc et à l'écran Progression.
+   (La constante PLAFOND_HYP est déclarée en haut du script, avant le premier appel au
+   moteur qui a lieu dès le chargement quand une séance est en cours.) */
+
+function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+function parseRange(str){
+  const m = String(str).match(/(\d+)\s*-\s*(\d+)/);
+  if (m) return [+m[1], +m[2]];
+  const n = String(str).match(/(\d+)/);
+  return n ? [+n[1], +n[1]] : [8,12];
+}
+function lastSessionFor(exo, bloc){
+  // Tri par date et non par position dans le tableau : l'app insère les logs du plus récent
+  // au plus ancien (unshift), mais un import JSON externe peut arriver dans n'importe quel ordre.
+  let best = null;
+  for (const log of S.logs){
+    if (log.bloc !== bloc) continue;
+    const sets = log.entries[exo.id];
+    if (!sets || !sets.length) continue;
+    if (!best || new Date(log.date) > new Date(best.date)) best = log;
+  }
+  return best ? { sets: best.entries[exo.id], effort: best.effort ? (best.effort[exo.id]||null) : null } : null;
+}
+/* Charge de travail de la dernière séance : le poids le plus LOURD tenu sur au moins 2 séries
+   DANS la fourchette de reps du bloc [lo,hi]. On ignore ainsi les séries d'échauffement (plus
+   légères, plus de reps) et une série lourde isolée. Chaîne de repli si aucun poids ne remplit
+   ce critère : plus lourd tenu ≥2 séries (sans condition de reps), puis plus lourd tout court,
+   puis le plus fréquent. Renvoie {w, refSets} où refSets = les séries faites à ce poids. */
+function workingWeight(sets, lo, hi){
+  const byW = {};
+  sets.forEach(s => { (byW[s.w] = byW[s.w] || []).push(s); });
+  const weights = Object.keys(byW).map(Number).sort((a,b)=>b-a); // du plus lourd au plus léger
+  // 1) plus lourd avec ≥2 séries dans la fourchette
+  for (const w of weights){
+    const inRange = byW[w].filter(s => s.r>=lo && s.r<=hi);
+    if (inRange.length >= 2) return { w, refSets: byW[w] };
+  }
+  // 2) plus lourd avec ≥2 séries (peu importe les reps)
+  for (const w of weights){ if (byW[w].length >= 2) return { w, refSets: byW[w] }; }
+  // 3) plus lourd tout court
+  const wMax = weights[0];
+  return { w: wMax, refSets: byW[wMax] };
+}
+/* Trie une liste de cibles de reps en ordre DÉCROISSANT (fatigue : plus de reps quand on est
+   frais — aligné sur le principe d'effort constant série à série) et borne chaque valeur dans
+   [lo, plafond] pour qu'une donnée aberrante ne contamine pas les cibles. */
+function orderTargets(targets, lo, plafond){
+  return targets.map(r => clamp(Math.round(r), lo, plafond)).sort((a,b)=>b-a);
+}
+// Tonnage (poids × reps sommé sur les séries) — "thermomètre" de dose, jamais un pilote.
+function tonnage(sets){ return sets.reduce((a,s)=>a + s.w*s.r, 0); }
+// Incrément appris depuis l'historique (paliers réels des machines, souvent en livres) :
+// plus petit écart entre deux poids distincts jamais saisis sur cet exo. Sinon incr du seed, sinon 2.5.
+function learnedIncrement(exo){
+  const ws = new Set();
+  S.logs.forEach(log => (log.entries[exo.id]||[]).forEach(s => { if (s.w>0) ws.add(s.w); }));
+  const arr = [...ws].sort((a,b)=>a-b);
+  if (arr.length < 2) return null;
+  let min = Infinity;
+  for (let i=1;i<arr.length;i++) min = Math.min(min, arr[i]-arr[i-1]);
+  min = Math.round(min*2)/2;
+  return (min>=0.5 && min<=10) ? min : null;
+}
+function exoIncrement(exo){ return learnedIncrement(exo) ?? exo.incr ?? 2.5; }
+// Reps prédites en passant de eff1 -> eff2 (charges EFFECTIVES) à e1RM constant (Epley)
+function predictReps(eff1, r1, eff2){ return Math.round(eff1*(30+r1)/eff2 - 30); }
+
+// Renvoie {w, targets[], conseil} ou null (pas d'historique dans ce bloc -> amorçage e1RM classique)
+function recommend(exo, bloc){
+  const t = exo.t[bloc]; if (!t) return null;
+  const last = lastSessionFor(exo, bloc); if (!last) return null;
+  const nS = t.s;
+  const effort = last.effort;
+  const reps = last.sets.map(s=>s.r);
+  // Ajuste une liste de reps à nS séries : tronque si trop long, complète en répétant la
+  // DERNIÈRE valeur si trop court (une série ajoutée se fait à l'effort de la dernière, pas
+  // de la première — cohérent avec le tri décroissant/fatigue).
+  const pad = arr => Array.from({length:nS}, (_,i)=> arr[Math.min(i, arr.length-1)]);
+
+  /* --- Poids du corps : progression en reps (ou secondes) uniquement --- */
+  if (exo.type === "pdc"){
+    const step = t.unit==="sec" ? (effort==="facile"?10:5) : (effort==="facile"?2:1);
+    const base = pad(reps);
+    const targets = effort==="limite" ? base : base.map(r=>r+step);
+    return { w: 0, targets, conseil: effort==="limite" ? "c'était limite : consolide au même niveau" : null };
+  }
+
+  const [lo, hi] = parseRange(t.r);
+  const isAssist = exo.type==="assist";
+  const eff = wt => isAssist ? S.bodyweight - wt : wt;   // charge effective (assist : PDC − assistance)
+  const incr = exoIncrement(exo);
+  const plafondMax = (bloc==="hyp") ? PLAFOND_HYP : hi;
+
+  // Charge de travail = plus lourd tenu ≥2 séries DANS la fourchette (ignore échauffements/série isolée).
+  const ww = workingWeight(last.sets, lo, hi);
+  const w = ww.w;
+  const refReps = ww.refSets.map(s=>s.r);            // reps faites À CE POIDS (base de progression)
+  const minR = Math.min(...refReps), maxR = Math.max(...refReps);
+  const plafond = Math.max(hi, Math.min(plafondMax, maxR)); // suit une extension déjà entamée
+  // Cibles construites sur nS séries à partir des reps de référence, puis triées décroissant + bornées.
+  const buildTargets = mapper => orderTargets(pad(refReps).map(mapper), lo, plafond);
+  // Ligne "thermomètre" comparant le tonnage projeté au tonnage de la séance de référence complète.
+  const tonInfo = (w2, targets) => {
+    const t0 = tonnage(last.sets);
+    const t1 = targets.reduce((a,r,i)=> a + w2*r, 0);
+    if (!t0) return null;
+    const pct = Math.round(100*(t1-t0)/t0);
+    return "volume projeté " + (pct>=0?"+":"") + pct + "% vs dernière séance";
+  };
+
+  /* ===== RESSENTI "LIMITE" (0-1 RIR) : consolidation stricte — mêmes poids, mêmes reps. ===== */
+  if (effort==="limite"){
+    return { w, targets: orderTargets(pad(refReps), lo, plafond),
+             conseil: "c'était limite la dernière fois : on consolide (mêmes poids et reps) avant de progresser" };
+  }
+
+  /* ===== RESSENTI "FACILE" : rattrapage par le 1RM lissé, SANS jamais faire baisser la charge.
+     cible = max( 1RM×% du bloc , poids de travail + 1 incrément ). Puis reps dans la fourchette. ===== */
+  if (effort==="facile" && !exo.noRm && !(isAssist && !S.bodyweight)){
+    const rm = smoothedRm(exo);
+    const pctBloc = BLOCS[bloc].pct;              // 0.85 / 0.75 / 0.55
+    const oneStepEff = eff(w) + incr;             // au minimum un cran au-dessus (jamais de baisse)
+    const wantedEff = rm ? Math.max(rm*pctBloc, oneStepEff) : oneStepEff;
+    // Convertir la charge effective visée en poids saisi (assist = PDC − effective), arrondi au palier.
+    const w2 = isAssist ? Math.max(0, round25(S.bodyweight - wantedEff)) : round25(wantedEff);
+    const rTarget = clamp(predictReps(eff(w), Math.round((minR+maxR)/2), eff(w2)), lo, hi);
+    const targets = buildTargets(()=>rTarget);
+    const rose = round05(Math.abs(eff(w2)-eff(w)));
+    return { w: w2, targets,
+             conseil: "c'était facile : montée franche (+"+rose+" kg de charge effective, cible "+lo+"-"+hi+" reps). "+ (tonInfo(w2, targets)||"") };
+  }
+
+  /* --- Assisté sans poids de corps réglé : progression en reps à assistance constante + invite. --- */
+  if (isAssist && !S.bodyweight){
+    const invite = "règle ton poids de corps dans ⚙️ Réglages pour que je pilote l'assistance";
+    if (minR < lo) return { w, targets: orderTargets(pad(refReps).map(r=>Math.max(r,lo)), lo, plafond), conseil: "consolide — et "+invite };
+    if (minR >= plafond) return { w, targets: orderTargets(pad(refReps).map(()=>plafond), lo, plafond), conseil: "⚠ prêt à monter, mais "+invite };
+    return { w, targets: buildTargets(r=>r+1), conseil: null };
+  }
+
+  /* --- Face pull & co (noRm) : jamais de montée automatique, léger par principe --- */
+  if (exo.noRm){
+    if (minR >= hi) return { w, targets: orderTargets(pad(refReps).map(()=>hi), lo, hi), conseil: "reste léger — c'est le but de cet exercice (monte un peu si tu veux, mais sans forcer)" };
+    return { w, targets: orderTargets(pad(refReps).map(r=>Math.min(hi, r+1)), lo, hi), conseil: null };
+  }
+
+  /* --- Échec : une série de référence sous le plancher -> consolider (jamais de baisse auto). --- */
+  if (minR < lo)
+    return { w, targets: orderTargets(pad(refReps).map(r=>Math.max(r, lo)), lo, plafond), conseil: "consolide : même poids, vise au moins "+lo+" partout" };
+
+  /* --- Dépassement massif (≥ plafond+3) : montée immédiate, PLAFONNÉE STRICTEMENT à +10 %. --- */
+  if (minR >= plafond + 3){
+    const wantedEff = Math.min(eff(w)*1.10, eff(w)*(30+minR)/(30+hi));
+    const steps = Math.floor((wantedEff - eff(w)) / incr + 1e-9);
+    if (steps >= 1){
+      const w2 = isAssist ? Math.max(0, round05(w - steps*incr)) : round05(w + steps*incr);
+      const r2 = clamp(Math.round(eff(w)*(30+minR)/eff(w2) - 30), lo, hi);
+      const targets = buildTargets(()=>r2);
+      return { w: w2, targets, conseil: "grosse marge la dernière fois : montée de charge (bornée à +10 %). "+(tonInfo(w2,targets)||"") };
+    }
+    const oneStepW = isAssist ? Math.max(0, round05(w - incr)) : round05(w + incr);
+    const r2info = Math.max(1, Math.round(eff(w)*(30+minR)/eff(oneStepW) - 30));
+    const pct = Math.round(100*incr/eff(w));
+    return { w, targets: orderTargets(pad(refReps), lo, plafond),
+             conseil: "⚠ grosse marge, mais le plus petit palier (+"+incr+" kg ≈ +"+pct+" %) dépasse la limite de +10 % par montée : si tu montes quand même à "+oneStepW+(isAssist?" d'assistance":" kg")+", attends-toi à ~"+r2info+" reps. À toi de décider." };
+  }
+
+  /* --- Plafond atteint partout : monter (borne +10 %, tolérance 0,6 rep) / étendre / tenir. --- */
+  if (minR >= plafond){
+    const w2 = isAssist ? Math.max(0, round05(w - incr)) : round05(w + incr);
+    const stepPct = incr / eff(w);
+    const r2raw = eff(w)*(30+plafond)/eff(w2) - 30;
+    if (stepPct <= 0.10 + 1e-9 && r2raw >= lo - 0.6){
+      const tr = clamp(Math.round(r2raw), lo, hi);
+      const targets = buildTargets(()=>tr);
+      return { w: w2, targets, conseil: "toutes les séries au plafond : on monte. "+(tonInfo(w2,targets)||"") };
+    }
+    if (plafond < plafondMax)
+      return { w, targets: orderTargets(pad(refReps).map(()=>plafond+1), lo, plafondMax), conseil: "palier de charge trop gros pour l'instant : on étend le plafond de reps" };
+    const pct = Math.round(100*stepPct);
+    const r2info = Math.max(1, Math.round(r2raw));
+    const raison = stepPct > 0.10 ? "dépasse la limite de +10 % par montée" : "te ferait tomber sous "+lo+" reps";
+    return { w, targets: orderTargets(pad(refReps).map(()=>plafond), lo, plafond),
+             conseil: "⚠ le prochain palier (+"+incr+" kg ≈ +"+pct+" %) "+raison+" : si tu montes quand même à "+w2+(isAssist?" d'assistance":" kg")+", attends-toi à ~"+r2info+" reps. À toi de décider." };
+  }
+
+  /* --- "Correct" ou non renseigné, dans la fourchette : +1 rep par série (mécanisme d'origine). --- */
+  const targets = buildTargets(r=>r+1);
+  return { w, targets, conseil: tonInfo(w, targets) };
+}
+
 function targetLabel(exo, bloc) {
   const t = exo.t[bloc];
+  const rec = recommend(exo, bloc);
+  if (rec) { // le moteur de progression pilote dès qu'un historique existe dans ce bloc
+    const vise = "vise " + rec.targets.join("·");
+    if (exo.type==="pdc") {
+      const unit = t.unit==="sec" ? " sec" : " reps";
+      return { main: rec.targets[0]+unit, sub: vise };
+    }
+    if (exo.type==="assist")
+      return { main: "−"+rec.w+" kg", sub: (S.bodyweight ? "("+round05(S.bodyweight-rec.w)+" kg soulevés) · " : "")+vise };
+    return { main: rec.w+" kg", sub: vise };
+  }
+  // --- Amorçage (aucune séance loggée dans ce bloc) : comportement e1RM classique ---
   if (exo.type==="pdc") {
-    const last = lastSessionBestReps(exo, bloc);
-    const unit = t.unit==="sec" ? " sec" : " reps";
-    return { main: last!=null ? last+unit : "—", sub: t.r+" × "+t.s };
+    return { main: "—", sub: t.r+" × "+t.s };
   }
   const c = computeTargetCharge(exo, bloc);
   if (c==null) {
@@ -715,10 +1043,15 @@ function targetLabel(exo, bloc) {
 
 function buildExoCard(exo) {
   const t = exo.t[cur.bloc];
+  const rec = recommend(exo, cur.bloc);
   if (!cur.entries[exo.id]) {
-    const initW = exo.type==="pdc" ? 0 : (computeTargetCharge(exo, cur.bloc) ?? 0);
-    const initR = exo.type==="pdc" ? (lastSessionBestReps(exo, cur.bloc) ?? (parseInt(t.r)||10)) : (parseInt(t.r)||10);
-    cur.entries[exo.id] = Array.from({length:t.s}, ()=>({w:initW, r:initR, done:false}));
+    if (rec) {
+      cur.entries[exo.id] = Array.from({length:t.s}, (_,i)=>({w:rec.w, r:rec.targets[Math.min(i, rec.targets.length-1)], done:false}));
+    } else {
+      const initW = exo.type==="pdc" ? 0 : (computeTargetCharge(exo, cur.bloc) ?? 0);
+      const initR = parseInt(t.r)||10;
+      cur.entries[exo.id] = Array.from({length:t.s}, ()=>({w:initW, r:initR, done:false}));
+    }
   }
   const card = document.createElement("div"); card.className="exo";
   const tl = targetLabel(exo, cur.bloc);
@@ -731,7 +1064,9 @@ function buildExoCard(exo) {
         <div class="detail">${tl.sub}</div>
       </div>
     </div>
-    ${exo.warn ? `<div class="exo-note">⚠ ${exo.warn}</div>` : ""}
+    ${rec && rec.conseil ? `<div class="exo-advice">💡 ${rec.conseil}</div>` : ""}
+    ${!rec && tl.main==="à tester" ? `<div class="exo-advice">💡 Charge inconnue : échauffe-toi, puis cherche une charge tenable 5-8 reps propres (procédure détaillée dans l'onglet Guide). Le 1RM se calculera tout seul à l'enregistrement de la séance.</div>` : ""}
+    ${exo.warn && !rec ? `<div class="exo-note">⚠ ${exo.warn}</div>` : ""}
     <div class="col-labels"><span></span><span>${exo.type==="assist"?"Assist. (kg)":"Poids (kg)"}</span><span>${t.unit==="sec"?"Secondes":"Reps"}</span><span>Fait</span></div>
     <div class="sets"></div>
     <div class="exo-tools">
@@ -753,6 +1088,12 @@ function buildExoCard(exo) {
     </div>
     <div class="exo-notes">
       <textarea class="notes-input" rows="1" placeholder="Commentaire, sensations sur cet exercice…">${escHtml(cur.notes[exo.id]||"")}</textarea>
+      <div class="effort-ctl">
+        <span class="effort-lbl">Ressenti</span>
+        <button data-e="facile" class="${cur.effort[exo.id]==="facile"?"on":""}">Facile</button>
+        <button data-e="correct" class="${cur.effort[exo.id]==="correct"?"on":""}">Correct</button>
+        <button data-e="limite" class="${cur.effort[exo.id]==="limite"?"on":""}">Limite</button>
+      </div>
     </div>`;
   const setsEl = card.querySelector(".sets");
   cur.entries[exo.id].forEach((st, i) => setsEl.appendChild(buildSetRow(exo, st, i)));
@@ -777,6 +1118,15 @@ function buildExoCard(exo) {
   const notesEl = card.querySelector(".notes-input");
   const saveNote = debounce(() => { cur.notes[exo.id] = notesEl.value; saveDraft(); }, 400);
   notesEl.addEventListener("input", saveNote);
+
+  /* --- ressenti Facile/Correct/Limite : exclusif, re-cliquer désélectionne --- */
+  const effBtns = card.querySelectorAll(".effort-ctl button");
+  effBtns.forEach(b => b.onclick = () => {
+    const v = b.dataset.e;
+    cur.effort[exo.id] = (cur.effort[exo.id]===v) ? null : v;
+    effBtns.forEach(x => x.classList.toggle("on", x.dataset.e===cur.effort[exo.id]));
+    saveDraft();
+  });
 
   /* --- ajout / retrait de série (reconstruit seulement cette carte) --- */
   card.querySelector('[data-a="ser+"]').onclick = () => {
@@ -868,6 +1218,9 @@ $("#finishBtn").onclick = () => {
   });
   const log = { id: Date.now(), date: new Date().toISOString(), sessionId: sess.id, bloc: cur.bloc, entries };
   if (Object.keys(notes).length) log.notes = notes;
+  const effort = {};
+  sess.exos.forEach(exo => { if (cur.effort[exo.id]) effort[exo.id] = cur.effort[exo.id]; });
+  if (Object.keys(effort).length) log.effort = effort;
   S.logs.unshift(log);
   recomputeRms();
   S.draft = null;
@@ -875,6 +1228,7 @@ $("#finishBtn").onclick = () => {
   stopRest();
   cur.entries = {};
   cur.notes = {};
+  cur.effort = {};
   renderSeance();
   toast("Séance enregistrée 💪");
 };
@@ -888,7 +1242,8 @@ function recomputeRms() {
       const sets = log.entries[exo.id]; if (!sets) return;
       sets.forEach(s => {
         if (s.r<1 || s.r>15) return;  // hors zone fiable
-        const rm = estRm(effLoad(exo, s.w), s.r);
+        const el = effLoad(exo, s.w); if (el==null) return;
+        const rm = estRm(el, s.r);
         if (rm > best) best = rm;
       });
     });
@@ -906,7 +1261,8 @@ function recomputeFromHistoryOnly() {
       const sets = log.entries[exo.id]; if (!sets) return;
       sets.forEach(s => {
         if (s.r<1 || s.r>15) return;
-        const rm = estRm(effLoad(exo, s.w), s.r);
+        const el = effLoad(exo, s.w); if (el==null) return;
+        const rm = estRm(el, s.r);
         if (rm > best) best = rm;
       });
     });
@@ -990,7 +1346,7 @@ function renderHisto() {
     const vol = Object.entries(log.entries).reduce((a,[exoId,sets])=>{
       const exo = sess?.exos.find(e=>e.id===exoId);
       if (!exo || exo.type==="pdc") return a;
-      return a + sets.reduce((x,s)=>x+effLoad(exo,s.w)*s.r,0);
+      return a + sets.reduce((x,s)=>{ const el = effLoad(exo,s.w); return x + (el==null ? 0 : el*s.r); },0);
     },0);
     const item = document.createElement("div"); item.className="histo-item";
     item.innerHTML = `
@@ -1017,8 +1373,9 @@ function renderHisto() {
         const isSec = exo?.type==="pdc" && exo.t[log.bloc]?.unit==="sec";
         const setsTxt = sets ? sets.map(s => isSec ? `${s.r} sec` : exo?.type==="pdc" ? `${s.r} reps` : `${s.w} kg × ${s.r}`).join(" · ") : "—";
         const note = log.notes && log.notes[exoId];
+        const eff = log.effort && log.effort[exoId];
         return `<div class="histo-exo">
-          <div class="histo-exo-name">${exo?.name ?? exoId}</div>
+          <div class="histo-exo-name">${exo?.name ?? exoId}${eff ? `<span class="effort-badge">${ {facile:"Facile",correct:"Correct",limite:"Limite"}[eff] }</span>` : ""}</div>
           <div class="histo-exo-sets">${setsTxt}</div>
           ${note ? `<div class="histo-exo-note">💬 ${escHtml(note)}</div>` : ""}
         </div>`;
@@ -1046,7 +1403,7 @@ function rmHistory(exo) {
   [...S.logs].reverse().forEach(log => {
     const sets = log.entries[exo.id]; if (!sets) return;
     let best = 0;
-    sets.forEach(s => { if (s.r>=1 && s.r<=15) best = Math.max(best, estRm(effLoad(exo,s.w), s.r)); });
+    sets.forEach(s => { const el = effLoad(exo,s.w); if (el!=null && s.r>=1 && s.r<=15) best = Math.max(best, estRm(el, s.r)); });
     if (best>0) pts.push({date: log.date, bloc: log.bloc, value: Math.round(best*10)/10});
   });
   return pts;
@@ -1133,8 +1490,15 @@ function renderProg() {
       el.appendChild(card);
       return;
     }
-    const rm = currentRm(exo);
+    const rm = smoothedRm(exo);                    // (B) 1RM lissé = max des 3 dernières estimations
     const hist = rmHistory(exo);
+    const nSess = sessionsWithExo(exo);
+    const provisoire = rm && nSess>0 && nSess<3;    // (C) fiabilité : < 3 séances = estimation provisoire
+    // Charge de travail = poids de la dernière séance dans le bloc conseillé (celui affiché en séance).
+    const wkBloc = suggestedBloc();
+    let workW = null;
+    const lastB = lastSessionFor(exo, wkBloc);
+    if (lastB) { const [wlo,whi]=parseRange(exo.t[wkBloc].r); workW = workingWeight(lastB.sets, wlo, whi).w; }
     const card = document.createElement("div"); card.className="prog-card";
     const zones = rm ? `
       <div class="zones">
@@ -1144,7 +1508,9 @@ function renderProg() {
       </div>` : "";
     card.innerHTML = `
       <div class="row1"><h3>${exo.name}</h3><span class="rm num">${rm? rm+" kg" : "—"}</span></div>
-      <div class="sub">${sess.name} · 1RM ${S.oneRmOverride[exo.id]!=null?"recalculé sur tes séances":"initial (estimation de départ)"}</div>
+      <div class="sub">${sess.name} · ${rm
+        ? "1RM estimé"+(provisoire?" (provisoire, se stabilise après 3 séances)":"")+(workW!=null? " · charge de travail actuelle : "+workW+" kg" : "")
+        : "aucune donnée pour l'instant — vois « Déterminer ton 1RM » dans l'onglet Guide"}</div>
       <canvas></canvas>${zones}
       <button class="toggle-detail">Voir l'historique ▾</button>
       <div class="histo-detail"></div>`;
@@ -1175,8 +1541,8 @@ function fmtZone(exo, load) {
 
 /* ==================== RÉGLAGES ==================== */
 function renderReglages() {
-  $("#bwInput").value = S.bodyweight;
-  $("#cycleStart").value = S.cycleStart;
+  $("#bwInput").value = S.bodyweight ?? "";
+  $("#cycleStart").value = S.cycleStart ?? "";
 }
 $("#bwSave").onclick = () => {
   const v = parseFloat($("#bwInput").value);
@@ -1192,7 +1558,7 @@ $("#exportBtn").onclick = () => {
   const blob = new Blob([JSON.stringify(S,null,2)], {type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "suivi-muscu-"+new Date().toISOString().slice(0,10)+".json";
+  a.download = "suivi-muscu-coach-"+new Date().toISOString().slice(0,10)+".json";
   a.click(); URL.revokeObjectURL(a.href);
 };
 $("#importBtn").onclick = () => $("#importFile").click();
@@ -1222,7 +1588,7 @@ $("#recalcBtn").onclick = () => {
 };
 $("#resetBtn").onclick = () => {
   if (!confirm("Effacer TOUT l'historique et les réglages ? (irréversible — pense à exporter avant)")) return;
-  S = defaultState(); syncProgram(); save(); cur.entries = {}; cur.notes = {};
+  S = defaultState(); syncProgram(); save(); cur.entries = {}; cur.notes = {}; cur.effort = {};
   renderSeance(); toast("Données réinitialisées");
 };
 
@@ -1233,7 +1599,12 @@ $("#resetBtn").onclick = () => {
    chaque ouverture pour rien. Le recalcul n'a lieu que sur deux actions explicites :
    - la fin d'une séance (finishBtn) → recomputeRms() (ajoute la nouvelle séance au calcul)
    - le bouton "Recalculer depuis l'historique" (recalcBtn) → recomputeFromHistoryOnly() */
+save(); // persiste sous la clé du fork (indispensable au 1er lancement, après import auto des données de l'app d'origine)
 renderSeance();
+// Tout premier lancement (aucune séance loggée, rien en cours) : on accueille sur le Guide.
+// Dès la première séance enregistrée, l'app s'ouvrira directement sur l'écran Séance.
+if (!S.logs.length && !S.draft) document.querySelector('nav button[data-scr="guide"]').click();
+window.__bootOk = true; // démarrage complet : désarme le filet d'erreur fatale
 if (draftRestored) {
   const dt = S.draft && S.draft.ts ? new Date(S.draft.ts).toLocaleDateString("fr-FR",{day:"numeric",month:"short"}) : "";
   toast("Séance en cours restaurée"+(dt? " ("+dt+")" : ""));

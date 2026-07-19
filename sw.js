@@ -1,4 +1,4 @@
-const CACHE = "suivi-muscu-v1";
+const CACHE = "suivi-muscu-coach-v1";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
