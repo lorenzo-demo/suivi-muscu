@@ -402,7 +402,7 @@ setTimeout(function(){
     <p>Efface tout l'historique et les réglages (le programme préchargé est conservé).</p>
     <button class="btn warn" id="resetBtn">Réinitialiser toutes les données</button>
   </div>
-  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Coach — build 2026-07-19-d</p>
+  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Coach — build 2026-07-19-g</p>
 </div>
 
 <!-- Chrono repos -->
@@ -443,16 +443,16 @@ return [
   {
     id: "s1", name: "Bas du corps",
     exos: [
-      { id:"presse",  name:"Presse à cuisse inclinée", type:"charge", oneRm:null,
+      { id:"presse", incr:1, name:"Presse à cuisse inclinée", type:"charge", oneRm:null,
         t:{force:{c:169,r:"5-6",s:5,rest:150}, hyp:{c:149,r:"8-12",s:4,rest:90}, end:{c:109,r:"20-25",s:3,rest:50}} },
-      { id:"hip",     name:"Hip thrust", type:"charge", oneRm:null,
+      { id:"hip", incr:1, name:"Hip thrust", type:"charge", oneRm:null,
         t:{force:{c:34,r:"5-6",s:5,rest:150}, hyp:{c:30,r:"8-12",s:4,rest:90}, end:{c:22,r:"20-25",s:3,rest:50}} },
-      { id:"extj",    name:"Extension jambes (quadriceps)", type:"charge", oneRm:null, 
+      { id:"extj", rack:"lb", name:"Extension jambes (quadriceps)", type:"charge", oneRm:null, 
         t:{force:{c:56,r:"5-6",s:4,rest:120}, hyp:{c:50,r:"8-12",s:3,rest:75}, end:{c:36,r:"20-25",s:3,rest:45}} },
-      { id:"flexj",   name:"Flexion jambes (ischios)", type:"charge", oneRm:null, 
+      { id:"flexj", rack:"lb", name:"Flexion jambes (ischios)", type:"charge", oneRm:null, 
         t:{force:{c:52,r:"5-6",s:4,rest:120}, hyp:{c:46,r:"8-12",s:3,rest:75}, end:{c:34,r:"20-25",s:3,rest:45}} },
-      { id:"mollets", name:"Mollets debout", type:"charge", oneRm:null,         t:{force:{c:null,r:"6-8",s:4,rest:90}, hyp:{c:null,r:"12-15",s:3,rest:60}, end:{c:null,r:"20-25",s:3,rest:45}} },
-      { id:"molletsassis", name:"Mollets assis (soléaire)", type:"charge", oneRm:null,
+      { id:"mollets", rack:"dbSingle", name:"Mollets debout", type:"charge", oneRm:null,         t:{force:{c:null,r:"6-8",s:4,rest:90}, hyp:{c:null,r:"12-15",s:3,rest:60}, end:{c:null,r:"20-25",s:3,rest:45}} },
+      { id:"molletsassis", rack:"dbPair", name:"Mollets assis (soléaire)", type:"charge", oneRm:null,
         warn:"Genou fléchi = travail du soléaire, complémentaire des mollets debout (gastrocnémien).",
         t:{force:{c:null,r:"6-8",s:3,rest:60}, hyp:{c:null,r:"12-15",s:3,rest:60}, end:{c:null,r:"20-25",s:3,rest:60}} },
       { id:"superman",name:"Superman (gainage lombaire)", type:"pdc", oneRm:null,
@@ -466,19 +466,19 @@ return [
     exos: [
       { id:"pompes",  name:"Pompes", type:"pdc", oneRm:null,
         t:{force:{c:0,r:"6-8 lestées",s:4,rest:120}, hyp:{c:0,r:"12-15",s:4,rest:90}, end:{c:0,r:"25-30",s:3,rest:45}} },
-      { id:"devinc", incr:4,  name:"Développé incliné haltères (total 2 haltères)", type:"charge", oneRm:null, warn:"Charge = total des 2 haltères.",
+      { id:"devinc", rack:"dbPair", name:"Développé incliné haltères (total 2 haltères)", type:"charge", oneRm:null, warn:"Charge = total des 2 haltères.",
         t:{force:{c:42.5,r:"5-6",s:5,rest:150}, hyp:{c:37.5,r:"8-12",s:4,rest:90}, end:{c:27.5,r:"20-25",s:3,rest:50}} },
-      { id:"devcou",  name:"Développé couché", type:"charge", oneRm:null,
+      { id:"devcou", incr:1, name:"Développé couché", type:"charge", oneRm:null,
         t:{force:{c:56.5,r:"5-6",s:5,rest:150}, hyp:{c:50,r:"8-12",s:4,rest:90}, end:{c:37,r:"20-25",s:3,rest:50}} },
-      { id:"devmil", incr:4, name:"Développé militaire haltères (total 2 haltères)", type:"charge", oneRm:null,
+      { id:"devmil", rack:"dbPair", name:"Développé militaire haltères (total 2 haltères)", type:"charge", oneRm:null,
         warn:"Départ conseillé ≈ 10-12 kg par haltère (20-24 kg au total).",
         t:{force:{c:null,r:"5-6",s:4,rest:120}, hyp:{c:null,r:"8-12",s:3,rest:90}, end:{c:null,r:"20-25",s:3,rest:50}} },
-      { id:"elat", incr:4, name:"Élévations latérales haltères", type:"charge", oneRm:null,
+      { id:"elat", rack:"dbPair", name:"Élévations latérales haltères", type:"charge", oneRm:null,
         warn:"Isolation stricte : léger à modéré, sans élan (risque de conflit d'épaule).",
         t:{force:{c:null,r:"8-10",s:3,rest:60}, hyp:{c:null,r:"12-15",s:3,rest:60}, end:{c:null,r:"20-25",s:3,rest:60}} },
-      { id:"dips",    name:"Dips assistés (assistance)", type:"assist", oneRm:null,
+      { id:"dips", rack:"lb", name:"Dips assistés (assistance)", type:"assist", oneRm:null,
         t:{force:{c:15,r:"5-6",s:4,rest:120}, hyp:{c:23,r:"8-12",s:3,rest:90}, end:{c:40,r:"20-25",s:3,rest:50}} },
-      { id:"triceps", name:"Extension triceps à la poulie", type:"charge", oneRm:null, warn:"Petite articulation : prudence en bloc Force, ne force jamais la montée.",
+      { id:"triceps", rack:"lb", name:"Extension triceps à la poulie", type:"charge", oneRm:null, warn:"Petite articulation : prudence en bloc Force, ne force jamais la montée.",
         t:{force:{c:34,r:"6-8",s:4,rest:90}, hyp:{c:31.5,r:"8-12",s:3,rest:75}, end:{c:23,r:"20-25",s:3,rest:45}} },
       { id:"releves", name:"Relevés de genoux suspendus", type:"pdc", oneRm:null,
         t:{force:{c:0,r:"8-10 lent",s:3,rest:60}, hyp:{c:0,r:"12-15",s:3,rest:60}, end:{c:0,r:"20",s:3,rest:45}} },
@@ -489,21 +489,21 @@ return [
   {
     id: "s3", name: "Haut 2 · Dorsaux",
     exos: [
-      { id:"tractions",name:"Tractions assistées (assistance)", type:"assist", oneRm:null,
+      { id:"tractions", rack:"lb", name:"Tractions assistées (assistance)", type:"assist", oneRm:null,
         t:{force:{c:23,r:"5-6",s:5,rest:150}, hyp:{c:31,r:"8-12",s:4,rest:90}, end:{c:46,r:"20-25",s:3,rest:50}} },
-      { id:"tir1b", incr:2,   name:"Tirage à un bras (haltère, par bras)", type:"charge", oneRm:null,
+      { id:"tir1b", rack:"dbSingle", name:"Tirage à un bras (haltère, par bras)", type:"charge", oneRm:null,
         t:{force:{c:29,r:"5-6",s:4,rest:120}, hyp:{c:25.5,r:"8-12",s:3,rest:90}, end:{c:19,r:"20-25",s:3,rest:50}} },
-      { id:"tirh",    name:"Tirage horizontal prise large", type:"charge", oneRm:null,
+      { id:"tirh", rack:"lb", name:"Tirage horizontal prise large", type:"charge", oneRm:null,
         t:{force:{c:61,r:"5-6",s:4,rest:120}, hyp:{c:54,r:"8-12",s:4,rest:90}, end:{c:39,r:"20-25",s:3,rest:50}} },
-      { id:"tirv",    name:"Tirage vertical prise large", type:"charge", oneRm:null,
+      { id:"tirv", rack:"lb", name:"Tirage vertical prise large", type:"charge", oneRm:null,
         t:{force:{c:69,r:"5-6",s:4,rest:120}, hyp:{c:61,r:"8-12",s:4,rest:90}, end:{c:45,r:"20-25",s:3,rest:50}} },
-      { id:"facepull",name:"Face pull à la poulie", type:"charge", oneRm:null, noRm:true,
+      { id:"facepull", rack:"lb", name:"Face pull à la poulie", type:"charge", oneRm:null, noRm:true,
         warn:"Exercice de santé d'épaule : reste TOUJOURS léger (12-15 reps), même en bloc Force. Jamais utilisé pour calculer un 1RM.",
         t:{force:{c:null,r:"12-15",s:3,rest:45}, hyp:{c:null,r:"12-15",s:3,rest:45}, end:{c:null,r:"12-15",s:3,rest:45}} },
-      { id:"curl",    name:"Biceps curl", type:"charge", oneRm:null,
+      { id:"curl", rack:"lb", name:"Biceps curl", type:"charge", oneRm:null,
         t:{force:{c:30,r:"6-8",s:4,rest:90}, hyp:{c:27,r:"8-12",s:3,rest:75}, end:{c:20,r:"20-25",s:3,rest:45}} },
       { id:"planche", name:"Planche + touché épaule", type:"pdc", oneRm:null,
-        t:{force:{c:0,r:"8-10 /côté",s:3,rest:60}, hyp:{c:0,r:"45 sec",s:3,rest:45,unit:"sec"}, end:{c:0,r:"60 sec+",s:3,rest:40,unit:"sec"}} },
+        t:{force:{c:0,r:"45",s:3,rest:60}, hyp:{c:0,r:"45",s:3,rest:45}, end:{c:0,r:"45",s:3,rest:40}} },
     ]
   }
 ];
@@ -547,7 +547,7 @@ const DEFAULT_PROGRAM_ID = "defaut";
    mises à jour du programme par défaut vers les appareils qui ont déjà un state v2 en
    localStorage — schemaVersion à lui seul ne suffit pas, car un state déjà en v2 n'est
    jamais retouché par la migration sinon. */
-const SEED_VERSION = 5;
+const SEED_VERSION = 6;
 
 function defaultState() {
   return {
@@ -602,6 +602,20 @@ syncProgram();
    Or refreshUndoneTargets() ci-dessous appelle le moteur DÈS le chargement quand une séance
    est en cours — donc la constante doit exister avant. */
 const PLAFOND_HYP = 15; // hypertrophie : au-delà de 15 reps, Epley décroche — on doit monter
+
+/* Tables de paliers réels de la salle (déclarées ici, avant le premier appel au moteur qui a
+   lieu au chargement quand une séance est en cours — voir la note sur PLAFOND_HYP).
+   Chaque exercice à charge porte un `rack:"lb"|"dbPair"|"dbSingle"` (ou un `incr` fixe pour la
+   barre chargeable de 1 en 1). snapToRack() cale toute charge cible sur un poids réellement
+   disponible ; au-delà du dernier palier, on prolonge du dernier pas observé. */
+const RACKS = {
+  // Machines à plaques en livres + demi-plaque de 2,3 kg (pas alterné +2,3/+2,2). Max 93,3.
+  lb: [4.5,6.8,9,11.3,14,16.3,18,20.3,23,25.3,27,29.3,32,34.3,36,38.3,41,43.3,45,47.3,50,52.3,54,56.3,59,61.3,64,66.3,68,70.3,73,75.3,77,79.3,82,84.3,86,88.3,91,93.3],
+  // Paire d'haltères (total) : 1..10 kg/haltère de 1 en 1, puis 12,14.. de 2 en 2 -> ×2. Max 100.
+  dbPair: [2,4,6,8,10,12,14,16,18,20,24,28,32,36,40,44,48,52,56,60,64,68,72,76,80,84,88,92,96,100],
+  // Haltère simple (par bras) : 1..10 de 1 en 1, puis 12,14.. de 2 en 2. Max 50.
+  dbSingle: [1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50]
+};
 function load() {
   try {
     const raw = localStorage.getItem(LS_KEY) || localStorage.getItem(LEGACY_LS_KEY);
@@ -643,7 +657,7 @@ if (S.draft && S.draft.entries) {
 function refreshUndoneTargets() {
   PROGRAM.forEach(sess => sess.exos.forEach(exo => {
     const sets = cur.entries[exo.id]; if (!sets) return;
-    const t = exo.t[cur.bloc]; if (!t) return;
+    const t = exo.t[blocFor(exo, cur.bloc)]; if (!t) return;
     const rec = recommend(exo, cur.bloc);
     if (rec) {
       sets.forEach((st,i) => { if (!st.done) { st.w = rec.w; st.r = rec.targets[Math.min(i, rec.targets.length-1)]; } });
@@ -709,11 +723,12 @@ function sessionsWithExo(exo) {
   return S.logs.filter(l => l.entries[exo.id] && l.entries[exo.id].length).length;
 }
 function getRest(exo) {
-  return S.restPref[exo.id+"."+cur.bloc] ?? exo.t[cur.bloc].rest;
+  const b = blocFor(exo, cur.bloc); // pdc -> repos d'hypertrophie
+  return S.restPref[exo.id+"."+b] ?? exo.t[b].rest;
 }
 function setRest(exo, sec) {
   sec = Math.max(0, Math.min(15*60+55, sec));
-  S.restPref[exo.id+"."+cur.bloc] = sec;
+  S.restPref[exo.id+"."+blocFor(exo, cur.bloc)] = sec;
   save();
   return sec;
 }
@@ -795,8 +810,8 @@ function computeTargetCharge(exo, bloc) {
   const rm = currentRm(exo);
   if (rm == null) return null;
   const target = rm * BLOCS[bloc].pct;
-  if (exo.type === "assist") return S.bodyweight ? round25(S.bodyweight - target) : null;
-  return round25(target);
+  if (exo.type === "assist") return S.bodyweight ? snapWeight(exo, S.bodyweight - target) : null;
+  return snapWeight(exo, target);
 }
 
 // Meilleure performance (reps, ou secondes pour un exo chronométré comme la planche) sur la
@@ -835,9 +850,12 @@ function parseRange(str){
 function lastSessionFor(exo, bloc){
   // Tri par date et non par position dans le tableau : l'app insère les logs du plus récent
   // au plus ancien (unshift), mais un import JSON externe peut arriver dans n'importe quel ordre.
+  // Pour un exo au poids du corps, tous les blocs sont équivalents (traités comme hypertrophie) :
+  // on accepte l'historique quel que soit le bloc où il a été loggé.
+  const anyBloc = exo.type==="pdc";
   let best = null;
   for (const log of S.logs){
-    if (log.bloc !== bloc) continue;
+    if (!anyBloc && log.bloc !== bloc) continue;
     const sets = log.entries[exo.id];
     if (!sets || !sets.length) continue;
     if (!best || new Date(log.date) > new Date(best.date)) best = log;
@@ -885,11 +903,50 @@ function learnedIncrement(exo){
   return (min>=0.5 && min<=10) ? min : null;
 }
 function exoIncrement(exo){ return learnedIncrement(exo) ?? exo.incr ?? 2.5; }
+
+/* ==================== PALIERS RÉELS DE LA SALLE ====================
+   Les tables RACKS sont déclarées EN HAUT du script (avec PLAFOND_HYP), car snapToRack() les
+   utilise dès le chargement quand une séance est en cours. Ci-dessous, seulement les fonctions
+   (hoistées, donc insensibles à l'ordre). */
+// Arrondit `w` au palier réel le plus proche de la table `rackName`. dir:'up' force le palier
+// STRICTEMENT supérieur (utilisé quand le moteur veut "au moins monter d'un cran").
+function snapToRack(rackName, w, dir){
+  const arr = RACKS[rackName]; if (!arr) return w;
+  if (dir === "up"){
+    for (const p of arr) if (p > w + 1e-9) return p;
+    const step = arr[arr.length-1]-arr[arr.length-2];
+    return Math.round((w + step)*10)/10; // au-delà de la table : prolonge du dernier pas
+  }
+  if (w >= arr[arr.length-1]){
+    if (w <= arr[arr.length-1] + 1e-9) return arr[arr.length-1];
+    const step = arr[arr.length-1]-arr[arr.length-2];
+    return Math.round((arr[arr.length-1] + Math.round((w-arr[arr.length-1])/step)*step)*10)/10;
+  }
+  let best = arr[0], d = Math.abs(w-arr[0]);
+  for (const p of arr){ const dd = Math.abs(w-p); if (dd < d){ d = dd; best = p; } }
+  return best;
+}
+// Palier suivant réel après le poids `w` pour un exercice (utilisé pour "+1 cran"). Respecte
+// la table `rack` si présente, sinon retombe sur l'incrément simple.
+function nextWeight(exo, w){
+  return exo.rack ? snapToRack(exo.rack, w, "up") : round05(w + exoIncrement(exo));
+}
+// Arrondit une charge cible au palier réel de l'exercice (ou au demi-kilo sinon).
+function snapWeight(exo, w){
+  return exo.rack ? snapToRack(exo.rack, w) : round25(w);
+}
 // Reps prédites en passant de eff1 -> eff2 (charges EFFECTIVES) à e1RM constant (Epley)
 function predictReps(eff1, r1, eff2){ return Math.round(eff1*(30+r1)/eff2 - 30); }
 
+/* Bloc EFFECTIF pour un exercice : les exos au poids du corps (pdc) n'ont pas de sens en Force
+   (pas de charge à monter) ni en Endurance (pas d'allègement) — on les traite TOUJOURS comme en
+   Hypertrophie, quel que soit le bloc du cycle. Mêmes cibles de reps, mêmes séries, même repos.
+   Tous les autres exercices suivent le bloc demandé. */
+function blocFor(exo, bloc){ return exo.type==="pdc" ? "hyp" : bloc; }
+
 // Renvoie {w, targets[], conseil} ou null (pas d'historique dans ce bloc -> amorçage e1RM classique)
 function recommend(exo, bloc){
+  bloc = blocFor(exo, bloc); // pdc -> toujours hypertrophie
   const t = exo.t[bloc]; if (!t) return null;
   const last = lastSessionFor(exo, bloc); if (!last) return null;
   const nS = t.s;
@@ -913,6 +970,28 @@ function recommend(exo, bloc){
   const eff = wt => isAssist ? S.bodyweight - wt : wt;   // charge effective (assist : PDC − assistance)
   const incr = exoIncrement(exo);
   const plafondMax = (bloc==="hyp") ? PLAFOND_HYP : hi;
+
+  /* Montée d'un cran en respectant les paliers RÉELS de la salle (table `rack` si présente).
+     Pour un exo assisté, "monter la difficulté" = RÉDUIRE l'assistance -> palier inférieur.
+     Renvoie { w2, incrEff } où incrEff = variation de charge EFFECTIVE réellement obtenue
+     (sert à la borne +10 %, qui doit refléter le vrai saut, pas un incrément théorique). */
+  const stepUp = (fromW) => {
+    let w2;
+    if (isAssist) {
+      // assistance : le "cran plus dur" est le palier de poids INFÉRIEUR (moins d'aide)
+      if (exo.rack) {
+        const arr = RACKS[exo.rack] || [];
+        let below = 0;
+        for (const p of arr) { if (p < fromW - 1e-9) below = p; else break; }
+        w2 = Math.max(0, below);
+      } else {
+        w2 = Math.max(0, round05(fromW - incr));
+      }
+    } else {
+      w2 = exo.rack ? snapToRack(exo.rack, fromW, "up") : round05(fromW + incr);
+    }
+    return { w2, incrEff: Math.abs(eff(w2) - eff(fromW)) };
+  };
 
   // Charge de travail = plus lourd tenu ≥2 séries DANS la fourchette (ignore échauffements/série isolée).
   const ww = workingWeight(last.sets, lo, hi);
@@ -942,10 +1021,13 @@ function recommend(exo, bloc){
   if (effort==="facile" && !exo.noRm && !(isAssist && !S.bodyweight)){
     const rm = smoothedRm(exo);
     const pctBloc = BLOCS[bloc].pct;              // 0.85 / 0.75 / 0.55
-    const oneStepEff = eff(w) + incr;             // au minimum un cran au-dessus (jamais de baisse)
+    const up = stepUp(w);                          // au minimum un cran RÉEL au-dessus (jamais de baisse)
+    const oneStepEff = eff(up.w2);
     const wantedEff = rm ? Math.max(rm*pctBloc, oneStepEff) : oneStepEff;
-    // Convertir la charge effective visée en poids saisi (assist = PDC − effective), arrondi au palier.
-    const w2 = isAssist ? Math.max(0, round25(S.bodyweight - wantedEff)) : round25(wantedEff);
+    // Charge effective visée -> poids saisi, calé sur le palier réel de la salle.
+    let w2 = isAssist ? Math.max(0, snapWeight(exo, S.bodyweight - wantedEff)) : snapWeight(exo, wantedEff);
+    // Garantir que ça monte vraiment d'au moins un cran (le snap pourrait retomber sur w).
+    if ((isAssist && w2 >= w) || (!isAssist && w2 <= w)) w2 = up.w2;
     const rTarget = clamp(predictReps(eff(w), Math.round((minR+maxR)/2), eff(w2)), lo, hi);
     const targets = buildTargets(()=>rTarget);
     const rose = round05(Math.abs(eff(w2)-eff(w)));
@@ -974,24 +1056,33 @@ function recommend(exo, bloc){
   /* --- Dépassement massif (≥ plafond+3) : montée immédiate, PLAFONNÉE STRICTEMENT à +10 %. --- */
   if (minR >= plafond + 3){
     const wantedEff = Math.min(eff(w)*1.10, eff(w)*(30+minR)/(30+hi));
-    const steps = Math.floor((wantedEff - eff(w)) / incr + 1e-9);
+    // Empiler des paliers RÉELS tant qu'on reste sous +10 % de charge effective.
+    let cur2 = w, effGain = 0, steps = 0;
+    while (true){
+      const nx = stepUp(cur2);
+      if (Math.abs(eff(nx.w2) - eff(w)) > eff(w)*0.10 + 1e-9) break;
+      if (nx.w2 === cur2) break;
+      cur2 = nx.w2; steps++;
+      if (eff(cur2) >= wantedEff - 1e-9) break;
+    }
     if (steps >= 1){
-      const w2 = isAssist ? Math.max(0, round05(w - steps*incr)) : round05(w + steps*incr);
+      const w2 = cur2;
       const r2 = clamp(Math.round(eff(w)*(30+minR)/eff(w2) - 30), lo, hi);
       const targets = buildTargets(()=>r2);
       return { w: w2, targets, conseil: "grosse marge la dernière fois : montée de charge (bornée à +10 %). "+(tonInfo(w2,targets)||"") };
     }
-    const oneStepW = isAssist ? Math.max(0, round05(w - incr)) : round05(w + incr);
-    const r2info = Math.max(1, Math.round(eff(w)*(30+minR)/eff(oneStepW) - 30));
-    const pct = Math.round(100*incr/eff(w));
+    const up = stepUp(w);
+    const r2info = Math.max(1, Math.round(eff(w)*(30+minR)/eff(up.w2) - 30));
+    const pct = Math.round(100*up.incrEff/eff(w));
     return { w, targets: orderTargets(pad(refReps), lo, plafond),
-             conseil: "⚠ grosse marge, mais le plus petit palier (+"+incr+" kg ≈ +"+pct+" %) dépasse la limite de +10 % par montée : si tu montes quand même à "+oneStepW+(isAssist?" d'assistance":" kg")+", attends-toi à ~"+r2info+" reps. À toi de décider." };
+             conseil: "⚠ grosse marge, mais le plus petit palier (+"+round05(up.incrEff)+" kg ≈ +"+pct+" %) dépasse la limite de +10 % par montée : si tu montes quand même à "+up.w2+(isAssist?" d'assistance":" kg")+", attends-toi à ~"+r2info+" reps. À toi de décider." };
   }
 
   /* --- Plafond atteint partout : monter (borne +10 %, tolérance 0,6 rep) / étendre / tenir. --- */
   if (minR >= plafond){
-    const w2 = isAssist ? Math.max(0, round05(w - incr)) : round05(w + incr);
-    const stepPct = incr / eff(w);
+    const up = stepUp(w);
+    const w2 = up.w2;
+    const stepPct = up.incrEff / eff(w);
     const r2raw = eff(w)*(30+plafond)/eff(w2) - 30;
     if (stepPct <= 0.10 + 1e-9 && r2raw >= lo - 0.6){
       const tr = clamp(Math.round(r2raw), lo, hi);
@@ -1004,7 +1095,7 @@ function recommend(exo, bloc){
     const r2info = Math.max(1, Math.round(r2raw));
     const raison = stepPct > 0.10 ? "dépasse la limite de +10 % par montée" : "te ferait tomber sous "+lo+" reps";
     return { w, targets: orderTargets(pad(refReps).map(()=>plafond), lo, plafond),
-             conseil: "⚠ le prochain palier (+"+incr+" kg ≈ +"+pct+" %) "+raison+" : si tu montes quand même à "+w2+(isAssist?" d'assistance":" kg")+", attends-toi à ~"+r2info+" reps. À toi de décider." };
+             conseil: "⚠ le prochain palier (+"+round05(up.incrEff)+" kg ≈ +"+pct+" %) "+raison+" : si tu montes quand même à "+w2+(isAssist?" d'assistance":" kg")+", attends-toi à ~"+r2info+" reps. À toi de décider." };
   }
 
   /* --- "Correct" ou non renseigné, dans la fourchette : +1 rep par série (mécanisme d'origine). --- */
@@ -1013,6 +1104,7 @@ function recommend(exo, bloc){
 }
 
 function targetLabel(exo, bloc) {
+  bloc = blocFor(exo, bloc); // pdc -> toujours hypertrophie
   const t = exo.t[bloc];
   const rec = recommend(exo, bloc);
   if (rec) { // le moteur de progression pilote dès qu'un historique existe dans ce bloc
@@ -1042,7 +1134,8 @@ function targetLabel(exo, bloc) {
 }
 
 function buildExoCard(exo) {
-  const t = exo.t[cur.bloc];
+  const eb = blocFor(exo, cur.bloc); // pdc -> hypertrophie (séries/repos/cibles)
+  const t = exo.t[eb];
   const rec = recommend(exo, cur.bloc);
   if (!cur.entries[exo.id]) {
     if (rec) {
