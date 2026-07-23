@@ -1,7 +1,7 @@
 {
-  "name": "Suivi Muscu Coach",
-  "short_name": "MuscuCoach",
-  "description": "Suivi de séances de musculation — cycle 6 semaines",
+  "name": "Suivi Muscu Builder",
+  "short_name": "MuscuBuilder",
+  "description": "Créateur de programmes de musculation — cycle 6 semaines",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

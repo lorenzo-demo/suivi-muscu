@@ -1,4 +1,4 @@
-const CACHE = "suivi-muscu-coach-2026-07-19-g"; // nom versionné : change à chaque build -> l'ancien cache est purgé automatiquement à l'activation
+const CACHE = "suivi-muscu-builder-2026-07-23-n"; // nom versionné : change à chaque build -> l'ancien cache est purgé automatiquement à l'activation
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {

@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Muscu Coach">
+<meta name="apple-mobile-web-app-title" content="Muscu Builder">
 
-<title>Suivi Muscu Coach — Cycle 6 semaines</title>
+<title>Suivi Muscu Builder — Cycle 6 semaines</title>
 <style>
   :root {
     --bg: #14161A;
@@ -251,6 +251,58 @@
     background:var(--surface2); color:var(--text); font-size:14.5px; font-weight:700;
   }
   .btn.warn { color: var(--danger); border-color: var(--danger); background:transparent; }
+  .prog-select {
+    width:100%; height:46px; border:1px solid var(--line); border-radius:10px;
+    background:var(--surface2); color:var(--text); font-size:14.5px; font-weight:700;
+    padding:0 12px; appearance:none; -webkit-appearance:none;
+  }
+  .prog-select:focus { outline:none; border-color: var(--accent); }
+  /* ---- Créateur de programmes ---- */
+  .b-row { display:flex; align-items:center; gap:8px; background:var(--surface2); border:1px solid var(--line);
+    border-radius:10px; padding:10px 12px; margin-bottom:8px; }
+  .b-row .grow { flex:1; min-width:0; }
+  .b-row .nm { font-weight:700; font-size:14.5px; overflow:hidden; text-overflow:ellipsis; }
+  .b-row .sub { color:var(--muted); font-size:12px; margin-top:2px; }
+  .b-row button { background:var(--surface); border:1px solid var(--line); color:var(--text);
+    border-radius:8px; min-width:34px; height:34px; font-size:15px; }
+  .b-row button.warn { color:var(--danger); }
+  .b-row.locked { opacity:.65; }
+  .b-add { width:100%; height:44px; border:1px dashed var(--line); border-radius:10px;
+    background:none; color:var(--accent); font-weight:700; font-size:14px; margin:4px 0 14px; }
+  .b-back { background:none; border:none; color:var(--accent); font-weight:700; font-size:14px; padding:8px 0; }
+  .b-inline { display:flex; gap:8px; margin-bottom:10px; }
+  .b-inline input[type=text] { flex:1; height:44px; border:1px solid var(--line); border-radius:10px;
+    background:var(--surface2); color:var(--text); padding:0 12px; font-size:14.5px; }
+  .pillbar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+  .pill { border:1px solid var(--line); background:var(--surface2); color:var(--muted);
+    border-radius:999px; padding:7px 12px; font-size:12.5px; font-weight:700; }
+  .pill.on { color:var(--accent); border-color:var(--accent); }
+  .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:60; display:flex;
+    align-items:flex-end; }
+  .modal-card { background:var(--surface); border-top:1px solid var(--line); border-radius:16px 16px 0 0;
+    width:100%; max-height:82vh; overflow-y:auto; padding:16px 14px calc(env(safe-area-inset-bottom, 0px) + 16px); }
+  .modal-card h3 { margin:0 0 10px; font-size:16px; }
+  .modal-close { float:right; background:none; border:none; color:var(--muted); font-size:20px; padding:0 4px; }
+  .b-orderbox { border:1px solid #8a6d1f; background:rgba(212,167,44,.08); border-radius:10px; padding:10px 12px; margin-bottom:10px; }
+  .b-orderwarn { color:#d4a72c; font-size:12.5px; line-height:1.45; margin-bottom:6px; }
+  .b-ordernote { color:var(--muted); font-size:11.5px; line-height:1.4; margin-top:8px; }
+  .b-orderok { color:var(--accent); font-size:12.5px; margin-bottom:10px; }
+  .vol-row { margin-bottom:11px; }
+  .vol-head { display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px; }
+  .vol-val { font-weight:700; }
+  .vol-val small { font-weight:400; color:var(--muted); font-size:10.5px; margin-left:4px; }
+  .vol-val.low, .vol-bar.low { color:#d4a72c; }
+  .vol-val.ok, .vol-bar.ok { color:var(--accent); }
+  .vol-val.high, .vol-bar.high { color:#d4a72c; }
+  .vol-val.zero { color:var(--muted); }
+  .vol-track { position:relative; height:8px; background:var(--surface2); border-radius:4px; overflow:hidden; }
+  .vol-bar { position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:currentColor; }
+  .vol-bar.zero { background:none; }
+  .vol-lo, .vol-hi { position:absolute; top:0; bottom:0; width:2px; background:var(--line); z-index:1; }
+  .vol-detail { color:var(--muted); font-size:11.5px; line-height:1.55; margin-top:5px;
+    border-left:2px solid var(--line); padding-left:8px; }
+  .b-vol-inline { float:right; background:var(--surface2); border:1px solid var(--line); color:var(--text);
+    border-radius:8px; height:32px; padding:0 10px; font-size:12.5px; font-weight:700; }
   .bw-row { display:flex; align-items:center; gap:10px; }
   .bw-row input {
     width:90px; height:46px; border:1px solid var(--line); border-radius:10px;
@@ -314,7 +366,7 @@ setTimeout(function(){
 </script>
 
 <header class="app">
-  <h1>Suivi Muscu <span style="color:var(--accent)">Coach</span></h1>
+  <h1>Suivi Muscu <span style="color:var(--accent)">Builder</span></h1>
   <span class="week" id="cycleInfo"></span>
 </header>
 
@@ -322,8 +374,8 @@ setTimeout(function(){
 <div class="screen" id="scr-guide">
   <div class="guide">
     <h2>📖 L'application en bref</h2>
-    <p>Suivi Muscu Coach est un carnet d'entraînement intelligent pour un split 3 séances (bas du corps, pectoraux/épaules, dos/bras), organisé en cycle de 6 semaines alternant trois blocs : <b>Force</b> (5-6 reps, lourd), <b>Hypertrophie</b> (8-12 reps) et <b>Endurance</b> (20-25 reps). À chaque séance, l'app te propose un poids et un nombre de répétitions par série, calculés depuis tes séances précédentes — tu n'as plus qu'à exécuter, valider, et corriger si la réalité en décide autrement. Tout est stocké sur ton téléphone uniquement : pense à exporter tes données de temps en temps (onglet Réglages).</p>
-    <p><b>Avant ta première séance :</b> ouvre l'onglet ⚙️ Réglages pour entrer <b>ton poids</b> et <b>ta date de début de cycle</b>. Le poids sert à calculer la charge réellement soulevée sur les exercices assistés (tractions, dips) ; la date lance la planification — toutes les 3 séances enregistrées, l'app passe à la semaine suivante du cycle et t'indique le bloc conseillé en haut de l'écran Séance.</p>
+    <p>Suivi Muscu Builder est un carnet d'entraînement intelligent bâti sur un principe : un <b>cycle de 6 semaines</b> alternant trois blocs — <b>Force</b> (5-6 reps, lourd), <b>Hypertrophie</b> (8-12 reps) et <b>Endurance</b> (20-25 reps) — appliqué au programme de ton choix. Le <b>programme par défaut</b> est un split 3 séances (bas du corps, pectoraux/épaules, dos/bras) ; à terme tu pourras composer tes propres séances et programmes, et le cycle comme le moteur de progression s'y appliqueront exactement de la même façon. À chaque séance, l'app te propose un poids et un nombre de répétitions par série, calculés depuis tes séances précédentes — tu n'as plus qu'à exécuter, valider, et corriger si la réalité en décide autrement. Tout est stocké sur ton téléphone uniquement : pense à exporter tes données de temps en temps (onglet Réglages).</p>
+    <p><b>Avant ta première séance :</b> ouvre l'onglet ⚙️ Réglages pour entrer <b>ton poids</b> et <b>ta date de début de cycle</b>. Le poids sert à calculer la charge réellement soulevée sur les exercices assistés (tractions, dips) ; la date lance la planification — à chaque « semaine » de séances enregistrées, l'app passe à la semaine suivante du cycle et t'indique le bloc conseillé en haut de l'écran Séance. Une semaine = le nombre de séances de ton rythme réel (3 par défaut, réglable via <b>Séances / semaine</b> dans Réglages — ex. un full body fait 2 fois par semaine → 2).</p>
 
     <h2>🧠 Sur quoi elle s'appuie</h2>
     <p>Le moteur applique la <b>surcharge progressive par double progression</b> : à poids constant, tu ajoutes des répétitions de séance en séance ; quand toutes tes séries atteignent le plafond de la fourchette, l'app monte la charge du plus petit palier réel de ton matériel et prédit combien de répétitions tu tiendras avec la nouvelle charge (formule d'Epley). Garde-fous : jamais plus de <b>+10 %</b> d'une montée à l'autre, jamais de baisse automatique sur une seule mauvaise séance, et certains exercices de santé (face pull) volontairement maintenus légers. Ces choix s'appuient sur la littérature scientifique : progresser en charge ou en répétitions produit des gains comparables (Plotkin et al., 2022), le volume hebdomadaire par muscle suit une relation dose-réponse (Schoenfeld et al., 2017), et le volume du programme est calibré sur les repères MEV/MAV (Israetel, Renaissance Periodization). Ton ressenti (<b>Facile / Correct / Limite</b>) module la vitesse de progression, sur le principe de l'autorégulation.</p>
@@ -337,7 +389,7 @@ setTimeout(function(){
       <li>Si tu dépasses 12-15 reps facilement, c'était trop léger : monte franchement à la série suivante.</li>
       <li>Enregistre ta séance — le 1RM estimé se calcule automatiquement et s'affine ensuite à chaque séance.</li>
     </ol>
-    <p>Les 2-3 premières séances servent de calibrage : normal que les cibles bougent un peu au début.</p>
+    <p>Les 2-3 premières séances servent de calibrage : normal que les cibles bougent un peu au début. La consigne s'adapte au bloc en cours : en <b>Force</b> vise 5-8 reps, en <b>Hypertrophie</b> la fourchette du bloc (8-12) suffit — toute série de 1 à 15 répétitions proche de l'échec alimente l'estimation. En <b>Endurance</b>, les séries de 20 reps et plus ne permettent pas d'estimation fiable : démarre léger, le 1RM se calibrera aux blocs plus lourds (ou fais une série ponctuelle de 12-15 reps).</p>
 
     <h2>🌱 Débutant ou en reprise ? La technique d'abord</h2>
     <p>Si tu débutes ou reprends après une longue pause, la priorité des premières semaines n'est pas la charge : c'est d'<b>apprendre l'exécution correcte de chaque mouvement</b>. Travaille léger, amplitude complète, tempo contrôlé, et ne monte en charge que si la technique reste identique de la première à la dernière répétition — une charge qui dégrade ta technique n'entraîne pas le muscle visé, elle entraîne tes compensations. Fais vérifier tes mouvements par un coach de ta salle sur les exercices techniques (développé couché, hip thrust, tirages). Apprends aussi à distinguer l'inconfort musculaire de l'effort, normal, d'une douleur articulaire, qui est un signal d'arrêt. Enfin, ne t'inquiète pas si les charges semblent modestes : les progressions initiales sont surtout nerveuses — ton système apprend à recruter tes muscles — et elles viendront vite.</p>
@@ -393,6 +445,20 @@ setTimeout(function(){
     </div>
   </div>
   <div class="setting">
+    <h3>Programme</h3>
+    <p>Programme actif : c'est lui qui s'affiche dans l'onglet Séance. L'historique, les 1RM et les repos personnalisés sont conservés quel que soit le programme.</p>
+    <select id="programSelect" class="prog-select"></select>
+    <div class="btnrow" style="margin-top:10px;">
+      <button class="btn" id="openBuilderBtn" style="width:100%;">✏️ Créer / modifier mes programmes</button>
+    </div>
+    <p style="margin-top:12px;">Séances effectuées par semaine : rythme réel d'entraînement sur ce programme. Pilote l'avancement du cycle de 6 semaines (et bientôt le volume hebdomadaire par muscle). Ex. : full body d'1 séance faite 2 fois par semaine → 2.</p>
+    <div class="bw-row">
+      <input type="number" id="spwInput" inputmode="numeric" min="1" max="7" step="1">
+      <span style="color:var(--muted)">séances / semaine</span>
+      <button class="btn" id="spwSave">Enregistrer</button>
+    </div>
+  </div>
+  <div class="setting">
     <h3>Recalcul du 1RM</h3>
     <p>Si vous voulez recalculer le 1RM à partir de votre historique, cliquez ici. Les estimations initiales sont remises à zéro et le 1RM de chaque exercice est reconstruit uniquement à partir de vos séances enregistrées (meilleure série de 1 à 15 reps). Un exercice sans aucune séance enregistrée conserve son estimation de départ.</p>
     <button class="btn" id="recalcBtn">Recalculer le 1RM depuis l'historique</button>
@@ -402,7 +468,17 @@ setTimeout(function(){
     <p>Efface tout l'historique et les réglages (le programme préchargé est conservé).</p>
     <button class="btn warn" id="resetBtn">Réinitialiser toutes les données</button>
   </div>
-  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Coach — build 2026-07-19-g</p>
+  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-07-23-n</p>
+</div>
+
+<!-- ================= CRÉATEUR DE PROGRAMMES (accessible depuis Réglages) ================= -->
+<div class="screen" id="scr-builder">
+  <div id="builderBody"></div>
+</div>
+
+<!-- Modal du sélecteur d'exercices -->
+<div id="pickerModal" class="modal-bg" style="display:none">
+  <div class="modal-card" id="pickerCard"></div>
 </div>
 
 <!-- Chrono repos -->
@@ -438,6 +514,186 @@ setTimeout(function(){
    noRm: true = jamais utilisé pour calculer/afficher un 1RM (exercice santé, toujours léger).
    Cette fonction retourne un tableau FRAIS à chaque appel (pas de référence partagée entre
    le seed par défaut et un éventuel futur programme dupliqué). */
+/* ==================== EXODB : BASE DE MOUVEMENTS ====================
+   La base décrit des MOUVEMENTS (muscles, pattern, matériels admis), pas des exercices prêts
+   pour le moteur. À l'ajout dans une séance, l'utilisateur choisit le matériel -> makeExoFromDb()
+   fabrique l'exercice concret avec un id STABLE `db_<mouvement>_<matériel>` : le même couple
+   choisi dans deux programmes partage donc son id, son 1RM et son historique.
+   Champs d'un mouvement :
+   - id       : minuscules SANS underscore (l'id d'exercice généré est parsé par split("_"))
+   - cat      : push | pull | legs | core   (filtres du créateur, structure des programmes)
+   - role     : bigPoly | poly | iso | isoDelicat | mollets | sante | gainage | gainageTps
+                -> pattern (poly/iso/gainage) ET template de cibles (fourchettes/séries/repos,
+                   rétro-ingénierie du seed)
+   - prim/sec : muscles primaires / secondaires (clés de MUSCLES) — comptage du volume : 1 / 0,5
+   - mat      : matériels admis (clés de MATERIELS)
+   - warn / noRm : mêmes sémantiques que sur les exercices seed */
+
+const MUSCLES = {
+  quads:"Quadriceps", ischios:"Ischio-jambiers", fessiers:"Fessiers", mollets:"Mollets",
+  pecs:"Pectoraux", dosL:"Dos — largeur (grand dorsal)", dosE:"Dos — épaisseur (trapèzes, rhomboïdes)",
+  deltA:"Deltoïdes antérieurs", deltL:"Deltoïdes latéraux", deltP:"Deltoïdes postérieurs",
+  biceps:"Biceps", triceps:"Triceps", abdos:"Abdominaux / gainage", lomb:"Lombaires"
+};
+
+/* Un étirement de référence par muscle : sert à composer la carte étirements des séances
+   custom (l'intensité selon le bloc reste pilotée par COOLDOWN_BLOC, comme sur le seed). */
+const STRETCHES = {
+  quads:"Quadriceps : talon-fesse debout — 30 s par jambe",
+  ischios:"Ischios : penché avant jambe tendue — 30 s par jambe",
+  fessiers:"Fessiers : figure 4 (cheville sur le genou opposé) — 30 s par côté",
+  mollets:"Mollets : fente contre un mur, talon arrière au sol — 30 s par jambe",
+  pecs:"Pectoraux : avant-bras sur un montant, buste en rotation opposée — 30 s par côté",
+  dosL:"Grand dorsal : suspension à la barre ou mains au mur buste basculé — 30 s",
+  dosE:"Milieu du dos : dos rond, bras tendus devant (position du chat) — 30 s",
+  deltA:"Épaules avant : mains croisées derrière le dos, poitrine ouverte — 30 s",
+  deltL:"Épaules : bras tendu tiré devant la poitrine — 30 s par bras",
+  deltP:"Arrière d'épaule : bras croisé devant, tiré au coude — 30 s par bras",
+  biceps:"Biceps : bras tendu, paume contre un mur vers l'arrière — 20-30 s par bras",
+  triceps:"Triceps : coude au-dessus de la tête, main entre les omoplates — 30 s par bras",
+  abdos:"Abdominaux : extension type cobra au sol — 20-30 s",
+  lomb:"Lombaires : genoux ramenés vers la poitrine, au sol — 30 s"
+};
+
+/* Les 6 natures de matériel. Le branchement moteur (rack / incr / type) est fait par
+   makeExoFromDb — le matériel est LA clé qui garantit de ne jamais proposer un poids inexistant. */
+const MATERIELS = {
+  lb:       { label:"Machine / poulie (plaques en livres)", suffix:"machine" },
+  plate:    { label:"Machine à disques (plateau à charger)", suffix:"machine à disques" }, // plate-loaded : incrément libre en kg, comme la presse du seed (incr 1)
+  dbSingle: { label:"Haltère (un seul)",                    suffix:"haltère" },
+  dbPair:   { label:"Paire d'haltères",                     suffix:"haltères" },
+  barre:    { label:"Barre libre + disques",                suffix:"barre" },
+  pdc:      { label:"Poids du corps",                       suffix:null },
+  assist:   { label:"Machine assistée (assistance en livres)", suffix:"assisté" }
+};
+
+/* Templates de cibles par rôle — rétro-ingénierie du programme seed :
+   gros poly 5/4/3 séries (repos 150/90/50), poly 4/3/3 (120/90/50), iso 4/3/3 (90/75/45),
+   iso délicate 3×3 (60), mollets 4/3/3, santé 12-15 partout, gainage 3×3. */
+const T_ROLES = {
+  bigPoly:    { force:{r:"5-6",s:5,rest:150},  hyp:{r:"8-12",s:4,rest:90},  end:{r:"20-25",s:3,rest:50} },
+  poly:       { force:{r:"5-6",s:4,rest:120},  hyp:{r:"8-12",s:3,rest:90},  end:{r:"20-25",s:3,rest:50} },
+  iso:        { force:{r:"6-8",s:4,rest:90},   hyp:{r:"8-12",s:3,rest:75},  end:{r:"20-25",s:3,rest:45} },
+  isoDelicat: { force:{r:"8-10",s:3,rest:60},  hyp:{r:"12-15",s:3,rest:60}, end:{r:"20-25",s:3,rest:60} },
+  mollets:    { force:{r:"10-12",s:4,rest:90}, hyp:{r:"15-20",s:3,rest:60}, end:{r:"20-25",s:3,rest:45} },
+  sante:      { force:{r:"12-15",s:3,rest:45}, hyp:{r:"12-15",s:3,rest:45}, end:{r:"12-15",s:3,rest:45} },
+  gainage:    { force:{r:"10-12",s:3,rest:60}, hyp:{r:"15-20",s:3,rest:45}, end:{r:"20-25",s:3,rest:40} },
+  gainageTps: { force:{r:"30-45s",s:3,rest:60},hyp:{r:"45s",s:3,rest:45},   end:{r:"45-60s",s:3,rest:40} }
+};
+function targetsFromRole(role) {
+  const t = T_ROLES[role] || T_ROLES.iso;
+  const mk = b => ({ c:null, r:t[b].r, s:t[b].s, rest:t[b].rest });
+  return { force:mk("force"), hyp:mk("hyp"), end:mk("end") };
+}
+
+const EXODB = [
+  /* ---------- LEGS ---------- */
+  { id:"squat",        name:"Squat",                          cat:"legs", role:"bigPoly", prim:["quads","fessiers"], sec:["ischios","lomb","abdos"], mat:["barre","dbSingle","pdc"], warn:"Technique exigeante : fais valider ton squat avant de charger." },
+  { id:"presse",       name:"Presse à cuisse",                cat:"legs", role:"bigPoly", prim:["quads","fessiers"], sec:["ischios"], mat:["plate","lb"] },
+  { id:"fentes",       name:"Fentes marchées ou statiques",   cat:"legs", role:"poly",    prim:["quads","fessiers"], sec:["ischios","abdos"], mat:["dbPair","barre","pdc"] },
+  { id:"fentebulgare", name:"Fentes bulgares",                cat:"legs", role:"poly",    prim:["quads","fessiers"], sec:["ischios"], mat:["dbPair","dbSingle","pdc"] },
+  { id:"sdt",          name:"Soulevé de terre",               cat:"legs", role:"bigPoly", prim:["fessiers","ischios","lomb"], sec:["quads","dosE","abdos"], mat:["barre"], warn:"Technique exigeante : dos neutre impératif, fais valider ton mouvement avant de charger." },
+  { id:"sdtroumain",   name:"Soulevé de terre roumain",       cat:"legs", role:"poly",    prim:["ischios","fessiers"], sec:["lomb"], mat:["barre","dbPair"], warn:"Dos neutre, descente contrôlée jusqu'à l'étirement des ischios — pas plus bas." },
+  { id:"hipthrust",    name:"Hip thrust",                     cat:"legs", role:"bigPoly", prim:["fessiers"], sec:["ischios"], mat:["barre","plate"] },
+  { id:"legext",       name:"Extension jambes",               cat:"legs", role:"iso",     prim:["quads"], sec:[], mat:["lb"] },
+  { id:"legcurl",      name:"Flexion jambes (leg curl)",      cat:"legs", role:"iso",     prim:["ischios"], sec:[], mat:["lb"] },
+  { id:"molletsdeb",   name:"Mollets debout",                 cat:"legs", role:"mollets", prim:["mollets"], sec:[], mat:["dbSingle","lb","plate","pdc"] },
+  { id:"molletsassis", name:"Mollets assis (soléaire)",       cat:"legs", role:"mollets", prim:["mollets"], sec:[], mat:["dbPair","lb"], warn:"Genou fléchi = travail du soléaire, complémentaire des mollets debout (gastrocnémien)." },
+  { id:"abduction",    name:"Abduction de hanche",            cat:"legs", role:"isoDelicat", prim:["fessiers"], sec:[], mat:["lb"] },
+  { id:"glutekick",    name:"Kickback fessier à la poulie",   cat:"legs", role:"iso",     prim:["fessiers"], sec:["ischios"], mat:["lb"] },
+  /* ---------- PUSH ---------- */
+  { id:"pompes",       name:"Pompes",                         cat:"push", role:"poly",    prim:["pecs"], sec:["triceps","deltA"], mat:["pdc"] },
+  { id:"devcouche",    name:"Développé couché",               cat:"push", role:"bigPoly", prim:["pecs"], sec:["triceps","deltA"], mat:["barre","dbPair"] },
+  { id:"devinclineh",  name:"Développé incliné",              cat:"push", role:"bigPoly", prim:["pecs"], sec:["deltA","triceps"], mat:["dbPair","barre"] },
+  { id:"devmachine",   name:"Développé assis (machine convergente)", cat:"push", role:"poly", prim:["pecs"], sec:["triceps","deltA"], mat:["lb","plate"] },
+  { id:"dips",         name:"Dips",                           cat:"push", role:"poly",    prim:["pecs"], sec:["triceps","deltA"], mat:["assist","pdc"] },
+  { id:"ecartepoulie", name:"Écarté à la poulie",             cat:"push", role:"iso",     prim:["pecs"], sec:[], mat:["lb"] },
+  { id:"ecartehalt",   name:"Écarté couché haltères",         cat:"push", role:"isoDelicat", prim:["pecs"], sec:["deltA"], mat:["dbPair"], warn:"Coudes légèrement fléchis, descente contrôlée : ne cherche jamais le maxi ici." },
+  { id:"pecdeck",      name:"Pec deck (butterfly)",           cat:"push", role:"iso",     prim:["pecs"], sec:[], mat:["lb"] },
+  { id:"devmilitaire", name:"Développé militaire",            cat:"push", role:"poly",    prim:["deltA"], sec:["deltL","triceps"], mat:["barre","dbPair"] },
+  { id:"elevlat",      name:"Élévations latérales",           cat:"push", role:"isoDelicat", prim:["deltL"], sec:[], mat:["dbPair","lb"], warn:"Isolation stricte : léger à modéré, sans élan (risque de conflit d'épaule)." },
+  { id:"elevfront",    name:"Élévations frontales",           cat:"push", role:"isoDelicat", prim:["deltA"], sec:[], mat:["dbPair","lb"] },
+  { id:"oiseau",       name:"Oiseau (élévations buste penché)", cat:"push", role:"isoDelicat", prim:["deltP"], sec:["dosE"], mat:["dbPair","lb"] },
+  { id:"facepull",     name:"Face pull à la poulie",          cat:"push", role:"sante",   prim:["deltP"], sec:["dosE"], mat:["lb"], noRm:true, warn:"Exercice de santé d'épaule : reste TOUJOURS léger (12-15 reps), même en bloc Force. Jamais utilisé pour calculer un 1RM." },
+  { id:"tricepspoulie",name:"Extension triceps à la poulie",  cat:"push", role:"iso",     prim:["triceps"], sec:[], mat:["lb"], warn:"Petite articulation : prudence en bloc Force, ne force jamais la montée." },
+  { id:"tricepsnuque", name:"Extension triceps nuque",        cat:"push", role:"iso",     prim:["triceps"], sec:[], mat:["dbSingle","dbPair"], warn:"Petite articulation : prudence en bloc Force, ne force jamais la montée." },
+  { id:"barrefront",   name:"Barre au front",                 cat:"push", role:"iso",     prim:["triceps"], sec:[], mat:["barre"], warn:"Coudes sensibles : charge modérée, contrôle total de la descente." },
+  /* ---------- PULL ---------- */
+  { id:"tractions",    name:"Tractions",                      cat:"pull", role:"bigPoly", prim:["dosL"], sec:["biceps","dosE"], mat:["assist","pdc"] },
+  { id:"tiragev",      name:"Tirage vertical",                cat:"pull", role:"poly",    prim:["dosL"], sec:["biceps"], mat:["lb"] },
+  { id:"tirageh",      name:"Tirage horizontal",              cat:"pull", role:"poly",    prim:["dosE"], sec:["dosL","biceps","deltP"], mat:["lb"] },
+  { id:"rowingbarre",  name:"Rowing barre buste penché",      cat:"pull", role:"bigPoly", prim:["dosE"], sec:["dosL","biceps","lomb"], mat:["barre"], warn:"Dos neutre impératif : gainage verrouillé, pas d'à-coups." },
+  { id:"rowing1bras",  name:"Rowing à un bras",               cat:"pull", role:"poly",    prim:["dosE"], sec:["dosL","biceps"], mat:["dbSingle"] },
+  { id:"pullover",     name:"Pull-over",                      cat:"pull", role:"iso",     prim:["dosL"], sec:["pecs","triceps"], mat:["lb","dbSingle"] },
+  { id:"shrugs",       name:"Shrugs (haussements d'épaules)", cat:"pull", role:"iso",     prim:["dosE"], sec:[], mat:["dbPair","barre"] },
+  { id:"curlpoulie",   name:"Biceps curl à la poulie",        cat:"pull", role:"iso",     prim:["biceps"], sec:[], mat:["lb"] },
+  { id:"curlbarre",    name:"Curl barre",                     cat:"pull", role:"iso",     prim:["biceps"], sec:[], mat:["barre"] },
+  { id:"curlhalt",     name:"Curl haltères",                  cat:"pull", role:"iso",     prim:["biceps"], sec:[], mat:["dbPair"] },
+  { id:"curlmarteau",  name:"Curl marteau",                   cat:"pull", role:"iso",     prim:["biceps"], sec:[], mat:["dbPair"] },
+  { id:"curlincline",  name:"Curl incliné",                   cat:"pull", role:"isoDelicat", prim:["biceps"], sec:[], mat:["dbPair"], warn:"Position étirée : charge modérée, pas d'élan." },
+  /* ---------- CORE ---------- */
+  { id:"crunch",       name:"Crunch",                         cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc","lb"] },
+  { id:"relevesgenoux",name:"Relevés de genoux suspendus",    cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc"] },
+  { id:"planche",      name:"Planche",                        cat:"core", role:"gainageTps", prim:["abdos"], sec:["lomb"], mat:["pdc"] },
+  { id:"planchelat",   name:"Planche latérale",               cat:"core", role:"gainageTps", prim:["abdos"], sec:[], mat:["pdc"] },
+  { id:"pallof",       name:"Pallof press (anti-rotation)",   cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["lb"] },
+  { id:"roulette",     name:"Roulette abdominale",            cat:"core", role:"gainage", prim:["abdos"], sec:["lomb","dosL"], mat:["pdc"], warn:"Exercice avancé : amplitude progressive, bassin verrouillé (aucune cambrure)." },
+  { id:"superman",     name:"Superman",                       cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers"], mat:["pdc"] },
+  { id:"extlombaire",  name:"Extension lombaire (banc à 45°)",cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers","ischios"], mat:["pdc","dbSingle"] },
+];
+
+/* Mapping des exercices SEED vers leurs mouvements EXODB : donne accès aux muscles
+   (comptage de volume, étirements) sans jamais modifier les exercices seed eux-mêmes. */
+const SEED_TO_DB = {
+  presse:"presse", hip:"hipthrust", extj:"legext", flexj:"legcurl", mollets:"molletsdeb",
+  molletsassis:"molletsassis", superman:"superman", crunch:"crunch",
+  pompes:"pompes", devinc:"devinclineh", devcou:"devcouche", devmil:"devmilitaire",
+  elat:"elevlat", dips:"dips", triceps:"tricepspoulie", releves:"relevesgenoux", lomb:"extlombaire",
+  tractions:"tractions", tir1b:"rowing1bras", tirh:"tirageh", tirv:"tiragev",
+  facepull:"facepull", curl:"curlpoulie", planche:"planche"
+};
+
+/* Mouvement EXODB d'un exoId quelconque (seed via SEED_TO_DB, custom via le préfixe db_),
+   ou null (futur « exercice libre » hors base). */
+function dbEntryForExo(exoId) {
+  if (typeof exoId !== "string") return null;
+  if (exoId.startsWith("db_")) {
+    const dbId = exoId.split("_")[1]; // sûr : les ids EXODB ne contiennent pas d'underscore (testé)
+    return EXODB.find(e => e.id === dbId) || null;
+  }
+  const dbId = SEED_TO_DB[exoId];
+  return dbId ? (EXODB.find(e => e.id === dbId) || null) : null;
+}
+
+/* Fabrique un exercice PRÊT POUR LE MOTEUR depuis un mouvement + un matériel choisi.
+   opts.incr : plus petit ajout possible pour une barre chargeable (défaut 1 kg, comme le seed). */
+function makeExoFromDb(dbId, mat, opts = {}) {
+  const m = EXODB.find(e => e.id === dbId);
+  if (!m || !MATERIELS[mat] || !m.mat.includes(mat)) return null;
+  const exo = { id: `db_${dbId}_${mat}`, name: exoDisplayName(m, mat), mat, role: m.role, oneRm: null, t: targetsFromRole(m.role) };
+  if (mat === "pdc") {
+    exo.type = "pdc";
+    ["force","hyp","end"].forEach(b => exo.t[b].c = 0); // convention seed : pdc -> charge 0
+  } else if (mat === "assist") {
+    exo.type = "assist"; exo.rack = "lb";               // assistance sélectionnée sur la machine en livres
+  } else {
+    exo.type = "charge";
+    if (mat === "barre" || mat === "plate") exo.incr = opts.incr || 1; // charge libre en kg (barre ou machine à disques)
+    else exo.rack = mat;                                // lb / dbPair / dbSingle -> table RACKS
+  }
+  const warns = [];
+  if (m.warn) warns.push(m.warn);
+  if (mat === "dbPair") warns.push("Charge = total des 2 haltères.");
+  if (warns.length) exo.warn = warns.join(" ");
+  if (m.noRm) exo.noRm = true;
+  seedRmBridge(dbId, mat, exo); // hérite du 1RM du jumeau seed s'il existe (estimation initiale)
+  return exo;
+}
+function exoDisplayName(m, mat) {
+  const suffix = MATERIELS[mat].suffix;
+  return (m.mat.length > 1 && suffix) ? `${m.name} — ${suffix}` : m.name;
+}
+
 function seedProgramSessions() {
 return [
   {
@@ -515,6 +771,9 @@ const BLOCS = {
   end:   { label:"Endurance",    pct:.55, weeks:"sem. 5-6", hint:"50-60% 1RM · 20-25 reps · repos 45-60 s. Pas de série d'approche nécessaire." }
 };
 const BLOC_ORDER = ["hyp","force","end"];
+/* Plans de cycle (déclarés ICI, avant load()/cur : suggestedBloc() est appelée dès l'init) */
+const CYCLE_DEFAULT = ["hyp","hyp","force","force","end","end"];
+const CYCLE_GD = ["end","end","hyp","hyp","end","end"];
 
 /* Échauffement spécifique par bloc + étirements par séance */
 const WARMUP = {
@@ -538,8 +797,11 @@ const COOLDOWN_BLOC = {
    (S.programs), plus seulement en dur dans le code. Structure prête pour gérer
    plusieurs programmes plus tard (S.programs = tableau, S.activeProgramId choisit
    celui affiché) ; pour l'instant un seul programme préchargé (seed). */
-const LS_KEY = "suiviMuscuCoach.v1"; // clé PROPRE au fork (même origine GitHub Pages = localStorage partagé avec l'app d'origine)
-const LEGACY_LS_KEY = "suiviMuscu.v1"; // au 1er lancement, on IMPORTE (copie, sans toucher) les données de l'app d'origine
+const LS_KEY = "suiviMuscuBuilder.v1"; // clé PROPRE à Builder (même origine GitHub Pages = localStorage partagé avec Coach et l'app d'origine)
+/* Au 1er lancement, on IMPORTE (copie, sans jamais toucher aux originaux) les données de
+   l'app la plus récente trouvée : Coach d'abord, sinon l'app d'origine. Après cette copie,
+   Builder vit sa vie : les deux apps coexistent sans se synchroniser (pont = export/import JSON). */
+const LEGACY_LS_KEYS = ["suiviMuscuCoach.v1", "suiviMuscu.v1"];
 const CURRENT_SCHEMA_VERSION = 2;
 const DEFAULT_PROGRAM_ID = "defaut";
 /* SEED_VERSION : à incrémenter à CHAQUE fois que seedProgramSessions() change (nouvel
@@ -558,8 +820,13 @@ function defaultState() {
     draft: null,         // séance en cours non terminée {sessionIdx, bloc, entries, ts}
     restPref: {},        // "exoId.bloc" -> repos personnalisé en secondes
     oneRmOverride: {},   // exoId -> 1RM recalculé
-    programs: [           // liste de programmes (1 seul pour l'instant)
-      { id: DEFAULT_PROGRAM_ID, name: "Split 3 jours (Force / Hypertrophie / Endurance)", sessions: seedProgramSessions(), seedVersion: SEED_VERSION }
+    nameArchive: { sessions:{}, exos:{} }, // noms des séances/exos custom SUPPRIMÉS -> l'Historique reste lisible
+    programs: [           // liste de programmes (le seed + futurs programmes créés par l'utilisateur)
+      /* sessionsPerWeek : nombre de séances effectuées par semaine — pilote l'avancement du
+         cycle de 6 semaines (weekOfCycle) et, plus tard, le calcul du volume hebdomadaire par
+         muscle. Peut différer du nombre de séances définies (ex. full body : 1 séance définie,
+         faite 2×/semaine -> sessionsPerWeek = 2). */
+      { id: DEFAULT_PROGRAM_ID, name: "Programme par défaut", sessions: seedProgramSessions(), seedVersion: SEED_VERSION, sessionsPerWeek: 3 }
     ],
     activeProgramId: DEFAULT_PROGRAM_ID
   };
@@ -582,10 +849,21 @@ function migrate(data) {
   if (!merged.activeProgramId || !merged.programs.some(p => p.id === merged.activeProgramId)) {
     merged.activeProgramId = merged.programs[0].id;
   }
-  // Resync du programme PAR DÉFAUT si son contenu (seedVersion) est plus vieux que le code actuel.
+  // Resync du programme PAR DÉFAUT si son contenu (seedVersion) est plus vieux que le code
+  // actuel. Les AUTRES programmes (créés par l'utilisateur) ne sont JAMAIS touchés par le
+  // reseed — c'est ce qui garantit qu'une mise à jour du seed n'écrase pas leurs séances.
+  if (!merged.nameArchive) merged.nameArchive = { sessions:{}, exos:{} };
   merged.programs = merged.programs.map(p => {
-    if (p.id === DEFAULT_PROGRAM_ID && (!p.seedVersion || p.seedVersion < SEED_VERSION)) {
-      return { ...p, sessions: seedProgramSessions(), seedVersion: SEED_VERSION };
+    if (p.id === DEFAULT_PROGRAM_ID) {
+      p = { ...p, name: "Programme par défaut" }; // le nom du programme par défaut appartient à l'app (états Coach importés, vieux exports)
+      if (!p.seedVersion || p.seedVersion < SEED_VERSION) {
+        p = { ...p, sessions: seedProgramSessions(), seedVersion: SEED_VERSION };
+      }
+    }
+    // Complète sessionsPerWeek sur tout programme qui en est dépourvu (état Coach importé,
+    // vieil export JSON...) : défaut raisonnable = 1 passage par séance définie et par semaine.
+    if (!p.sessionsPerWeek || p.sessionsPerWeek < 1) {
+      p = { ...p, sessionsPerWeek: (p.sessions && p.sessions.length) || 3 };
     }
     return p;
   });
@@ -618,7 +896,8 @@ const RACKS = {
 };
 function load() {
   try {
-    const raw = localStorage.getItem(LS_KEY) || localStorage.getItem(LEGACY_LS_KEY);
+    let raw = localStorage.getItem(LS_KEY);
+    if (!raw) for (const k of LEGACY_LS_KEYS) { raw = localStorage.getItem(k); if (raw) break; }
     if (raw) return migrate(JSON.parse(raw));
   } catch(e) { console.warn("localStorage indisponible :", e); }
   return defaultState();
@@ -631,6 +910,27 @@ function activeProgram() {
   return S.programs.find(p => p.id === S.activeProgramId) || S.programs[0];
 }
 function syncProgram() { PROGRAM = activeProgram().sessions; }
+/* ---- Résolutions INTER-PROGRAMMES ----
+   L'historique, les 1RM et les repos perso sont indexés par sessionId/exoId et survivent au
+   changement de programme actif. Ces deux helpers cherchent donc dans TOUS les programmes :
+   - findSessionById : retrouver la séance d'un log même si elle appartient à un programme
+     désormais inactif (sinon l'Historique afficherait "?").
+   - allUniqueExos : liste dédupliquée (par id) des exercices de tous les programmes — un même
+     couple mouvement×matériel partagé entre programmes a le MÊME id, donc un seul 1RM. */
+function findSessionById(sessionId) {
+  for (const p of S.programs) {
+    const s = p.sessions.find(x => x.id === sessionId);
+    if (s) return s;
+  }
+  return null;
+}
+function allUniqueExos() {
+  const map = new Map();
+  S.programs.forEach(p => p.sessions.forEach(s => s.exos.forEach(e => {
+    if (!map.has(e.id)) map.set(e.id, e);
+  })));
+  return [...map.values()];
+}
 
 /* état de la séance en cours — sauvegardé automatiquement à chaque modification */
 let cur = { sessionIdx: 0, bloc: suggestedBloc(), entries: {}, rest: {}, notes: {}, effort: {} };
@@ -643,8 +943,22 @@ let draftRestored = false;
    mémoire agressive côté iOS) pendant cette fenêtre, toutes les saisies en cours étaient
    perdues au retour. */
 let curTouched = false;
-if (S.draft && S.draft.entries) {
-  cur = { sessionIdx: S.draft.sessionIdx, bloc: S.draft.bloc, entries: S.draft.entries, rest: S.draft.rest || {}, notes: S.draft.notes || {}, effort: S.draft.effort || {} };
+/* Un brouillon n'est restauré que s'il contient AU MOINS UNE SÉRIE VALIDÉE (même critère que
+   hasProgress). Un brouillon "vide" (saisies effleurées, aucune validation) imposait son bloc
+   périmé au démarrage — ex. puce Hypertrophie sélectionnée alors que le plan du programme
+   conseille Endurance. Les brouillons vides sont purgés au passage. */
+const draftHasProgress = S.draft && S.draft.entries
+  && Object.values(S.draft.entries).some(sets => (sets || []).some(s => s && s.done));
+if (S.draft && !draftHasProgress) { S.draft = null; }
+if (draftHasProgress) {
+  /* Une séance en cours appartient à SON programme : si le brouillon a été créé dans un autre
+     programme que l'actif (multi-programmes), on rebascule dessus — la séance entamée prime. */
+  if (S.draft.programId && S.draft.programId !== S.activeProgramId
+      && S.programs.some(p => p.id === S.draft.programId)) {
+    S.activeProgramId = S.draft.programId;
+    syncProgram();
+  }
+  cur = { sessionIdx: Math.min(S.draft.sessionIdx, PROGRAM.length-1), bloc: S.draft.bloc, entries: S.draft.entries, rest: S.draft.rest || {}, notes: S.draft.notes || {}, effort: S.draft.effort || {} };
   draftRestored = true;
   curTouched = true;
   refreshUndoneTargets(); // les séries pas encore validées reprennent la cible ACTUELLE (1RM/perf courants), pas l'ancienne saisie
@@ -669,7 +983,7 @@ function refreshUndoneTargets() {
 }
 function saveDraft() {
   curTouched = true; // saveDraft() n'est appelée que depuis une vraie interaction utilisateur
-  S.draft = { sessionIdx: cur.sessionIdx, bloc: cur.bloc, entries: cur.entries, rest: cur.rest, notes: cur.notes, effort: cur.effort, ts: Date.now() };
+  S.draft = { programId: S.activeProgramId, sessionIdx: cur.sessionIdx, bloc: cur.bloc, entries: cur.entries, rest: cur.rest, notes: cur.notes, effort: cur.effort, ts: Date.now() };
   save();
 }
 function clearDraft() { S.draft = null; curTouched = false; save(); }
@@ -743,15 +1057,38 @@ function sessionsSinceCycleStart() {
   const d0 = new Date(S.cycleStart+"T00:00:00");
   return S.logs.filter(l => new Date(l.date) >= d0).length;
 }
+function sessionsPerWeek() {
+  const p = activeProgram();
+  return p.sessionsPerWeek || (p.sessions && p.sessions.length) || 3;
+}
 function weekOfCycle() {
   const n = sessionsSinceCycleStart();
   if (n === null) return null;
-  return (Math.floor(n/3) % 6) + 1; // 1..6, boucle tous les 6×3 = 18 séances
+  const spw = sessionsPerWeek();
+  return (Math.floor(n/spw) % 6) + 1; // 1..6, boucle tous les 6×spw séances effectuées
+}
+/* ---- Plan de cycle PAR PROGRAMME ----
+   Par défaut : Hyp (sem. 1-2) / Force (3-4) / End (5-6) — le cycle historique de l'app.
+   Un programme peut définir son propre plan (6 entrées, une par semaine). L'assistant
+   "grand débutant" pose End/End/Hyp/Hyp/End/End : démarrage en séries longues et légères
+   (maximum de répétitions du geste = apprentissage technique), montée en Hypertrophie au
+   milieu, retour en Endurance — jamais de charges >85% sur une technique en construction
+   (NSCA/ACSM : intensité modérée pour le novice). Les blocs ABSENTS du plan ne sont pas
+   proposés dans le sélecteur de séance : pour retrouver le bloc Force, il suffit de passer
+   sur un programme dont le plan l'inclut. */
+function cyclePlanOf(p) {
+  if (p.cyclePlan && p.cyclePlan.length === 6 && p.cyclePlan.every(b => BLOCS[b])) return p.cyclePlan;
+  if (p.noForce) return CYCLE_GD; // compat : programmes GD générés avant l'introduction de cyclePlan
+  return CYCLE_DEFAULT;
+}
+function allowedBlocs() {
+  const plan = cyclePlanOf(activeProgram());
+  return BLOC_ORDER.filter(k => plan.includes(k));
 }
 function suggestedBloc() {
   const w = weekOfCycle();
-  if (w === null) return "hyp"; // pas de date réglée : défaut raisonnable
-  return w<=2 ? "hyp" : (w<=4 ? "force" : "end");
+  if (w === null) return cyclePlanOf(activeProgram())[0] || "hyp"; // pas de date réglée : 1re semaine du plan
+  return cyclePlanOf(activeProgram())[w - 1] || "hyp";
 }
 
 /* ==================== NAVIGATION ==================== */
@@ -783,7 +1120,9 @@ function renderSeanceSelectors() {
     seg.appendChild(b);
   });
   const bseg = $("#blocSeg"); bseg.innerHTML = "";
-  BLOC_ORDER.forEach(k => {
+  const allowed = allowedBlocs();
+  if (!allowed.includes(cur.bloc)) cur.bloc = suggestedBloc(); // ex. bloc Force sélectionné puis passage sur un programme sans Force
+  allowed.forEach(k => {
     const b = document.createElement("button");
     b.textContent = BLOCS[k].label + (suggestedBloc()===k ? " ●" : "");
     if (k===cur.bloc) b.classList.add("on");
@@ -931,6 +1270,27 @@ function snapToRack(rackName, w, dir){
 function nextWeight(exo, w){
   return exo.rack ? snapToRack(exo.rack, w, "up") : round05(w + exoIncrement(exo));
 }
+// Palier réel strictement INFÉRIEUR (utilisé par la descente de charge). Respecte la table
+// `rack` si présente ; renvoie w inchangé si on est déjà au palier minimum.
+function prevWeight(exo, w){
+  if (exo.rack){
+    const arr = RACKS[exo.rack] || [];
+    let below = null;
+    for (const p of arr){ if (p < w - 1e-9) below = p; else break; }
+    return below != null ? below : w;
+  }
+  const w2 = round05(w - exoIncrement(exo));
+  return w2 > 0 ? w2 : w;
+}
+// Les deux dernières séances contenant cet exo dans ce bloc (la plus récente d'abord).
+function lastTwoSessionsFor(exo, bloc){
+  const anyBloc = exo.type === "pdc";
+  return S.logs
+    .filter(l => (anyBloc || l.bloc === bloc) && l.entries[exo.id] && l.entries[exo.id].length)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 2)
+    .map(l => ({ sets: l.entries[exo.id] }));
+}
 // Arrondit une charge cible au palier réel de l'exercice (ou au demi-kilo sinon).
 function snapWeight(exo, w){
   return exo.rack ? snapToRack(exo.rack, w) : round25(w);
@@ -1009,6 +1369,39 @@ function recommend(exo, bloc){
     const pct = Math.round(100*(t1-t0)/t0);
     return "volume projeté " + (pct>=0?"+":"") + pct + "% vs dernière séance";
   };
+
+  /* ===== DESCENTE DE CHARGE — évaluée AVANT tout ressenti (les données priment) =====
+     a) Échec net : ≥3 reps sous le plancher -> charge clairement trop lourde, descente
+        IMMÉDIATE d'un palier réel.
+     b) Récidive : 2 séances consécutives sous le plancher AU MÊME poids -> la séance de
+        grâce (consolidation) a été accordée, on descend d'un palier réel.
+     Un raté marginal isolé (ex. 7 reps pour un plancher à 8) reste une consolidation, plus
+     bas : rater de peu juste après une montée est le déroulement NORMAL de la double
+     progression, et une mauvaise journée n'efface pas un palier gagné.
+     Exclusions : exos "santé" (noRm, jamais pilotés au poids) et assistés sans poids de
+     corps réglé (leur branche dédiée gère). */
+  if (!exo.noRm && !(isAssist && !S.bodyweight) && minR < lo){
+    const severeUnder = minR <= lo - 3;
+    let repeatUnder = false;
+    if (!severeUnder){
+      const two = lastTwoSessionsFor(exo, bloc);
+      if (two.length === 2){
+        const prevWW = workingWeight(two[1].sets, lo, hi);
+        if (prevWW.w === w && Math.min(...prevWW.refSets.map(s => s.r)) < lo) repeatUnder = true;
+      }
+    }
+    if (severeUnder || repeatUnder){
+      // plus facile = palier de poids inférieur (charge) ou palier d'assistance SUPÉRIEUR (assisté)
+      const wDown = isAssist ? nextWeight(exo, w) : prevWeight(exo, w);
+      if (wDown !== w){
+        const rT = clamp(predictReps(eff(w), Math.max(minR, 1), eff(wDown)), lo, hi);
+        const targets = orderTargets(pad(refReps).map(() => rT), lo, plafond);
+        return { w: wDown, targets, conseil: severeUnder
+          ? "charge trop lourde la dernière fois (" + minR + " reps pour un plancher à " + lo + ") : descente d'un palier pour retravailler proprement dans la fourchette"
+          : "2 séances de suite sous le plancher à ce poids : descente d'un palier — on reconstruira la montée sur des bases solides" };
+      }
+    }
+  }
 
   /* ===== RESSENTI "LIMITE" (0-1 RIR) : consolidation stricte — mêmes poids, mêmes reps. ===== */
   if (effort==="limite"){
@@ -1158,7 +1551,7 @@ function buildExoCard(exo) {
       </div>
     </div>
     ${rec && rec.conseil ? `<div class="exo-advice">💡 ${rec.conseil}</div>` : ""}
-    ${!rec && tl.main==="à tester" ? `<div class="exo-advice">💡 Charge inconnue : échauffe-toi, puis cherche une charge tenable 5-8 reps propres (procédure détaillée dans l'onglet Guide). Le 1RM se calculera tout seul à l'enregistrement de la séance.</div>` : ""}
+    ${!rec && tl.main==="à tester" ? `<div class="exo-advice">${testAdviceHtml(cur.bloc)}</div>` : ""}
     ${exo.warn && !rec ? `<div class="exo-note">⚠ ${exo.warn}</div>` : ""}
     <div class="col-labels"><span></span><span>${exo.type==="assist"?"Assist. (kg)":"Poids (kg)"}</span><span>${t.unit==="sec"?"Secondes":"Reps"}</span><span>Fait</span></div>
     <div class="sets"></div>
@@ -1276,25 +1669,35 @@ function buildSetRow(exo, st, i) {
 }
 
 function renderSeance() {
+  if (cur.sessionIdx >= PROGRAM.length) cur.sessionIdx = 0; // le programme actif a moins de séances qu'avant
   renderSeanceSelectors();
   const list = $("#exoList"); list.innerHTML = "";
   const sess = PROGRAM[cur.sessionIdx];
+  /* Programme sans séance (programme custom en cours de construction, import partiel...) :
+     écran vide explicite plutôt qu'un crash — le filet d'erreur ne doit servir qu'aux vrais bugs. */
+  if (!sess) {
+    list.innerHTML = `<div class="empty">Ce programme ne contient encore aucune séance.<br>Ajoute des séances (ou choisis un autre programme dans ⚙️ Réglages).</div>`;
+    $("#finishBtn").style.display = "none";
+    return;
+  }
+  $("#finishBtn").style.display = "";
 
-  /* Carte échauffement en tête de séance */
+  /* Carte échauffement en tête de séance : consigne du bloc + mobilité ciblée selon la séance */
   const warm = document.createElement("div"); warm.className="info-card";
-  warm.innerHTML = `<h3>🔥 Échauffement</h3><p>${WARMUP[cur.bloc]}</p>`;
+  warm.innerHTML = `<h3>🔥 Échauffement</h3><p>${WARMUP[cur.bloc]}${generatedWarmupFocus(sess)}</p>`;
   list.appendChild(warm);
 
   sess.exos.forEach(exo => list.appendChild(buildExoCard(exo)));
 
   /* Carte étirements en fin de séance */
   const cool = document.createElement("div"); cool.className="info-card";
-  cool.innerHTML = `<h3>🧘 Retour au calme &amp; étirements</h3><p>${COOLDOWN_BLOC[cur.bloc]}</p><p>${COOLDOWN[sess.id]}</p>`;
+  cool.innerHTML = `<h3>🧘 Retour au calme &amp; étirements</h3><p>${COOLDOWN_BLOC[cur.bloc]}</p><p>${COOLDOWN[sess.id] || generatedCooldown(sess)}</p>`;
   list.appendChild(cool);
 }
 
 $("#finishBtn").onclick = () => {
   const sess = PROGRAM[cur.sessionIdx];
+  if (!sess) return; // programme sans séance : rien à enregistrer
   const entries = {};
   let any = false;
   sess.exos.forEach(exo => {
@@ -1328,7 +1731,9 @@ $("#finishBtn").onclick = () => {
 
 /* ==================== RECALCUL 1RM ==================== */
 function recomputeRms() {
-  PROGRAM.forEach(sess => sess.exos.forEach(exo => {
+  // Tous les programmes, dédupliqué par exoId : le 1RM d'un exercice partagé reste à jour
+  // même quand la séance est enregistrée depuis un autre programme que celui où il est affiché.
+  allUniqueExos().forEach(exo => {
     if (exo.type==="pdc" || exo.noRm) return;
     let best = exo.oneRm ?? 0;
     S.logs.forEach(log => {
@@ -1341,13 +1746,14 @@ function recomputeRms() {
       });
     });
     if (best>0) S.oneRmOverride[exo.id] = Math.round(best*10)/10;
-  }));
+  });
 }
 /* Reset complet : ignore les estimations initiales, repart uniquement de l'historique.
-   Si un exercice n'a aucune série enregistrée, il retombe sur son 1RM initial. */
+   Si un exercice n'a aucune série enregistrée, il retombe sur son 1RM initial.
+   Comme recomputeRms : tous les programmes, dédupliqué par exoId. */
 function recomputeFromHistoryOnly() {
   S.oneRmOverride = {};
-  PROGRAM.forEach(sess => sess.exos.forEach(exo => {
+  allUniqueExos().forEach(exo => {
     if (exo.type==="pdc" || exo.noRm) return;
     let best = 0;
     S.logs.forEach(log => {
@@ -1360,7 +1766,7 @@ function recomputeFromHistoryOnly() {
       });
     });
     if (best>0) S.oneRmOverride[exo.id] = Math.round(best*10)/10;
-  }));
+  });
 }
 
 /* ==================== CHRONO REPOS ==================== */
@@ -1433,7 +1839,7 @@ function renderHisto() {
     return;
   }
   S.logs.forEach(log => {
-    const sess = PROGRAM.find(s=>s.id===log.sessionId);
+    const sess = findSessionById(log.sessionId); // inter-programmes : un log d'un programme inactif reste lisible
     const d = new Date(log.date);
     const nSets = Object.values(log.entries).reduce((a,v)=>a+v.length,0);
     const vol = Object.entries(log.entries).reduce((a,[exoId,sets])=>{
@@ -1444,7 +1850,7 @@ function renderHisto() {
     const item = document.createElement("div"); item.className="histo-item";
     item.innerHTML = `
       <div class="top">
-        <span class="date">${d.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"})} · ${sess?.name??"?"}</span>
+        <span class="date">${d.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"})} · ${sess?.name ?? escHtml(archivedSessionName(log.sessionId))}</span>
         <span class="tag ${log.bloc}">${BLOCS[log.bloc].label}</span>
       </div>
       <div class="sum num">${nSets} séries validées · volume ≈ ${Math.round(vol)} kg</div>
@@ -1468,7 +1874,7 @@ function renderHisto() {
         const note = log.notes && log.notes[exoId];
         const eff = log.effort && log.effort[exoId];
         return `<div class="histo-exo">
-          <div class="histo-exo-name">${exo?.name ?? exoId}${eff ? `<span class="effort-badge">${ {facile:"Facile",correct:"Correct",limite:"Limite"}[eff] }</span>` : ""}</div>
+          <div class="histo-exo-name">${exo?.name ?? escHtml(archivedExoName(exoId))}${eff ? `<span class="effort-badge">${ {facile:"Facile",correct:"Correct",limite:"Limite"}[eff] }</span>` : ""}</div>
           <div class="histo-exo-sets">${setsTxt}</div>
           ${note ? `<div class="histo-exo-note">💬 ${escHtml(note)}</div>` : ""}
         </div>`;
@@ -1624,6 +2030,10 @@ function wireProgToggle(card, buildHtml) {
     toggleBtn.textContent = expanded ? "Masquer l'historique ▴" : "Voir l'historique ▾";
   };
 }
+/* Le tableau Progression affiche les zones THÉORIQUES du 1RM (85/75/55%), volontairement non
+   collées aux paliers : c'est une information de référence. La séance, elle, colle toujours
+   au palier réel — d'où des cas légitimes où deux zones proches tombent sur le même palier
+   (ex. paires d'haltères : 26,3 et 29,8 kg -> 28 tous les deux, faute de 26 et 30). */
 function fmtZone(exo, load) {
   if (exo.type==="assist") {
     const assist = round05(S.bodyweight - load);
@@ -1636,7 +2046,847 @@ function fmtZone(exo, load) {
 function renderReglages() {
   $("#bwInput").value = S.bodyweight ?? "";
   $("#cycleStart").value = S.cycleStart ?? "";
+  const sel = $("#programSelect"); sel.innerHTML = "";
+  S.programs.forEach(p => {
+    const o = document.createElement("option");
+    o.value = p.id;
+    o.textContent = p.name + " (" + p.sessions.length + " séance" + (p.sessions.length>1?"s":"") + ")";
+    if (p.id === S.activeProgramId) o.selected = true;
+    sel.appendChild(o);
+  });
+  $("#spwInput").value = sessionsPerWeek();
 }
+/* Activation d'un programme : logique partagée entre le sélecteur des Réglages et le créateur.
+   Retourne false si l'utilisateur renonce (séance en cours). */
+function activateProgram(id) {
+  if (id === S.activeProgramId) return true;
+  if (hasProgress() && !confirm("Changer de programme effacera la séance en cours (séries non enregistrées). Continuer ?")) {
+    return false;
+  }
+  S.activeProgramId = id;
+  syncProgram();
+  cur.sessionIdx = 0; cur.entries = {}; cur.notes = {}; cur.effort = {};
+  cur.bloc = suggestedBloc(); // le bloc suggéré dépend du programme (noForce, sessionsPerWeek) : on réaligne la sélection
+  clearDraft();
+  save();
+  renderSeance(); renderReglages();
+  toast("Programme actif : " + activeProgram().name);
+  return true;
+}
+$("#programSelect").onchange = e => {
+  if (!activateProgram(e.target.value)) {
+    e.target.value = S.activeProgramId; // annulation : on remet le sélecteur en place
+  }
+};
+$("#spwSave").onclick = () => {
+  const v = parseInt($("#spwInput").value, 10);
+  if (!v || v < 1 || v > 7) { toast("Valeur invalide (1 à 7)"); return; }
+  activeProgram().sessionsPerWeek = v;
+  save();
+  renderSeance(); // la semaine de cycle affichée en haut dépend de sessionsPerWeek
+  toast("Rythme : " + v + " séance" + (v>1?"s":"") + " / semaine");
+};
+
+/* ==================== CRÉATEUR DE PROGRAMMES ====================
+   Écran hors barre de navigation, accessible depuis Réglages. Trois niveaux :
+   liste des programmes -> éditeur de programme -> éditeur de séance (+ modal picker EXODB).
+   Le CRUD passe par des fonctions nommées (testables en headless) ; l'UI ne fait que les appeler.
+   Règles de sécurité :
+   - le programme par défaut n'est JAMAIS modifiable (le reseed l'écraserait) ;
+   - pas de modification structurelle du programme ACTIF pendant une séance en cours ;
+   - toute suppression archive les noms (S.nameArchive) pour garder l'Historique lisible. */
+function uid(prefix) { return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+let builderView = { mode:"programs", programId:null, sessionId:null };
+
+function showScreen(name) {
+  $$("nav button").forEach(x => x.classList.toggle("on", x.dataset.scr === name));
+  $$(".screen").forEach(x => x.classList.remove("active"));
+  $("#scr-" + name).classList.add("active");
+  // Même contrat que la barre de navigation : l'écran montré est toujours re-rendu à jour
+  if (name === "histo") renderHisto();
+  if (name === "prog") renderProg();
+  if (name === "reglages") renderReglages();
+}
+function builderProgram() { return S.programs.find(p => p.id === builderView.programId) || null; }
+function builderSession() {
+  const p = builderProgram();
+  return p ? (p.sessions.find(s => s.id === builderView.sessionId) || null) : null;
+}
+function canEditStructure(p) {
+  if (p.id === DEFAULT_PROGRAM_ID) { toast("Le programme par défaut n'est pas modifiable — crée ton propre programme."); return false; }
+  if (p.id === S.activeProgramId && hasProgress()) {
+    toast("Termine ou abandonne la séance en cours avant de modifier le programme actif.");
+    return false;
+  }
+  return true;
+}
+function afterStructureChange(p) {
+  save();
+  if (p.id === S.activeProgramId) { syncProgram(); renderSeance(); } // reflet immédiat côté Séance
+  renderBuilder();
+}
+
+/* ---- CRUD (fonctions nommées, testables) ---- */
+function createProgram(name) {
+  name = (name || "").trim();
+  if (!name) { toast("Donne un nom au programme."); return null; }
+  const p = { id: uid("u"), name, sessions: [], sessionsPerWeek: 3 };
+  S.programs.push(p);
+  save();
+  return p;
+}
+function deleteProgram(programId) {
+  const p = S.programs.find(x => x.id === programId);
+  if (!p || p.id === DEFAULT_PROGRAM_ID) return false;
+  if (p.id === S.activeProgramId && hasProgress()) { toast("Termine ou abandonne la séance en cours d'abord."); return false; }
+  p.sessions.forEach(archiveSessionNames);
+  S.programs = S.programs.filter(x => x.id !== programId);
+  if (S.activeProgramId === programId) {
+    S.activeProgramId = DEFAULT_PROGRAM_ID;
+    syncProgram();
+    cur.sessionIdx = 0; cur.entries = {}; cur.notes = {}; cur.effort = {};
+    clearDraft();
+    renderSeance(); renderReglages();
+  }
+  save();
+  return true;
+}
+function renameProgram(programId, name) {
+  const p = S.programs.find(x => x.id === programId);
+  name = (name || "").trim();
+  if (!p || p.id === DEFAULT_PROGRAM_ID || !name) return false;
+  p.name = name; save(); renderReglages();
+  return true;
+}
+function addSessionTo(programId, name) {
+  const p = S.programs.find(x => x.id === programId);
+  if (!p || !canEditStructure(p)) return null;
+  name = (name || "").trim();
+  if (!name) { toast("Donne un nom à la séance."); return null; }
+  const sess = { id: uid("us"), name, exos: [] };
+  p.sessions.push(sess);
+  afterStructureChange(p);
+  return sess;
+}
+function deleteSession(programId, sessionId) {
+  const p = S.programs.find(x => x.id === programId);
+  if (!p || !canEditStructure(p)) return false;
+  const sess = p.sessions.find(s => s.id === sessionId);
+  if (!sess) return false;
+  archiveSessionNames(sess);
+  p.sessions = p.sessions.filter(s => s.id !== sessionId);
+  afterStructureChange(p);
+  return true;
+}
+function renameSession(programId, sessionId, name) {
+  const p = S.programs.find(x => x.id === programId);
+  const sess = p && p.sessions.find(s => s.id === sessionId);
+  name = (name || "").trim();
+  if (!p || p.id === DEFAULT_PROGRAM_ID || !sess || !name) return false;
+  sess.name = name; save(); renderBuilder();
+  return true;
+}
+function moveSession(programId, sessionId, dir) {
+  const p = S.programs.find(x => x.id === programId);
+  if (!p || !canEditStructure(p)) return false;
+  const i = p.sessions.findIndex(s => s.id === sessionId);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= p.sessions.length) return false;
+  [p.sessions[i], p.sessions[j]] = [p.sessions[j], p.sessions[i]];
+  afterStructureChange(p);
+  return true;
+}
+function addExoToSession(programId, sessionId, exo) {
+  const p = S.programs.find(x => x.id === programId);
+  const sess = p && p.sessions.find(s => s.id === sessionId);
+  if (!p || !sess || !exo || !canEditStructure(p)) return false;
+  if (sess.exos.some(e => e.id === exo.id)) { toast("Cet exercice (même matériel) est déjà dans la séance."); return false; }
+  sess.exos.push(exo);
+  afterStructureChange(p);
+  return true;
+}
+function deleteExo(programId, sessionId, exoId) {
+  const p = S.programs.find(x => x.id === programId);
+  const sess = p && p.sessions.find(s => s.id === sessionId);
+  if (!p || !sess || !canEditStructure(p)) return false;
+  const exo = sess.exos.find(e => e.id === exoId);
+  if (!exo) return false;
+  S.nameArchive.exos[exo.id] = exo.name; // l'historique éventuel garde un nom lisible
+  sess.exos = sess.exos.filter(e => e.id !== exoId);
+  afterStructureChange(p);
+  return true;
+}
+function moveExo(programId, sessionId, exoId, dir) {
+  const p = S.programs.find(x => x.id === programId);
+  const sess = p && p.sessions.find(s => s.id === sessionId);
+  if (!p || !sess || !canEditStructure(p)) return false;
+  const i = sess.exos.findIndex(e => e.id === exoId);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= sess.exos.length) return false;
+  [sess.exos[i], sess.exos[j]] = [sess.exos[j], sess.exos[i]];
+  afterStructureChange(p);
+  return true;
+}
+function makeFreeExo(name, mat, role, muscle, opts = {}) {
+  name = (name || "").trim();
+  if (!name || !MATERIELS[mat] || !MUSCLES[muscle]) return null;
+  role = ["poly","iso","gainage"].includes(role) ? role : "iso";
+  const exo = { id: uid("uf"), name, mat, role, oneRm: null, t: targetsFromRole(role),
+                freeM: { prim: [muscle], sec: [] } }; // muscles portés par l'exo (hors base)
+  if (mat === "pdc") { exo.type = "pdc"; ["force","hyp","end"].forEach(b => exo.t[b].c = 0); }
+  else if (mat === "assist") { exo.type = "assist"; exo.rack = "lb"; }
+  else {
+    exo.type = "charge";
+    if (mat === "barre" || mat === "plate") exo.incr = opts.incr || 1;
+    else exo.rack = mat;
+  }
+  if (mat === "dbPair") exo.warn = "Charge = total des 2 haltères.";
+  return exo;
+}
+function archiveSessionNames(sess) {
+  S.nameArchive.sessions[sess.id] = sess.name;
+  sess.exos.forEach(e => S.nameArchive.exos[e.id] = e.name);
+}
+
+/* ---- Garde-fous d'ordre (étape 4) : AVERTISSEMENTS, jamais de blocage ----
+   Fondement : l'ordre des exercices n'affecte pas l'hypertrophie (Nunes et al. 2021, méta-analyse),
+   mais la force progresse davantage sur ce qui est fait en premier (principe de priorité), la
+   technique des mouvements lourds exige de la fraîcheur, et fatiguer le tronc tôt dégrade la
+   stabilisation de tout le reste. D'où deux règles SOUPLES :
+   1) polyarticulaires avant isolations ; 2) gainage en fin de séance.
+   Le seed lui-même déroge une fois à la règle 1 (dips après élévations latérales) — preuve
+   qu'un avertissement pédagogique est le bon niveau d'intervention, pas une interdiction. */
+/* Consigne de calibrage d'un exercice sans 1RM, ADAPTÉE AU BLOC en cours.
+   Force/Hypertrophie : viser la fourchette du bloc suffit — toute série de 1 à 15 reps proche
+   de l'échec alimente l'estimation (Epley/Brzycki, précises jusqu'à ~12-15 reps).
+   Endurance : cas particulier — les séries de 20+ reps sont HORS plage d'estimation (le moteur
+   ignore r>15), il faut le dire honnêtement plutôt que laisser croire au calibrage automatique. */
+function testAdviceHtml(bloc) {
+  if (bloc === "end") return `💡 Nouvel exercice, charge inconnue : démarre léger et ajuste pour tenir 20-25 reps. Le 1RM se calibrera automatiquement aux blocs plus lourds — ou fais une première série de 12-15 reps si tu veux le calibrer dès maintenant.`;
+  const fourchette = bloc === "force" ? "5-8" : "8-12";
+  return `💡 Nouvel exercice, charge inconnue : échauffe-toi, puis cherche une charge tenable ${fourchette} reps propres en gardant 1-2 reps en réserve. Le 1RM se calcule tout seul à l'enregistrement de la séance.`;
+}
+
+function exoRole(exo) {
+  if (exo.role) return exo.role;                       // exos créés (base ou libres)
+  const db = dbEntryForExo(exo.id);
+  if (db) return db.role;                              // exos seed via le mapping
+  return exo.type === "pdc" ? "gainage" : "iso";       // repli prudent
+}
+function orderGroup(exo) {
+  const r = exoRole(exo);
+  if (r === "bigPoly" || r === "poly") return 0;       // polyarticulaires
+  if (r === "gainage" || r === "gainageTps") return 2; // gainage
+  return 1;                                            // isolations, mollets, santé
+}
+function analyzeOrder(sess) {
+  const warns = [];
+  const groups = sess.exos.map(orderGroup);
+  sess.exos.forEach((exo, i) => {
+    /* Exemption : une isolation placée AVANT par choix de priorité (assistant ou utilisateur,
+       flag priority) applique le principe de priorité — travailler frais ce qui compte le plus,
+       même une isolation. On ne la compte pas comme violation d'ordre. */
+    if (groups[i] === 0 && sess.exos.slice(0, i).some((e, j) => groups[j] === 1 && !e.priority)) {
+      warns.push(`« ${exo.name} » (polyarticulaire) arrive après des isolations. Les mouvements lourds se font frais : technique plus sûre, et la force progresse surtout sur ce qui est placé en premier.`);
+    }
+    if (groups[i] === 2 && groups.slice(i + 1).some(g => g !== 2)) {
+      warns.push(`« ${exo.name} » (gainage) n'est pas en fin de séance. Un tronc fatigué stabilise moins bien tous les exercices qui suivent.`);
+    }
+  });
+  return warns.slice(0, 3); // 3 messages max : au-delà, le réordonnancement dit tout
+}
+function reorderSession(programId, sessionId) {
+  const p = S.programs.find(x => x.id === programId);
+  const sess = p && p.sessions.find(s => s.id === sessionId);
+  if (!p || !sess || !canEditStructure(p)) return false;
+  // Tri STABLE par groupe : l'ordre relatif choisi par l'utilisateur est préservé dans chaque groupe
+  sess.exos = sess.exos.map((e, i) => [orderGroup(e), i, e])
+    .sort((a, b) => a[0] - b[0] || a[1] - b[1])
+    .map(x => x[2]);
+  afterStructureChange(p);
+  return true;
+}
+
+/* ---- Volume hebdomadaire par muscle (étape 5) ----
+   Comptage fractionnel : série sur muscle primaire = 1, secondaire = 0,5 (méthode des
+   méta-régressions récentes, Pelland 2024). Référence : séries du bloc HYPERTROPHIE (le bloc
+   « croissance », stable d'une semaine à l'autre). Multiplicateur hebdomadaire :
+   sessionsPerWeek / nombre de séances définies (full body 1 séance × 2 passages -> ×2).
+   Repères affichés : ~10-20 séries/muscle/semaine (Schoenfeld 2017 ; Baz-Valle 2022 : au-delà
+   de 20, pas de bénéfice net). Sous 10 : zone maintien/reprise — pas une erreur en soi. */
+const VOL_LOW = 10, VOL_HIGH = 20;
+function exoMuscles(exo) {
+  const db = dbEntryForExo(exo.id);
+  if (db) return { prim: db.prim, sec: db.sec || [] };
+  if (exo.freeM) return { prim: exo.freeM.prim || [], sec: exo.freeM.sec || [] };
+  return { prim: [], sec: [] };
+}
+function sessionVolumeByMuscle(sess) {
+  const acc = {};
+  sess.exos.forEach(exo => {
+    const sets = (exo.t && exo.t.hyp && exo.t.hyp.s) || 3;
+    const { prim, sec } = exoMuscles(exo);
+    prim.forEach(m => acc[m] = (acc[m] || 0) + sets);
+    sec.forEach(m => acc[m] = (acc[m] || 0) + sets * 0.5);
+  });
+  return acc;
+}
+function weeklyVolumeByMuscle(program) {
+  if (!program.sessions.length) return {};
+  const mult = (program.sessionsPerWeek || program.sessions.length) / program.sessions.length;
+  const acc = {};
+  program.sessions.forEach(s => Object.entries(sessionVolumeByMuscle(s))
+    .forEach(([m, v]) => acc[m] = (acc[m] || 0) + v));
+  Object.keys(acc).forEach(m => acc[m] = Math.round(acc[m] * mult * 10) / 10);
+  return acc;
+}
+
+/* ---- Échauffement ciblé & étirements générés (étape 7) ----
+   Étirements : composés depuis les muscles PRIMAIRES de la séance (table STRETCHES), l'intensité
+   restant pilotée par COOLDOWN_BLOC. Les séances seed gardent leurs textes historiques (COOLDOWN).
+   Échauffement : la consigne du bloc (WARMUP) + une ligne de mobilité articulaire selon les
+   catégories présentes dans la séance. */
+const MUSCLE_CAT = { quads:"legs", ischios:"legs", fessiers:"legs", mollets:"legs",
+  pecs:"push", deltA:"push", deltL:"push", triceps:"push",
+  dosL:"pull", dosE:"pull", deltP:"pull", biceps:"pull", abdos:"core", lomb:"core" };
+function sessionCats(sess) {
+  const cats = new Set();
+  sess.exos.forEach(e => {
+    const db = dbEntryForExo(e.id);
+    if (db) cats.add(db.cat);
+    else exoMuscles(e).prim.forEach(m => MUSCLE_CAT[m] && cats.add(MUSCLE_CAT[m]));
+  });
+  return cats;
+}
+function generatedWarmupFocus(sess) {
+  const cats = sessionCats(sess);
+  const parts = [];
+  if (cats.has("legs")) parts.push("hanches, genoux et chevilles (squats au poids du corps, fentes légères)");
+  if (cats.has("push") || cats.has("pull")) parts.push("épaules et coudes (rotations d'épaules, tirages très légers ou élastique)");
+  if (cats.has("core")) parts.push("colonne (chat-vache, rotations douces du buste)");
+  return parts.length ? ` Mobilité ciblée pour cette séance : ${parts.join(" ; ")}.` : "";
+}
+function generatedCooldown(sess) {
+  const mus = [];
+  sess.exos.forEach(e => exoMuscles(e).prim.forEach(m => { if (!mus.includes(m)) mus.push(m); }));
+  const items = mus.map(m => STRETCHES[m]).filter(Boolean);
+  return items.length ? "Étirements ciblés — " + items.join(" · ") : "Étirements légers des muscles travaillés.";
+}
+
+/* ---- Pont de 1RM seed -> base (étape 7) ----
+   Un exercice créé depuis la base démarre normalement "à tester". Mais si le MÊME mouvement
+   existe dans le programme par défaut avec un historique (ex. ta presse), on initialise le 1RM
+   du nouvel exercice depuis le 1RM courant du jumeau seed — pleine valeur si le matériel
+   correspond, décote de 10% sinon (une presse à plateau et un développé haltères ne donnent pas
+   les mêmes charges). Simple ESTIMATION INITIALE (champ oneRm) : le moteur recalibre dès les
+   premières séances, exactement comme pour les exercices seed. */
+function seedRmBridge(dbId, mat, exo) {
+  if (exo.type === "pdc" || exo.noRm) return;
+  if (typeof S === "undefined" || !S || !S.programs) return; // appel avant init de l'état : pas de pont
+  const seedId = Object.keys(SEED_TO_DB).find(k => SEED_TO_DB[k] === dbId);
+  if (!seedId) return;
+  const seedExo = allUniqueExos().find(e => e.id === seedId);
+  const rm = (S.oneRmOverride && S.oneRmOverride[seedId]) || (seedExo && seedExo.oneRm) || null;
+  if (!rm) return;
+  const sameMat = seedExo && (
+    (seedExo.rack && seedExo.rack === exo.rack) ||
+    (seedExo.incr != null && !seedExo.rack && (mat === "barre" || mat === "plate"))
+  );
+  exo.oneRm = Math.round(rm * (sameMat ? 1 : 0.9) * 10) / 10;
+}
+
+/* ==================== ASSISTANT DE CRÉATION (étape 6) ====================
+   Générateur DÉCLARATIF : structure choisie par (niveau, jours), séances remplies depuis
+   EXODB selon le template rétro-ingéniéré du seed (poly -> iso -> gainage), matériel choisi
+   par un ordre de préférence dépendant du niveau, priorités musculaires appliquées par le
+   principe de priorité (exercice en tête + isolation ajoutée). Le résultat est un BROUILLON
+   ouvert dans l'éditeur : tout est modifiable, rien n'est activé automatiquement.
+   Grand débutant : full body, quasi pas d'isolation (les progrès initiaux sont neuromoteurs,
+   les polyarticulaires couvrent tout le corps), gainage conservé (protection du dos), biais
+   machines/gobelet (technique d'abord), et drapeau noForce (cycle Hyp/Hyp/End). */
+const WIZ_LEVELS = {
+  gd:      { label:"Grand débutant",   matBias:["lb","plate","assist","dbSingle","dbPair","pdc","barre"], noForce:true  },
+  reprise: { label:"Reprise / débutant", matBias:["lb","plate","dbPair","dbSingle","assist","pdc","barre"], noForce:false },
+  inter:   { label:"Intermédiaire",    matBias:["barre","dbPair","lb","plate","dbSingle","assist","pdc"], noForce:false }
+};
+function wpick(dbId, level) {
+  const m = EXODB.find(e => e.id === dbId);
+  if (!m) return null;
+  const mat = WIZ_LEVELS[level].matBias.find(mt => m.mat.includes(mt)) || m.mat[0];
+  return makeExoFromDb(dbId, mat, { incr: 1 });
+}
+/* Séances-types : listes d'ids EXODB par (type de séance, niveau). */
+const WIZ_TEMPLATES = {
+  fullbody: {
+    gd:      ["presse","devmachine","tiragev","tirageh","crunch","superman"],
+    reprise: ["presse","sdtroumain","devcouche","tiragev","elevlat","crunch","superman"],
+    inter:   ["squat","devcouche","rowingbarre","devmilitaire","curlhalt","tricepspoulie","crunch","superman"]
+  },
+  bas: {
+    reprise: ["presse","hipthrust","legcurl","molletsdeb","crunch","superman"],
+    inter:   ["squat","hipthrust","legext","legcurl","molletsdeb","crunch","superman"]
+  },
+  haut: {
+    reprise: ["devcouche","tiragev","devmilitaire","tirageh","facepull","curlhalt","tricepspoulie"],
+    inter:   ["devcouche","rowingbarre","devmilitaire","tiragev","facepull","curlhalt","tricepspoulie","elevlat"]
+  },
+  push: {
+    reprise: ["devcouche","devinclineh","devmilitaire","elevlat","tricepspoulie","relevesgenoux"],
+    inter:   ["devcouche","devinclineh","devmilitaire","elevlat","ecartepoulie","tricepspoulie","relevesgenoux"]
+  },
+  pull: {
+    reprise: ["tractions","tirageh","tiragev","facepull","curlhalt","planche"],
+    inter:   ["tractions","rowingbarre","tiragev","facepull","curlhalt","curlincline","planche"]
+  },
+  legs: {
+    reprise: ["presse","hipthrust","legcurl","molletsdeb","crunch","superman"],
+    inter:   ["squat","sdtroumain","legext","legcurl","molletsdeb","crunch","superman"]
+  }
+};
+/* Structures possibles pour (niveau, jours) : la PREMIÈRE est la recommandée, les suivantes
+   sont des alternatives légitimes (à volume égal, la fréquence importe peu — Grgic 2018 — donc
+   un intermédiaire peut par ex. préférer un full body 3× en phase de maintien).
+   Grand débutant : plafond 3 jours (NSCA/ACSM : novice = 2-3 jours full body non consécutifs),
+   et conseil de bascule vers "Reprise" après ~6 semaines (un cycle complet). */
+function wizardStructures(level, days) {
+  const NAMES = { fullbody:["Full body"], hautbas:["Bas du corps","Haut du corps"],
+                  hautbas2:["Bas du corps","Haut du corps"],
+                  ppl:["Push (pousser)","Pull (tirer)","Jambes"], ppl2:["Push (pousser)","Pull (tirer)","Jambes"] };
+  const LABELS = { fullbody:"Full body", hautbas:"Haut / Bas", hautbas2:"Haut / Bas ×2", ppl:"PPL", ppl2:"PPL ×2" };
+  const mk = (kind, spw, why) => ({ kind, names: NAMES[kind], label: LABELS[kind], spw, why });
+  if (level === "gd") {
+    const d = Math.min(days, 3);
+    return [mk("fullbody", d, "Full body " + d + "×/semaine, jours non consécutifs : la recommandation NSCA/ACSM pour un novice — tout le corps à chaque passage, charges légères, récupération large. Vise ~6 semaines (un cycle complet), puis reviens dans l'assistant en « Reprise / débutant ».")];
+  }
+  if (days === 1) return [mk("fullbody", 1, "Une seule séance par semaine : le full body est la seule structure qui couvre tout.")];
+  if (days === 2) {
+    const fb = mk("fullbody", 2, "Full body 2× : couvre tout le corps avec une récupération large — la référence des recommandations générales.");
+    const hb = mk("hautbas", 2, "Haut / Bas : séances plus courtes et ciblées, chaque muscle une fois par semaine.");
+    return level === "inter" ? [hb, fb] : [fb, hb];
+  }
+  if (days === 3) {
+    const fb = mk("fullbody", 3, "Full body 3× : les gestes fondamentaux répétés souvent — idéal pour apprendre, et tout aussi valable en phase de maintien pour un pratiquant confirmé (à volume égal, la fréquence importe peu).");
+    const ppl = mk("ppl", 3, "PPL : chaque séance concentre le volume sur un schéma moteur, à l'image du programme par défaut.");
+    return level === "inter" ? [ppl, fb] : [fb, ppl];
+  }
+  if (days === 4) return [mk("hautbas2", 4, "Haut / Bas ×2 : chaque muscle travaillé 2×/semaine, volume réparti en séances digestes.")];
+  return [mk("ppl2", days, "PPL ×2 : à volume élevé, mieux vaut répartir (au-delà de ~10 séries productives par muscle et par séance, le surplus rend moins).")];
+}
+function buildWizardProgram(opts) {
+  const level = WIZ_LEVELS[opts.level] ? opts.level : "reprise";
+  const days = Math.min(6, Math.max(1, opts.days || 3));
+  const sts = wizardStructures(level, days);
+  const st = sts[Math.min(opts.structIdx || 0, sts.length - 1)];
+  const tplKeys = { fullbody:["fullbody"], hautbas:["bas","haut"], hautbas2:["bas","haut"],
+                    ppl:["push","pull","legs"], ppl2:["push","pull","legs"] }[st.kind];
+  const lvlKey = k => WIZ_TEMPLATES[k][level] ? level : "reprise"; // fullbody seul a une variante gd
+  const sessions = tplKeys.map((k, i) => ({
+    id: uid("us"),
+    name: st.names[i],
+    exos: WIZ_TEMPLATES[k][lvlKey(k)].map(dbId => wpick(dbId, level)).filter(Boolean)
+  }));
+  // Priorités musculaires (principe de priorité) : exercice ciblé placé EN TÊTE de sa séance,
+  // + une isolation ajoutée si le muscle n'a aucun exercice primaire dans le programme.
+  (opts.priorities || []).slice(0, 2).forEach(mu => {
+    let placed = false;
+    sessions.forEach(sess => {
+      const i = sess.exos.findIndex(e => exoMuscles(e).prim.includes(mu));
+      if (i > 0) { const [e] = sess.exos.splice(i, 1); e.priority = true; sess.exos.unshift(e); placed = true; }
+      else if (i === 0) { sess.exos[0].priority = true; placed = true; }
+    });
+    const iso = EXODB.find(e => (e.role==="iso"||e.role==="isoDelicat"||e.role==="mollets") && e.prim.includes(mu));
+    if (iso) {
+      // séance la plus pertinente = celle qui touche déjà ce muscle (ou la 1re)
+      const target = sessions.find(s => s.exos.some(e => {
+        const ms = exoMuscles(e); return ms.prim.includes(mu) || ms.sec.includes(mu);
+      })) || sessions[0];
+      if (!target.exos.some(e => dbEntryForExo(e.id)?.id === iso.id)) {
+        const exo = wpick(iso.id, level);
+        // insérée avant le gainage (ordre poly -> iso -> gainage respecté)
+        const gi = target.exos.findIndex(e => orderGroup(e) === 2);
+        if (exo) { gi === -1 ? target.exos.push(exo) : target.exos.splice(gi, 0, exo); placed = true; }
+      }
+    }
+  });
+  const name = st.names.length === 1
+    ? `${st.names[0]} — ${WIZ_LEVELS[level].label}`
+    : `${st.kind.startsWith("ppl") ? "PPL" : "Haut / Bas"}${st.spw > st.names.length ? " ×2" : ""} — ${WIZ_LEVELS[level].label}`;
+  const prog = { id: uid("u"), name, sessions, sessionsPerWeek: st.spw };
+  if (WIZ_LEVELS[level].noForce) { prog.noForce = true; prog.cyclePlan = [...CYCLE_GD]; }
+  return prog;
+}
+function archivedSessionName(id) { return (S.nameArchive && S.nameArchive.sessions[id]) || "Séance supprimée"; }
+function archivedExoName(id) { return (S.nameArchive && S.nameArchive.exos[id]) || id; }
+
+/* ---- Rendu des 3 niveaux ---- */
+function renderBuilder() {
+  const el = $("#builderBody");
+  if (builderView.mode === "volume" && !builderProgram()) builderView.mode = "programs";
+  if (builderView.mode === "program" && !builderProgram()) builderView.mode = "programs";
+  if (builderView.mode === "session" && !builderSession()) builderView.mode = "program";
+  if (builderView.mode === "programs") return renderBuilderPrograms(el);
+  if (builderView.mode === "wizard") return renderBuilderWizard(el);
+  if (builderView.mode === "volume") return renderBuilderVolume(el);
+  if (builderView.mode === "program") return renderBuilderProgram(el);
+  return renderBuilderSession(el);
+}
+function renderBuilderPrograms(el) {
+  el.innerHTML = `<button class="b-back" id="bBackReglages">← Réglages</button>
+    <h2 style="margin:4px 0 12px;">Mes programmes</h2>
+    <div id="bProgList"></div>
+    <button class="b-add" id="bWizardBtn">🧭 Assistant : composer un programme pour moi</button>
+    <div class="b-inline"><input type="text" id="bNewProgName" placeholder="Nom du nouveau programme" maxlength="60">
+    <button class="btn" id="bNewProgBtn">Créer</button></div>
+    <p style="color:var(--muted);font-size:12.5px;">Le programme par défaut n'est pas modifiable (il est resynchronisé par les mises à jour de l'app). Crée ton propre programme, puis compose ses séances depuis la base d'exercices.</p>`;
+  const list = $("#bProgList");
+  S.programs.forEach(p => {
+    const row = document.createElement("div");
+    row.className = "b-row" + (p.id === DEFAULT_PROGRAM_ID ? " locked" : "");
+    const active = p.id === S.activeProgramId ? " · actif ✓" : "";
+    row.innerHTML = `<div class="grow"><div class="nm">${escHtml(p.name)}</div>
+      <div class="sub">${p.sessions.length} séance${p.sessions.length>1?"s":""} · ${p.sessionsPerWeek || p.sessions.length || "?"}×/sem${active}</div></div>`
+      + `<button class="b-vol" title="Volume par muscle">📊</button>`
+      + (p.id === DEFAULT_PROGRAM_ID
+         ? `<button disabled title="Non modifiable">🔒</button>`
+         : `<button class="b-edit">✏️</button><button class="warn b-del">🗑</button>`);
+    row.querySelector(".b-vol").onclick = () => { builderView = { mode:"volume", programId:p.id, sessionId:null, from:"programs" }; renderBuilder(); };
+    if (p.id !== DEFAULT_PROGRAM_ID) {
+      row.querySelector(".b-edit").onclick = () => { builderView = { mode:"program", programId:p.id, sessionId:null }; renderBuilder(); };
+      row.querySelector(".b-del").onclick = () => {
+        if (confirm(`Supprimer le programme « ${p.name} » ? Son historique de séances reste conservé.`)) {
+          if (deleteProgram(p.id)) { toast("Programme supprimé"); renderBuilder(); }
+        }
+      };
+    }
+    list.appendChild(row);
+  });
+  $("#bBackReglages").onclick = () => showScreen("reglages");
+  $("#bWizardBtn").onclick = () => { builderView = { mode:"wizard", programId:null, sessionId:null }; renderBuilder(); };
+  $("#bNewProgBtn").onclick = () => {
+    const p = createProgram($("#bNewProgName").value);
+    if (p) { builderView = { mode:"program", programId:p.id, sessionId:null }; renderBuilder(); }
+  };
+}
+let wizardState = { level:null, days:null, priorities:[], structIdx:0 };
+function renderBuilderWizard(el) {
+  const lvlPills = Object.entries(WIZ_LEVELS).map(([k,v]) =>
+    `<button class="pill ${wizardState.level===k?"on":""}" data-lvl="${k}">${v.label}</button>`).join("");
+  const maxDays = wizardState.level === "gd" ? 3 : 6; // novice : 2-3 j full body (NSCA/ACSM)
+  const dayPills = [1,2,3,4,5,6].filter(d => d <= maxDays).map(d =>
+    `<button class="pill ${wizardState.days===d?"on":""}" data-days="${d}">${d} j</button>`).join("");
+  const prioPills = Object.entries(MUSCLES).map(([k,v]) =>
+    `<button class="pill ${wizardState.priorities.includes(k)?"on":""}" data-prio="${k}">${v}</button>`).join("");
+  const showPrio = wizardState.level && wizardState.level !== "gd";
+  let preview = "";
+  if (wizardState.level && wizardState.days) {
+    const sts = wizardStructures(wizardState.level, wizardState.days);
+    if (wizardState.structIdx >= sts.length) wizardState.structIdx = 0;
+    const st = sts[wizardState.structIdx];
+    const structPills = sts.length > 1
+      ? `<div class="pillbar" style="margin:8px 0 0;">${sts.map((x,i) =>
+          `<button class="pill ${i===wizardState.structIdx?"on":""}" data-struct="${i}">${x.label}${i===0?" (recommandée)":""}</button>`).join("")}</div>`
+      : "";
+    preview = `<div class="b-orderbox" style="border-color:var(--line);background:var(--surface2);">
+      <div style="font-weight:700;font-size:13.5px;margin-bottom:4px;">Structure : ${st.names.join(" · ")} — rythme ${st.spw}/sem</div>
+      <div style="color:var(--muted);font-size:12.5px;line-height:1.5;">${st.why}${wizardState.level==="gd" ? " Cycle adapté : Endurance (sem. 1-2, séries longues et légères = beaucoup de répétitions du geste) → Hypertrophie (3-4) → Endurance (5-6). Pas de bloc Force : les charges lourdes attendront une technique solide." : ""}</div>
+      ${structPills}
+    </div>`;
+  }
+  el.innerHTML = `<button class="b-back" id="bWizBack">← Mes programmes</button>
+    <h2 style="margin:4px 0 10px;">🧭 Assistant</h2>
+    <p style="color:var(--muted);font-size:13px;margin:0 0 6px;">Ton niveau :</p>
+    <div class="pillbar">${lvlPills}</div>
+    <p style="color:var(--muted);font-size:13px;margin:0 0 6px;">Jours d'entraînement par semaine :</p>
+    <div class="pillbar">${dayPills}</div>
+    ${showPrio ? `<p style="color:var(--muted);font-size:13px;margin:0 0 6px;">Muscles prioritaires (2 max, optionnel) — placés en tête de séance avec une isolation en plus :</p>
+    <div class="pillbar">${prioPills}</div>` : ""}
+    ${preview}
+    <button class="btn" id="bWizGo" style="width:100%;height:46px;" ${wizardState.level && wizardState.days ? "" : "disabled"}>Générer le programme (modifiable ensuite)</button>`;
+  $$("#builderBody .pill[data-lvl]").forEach(b => b.onclick = () => {
+    wizardState.level = b.dataset.lvl;
+    wizardState.structIdx = 0;
+    if (wizardState.level === "gd") {
+      wizardState.priorities = [];
+      if (wizardState.days > 3) wizardState.days = 3; // plafond novice
+    }
+    renderBuilder();
+  });
+  $$("#builderBody .pill[data-days]").forEach(b => b.onclick = () => { wizardState.days = parseInt(b.dataset.days,10); wizardState.structIdx = 0; renderBuilder(); });
+  $$("#builderBody .pill[data-struct]").forEach(b => b.onclick = () => { wizardState.structIdx = parseInt(b.dataset.struct,10); renderBuilder(); });
+  $$("#builderBody .pill[data-prio]").forEach(b => b.onclick = () => {
+    const mu = b.dataset.prio;
+    const i = wizardState.priorities.indexOf(mu);
+    if (i >= 0) wizardState.priorities.splice(i, 1);
+    else if (wizardState.priorities.length < 2) wizardState.priorities.push(mu);
+    renderBuilder();
+  });
+  $("#bWizBack").onclick = () => { builderView = { mode:"programs", programId:null, sessionId:null }; renderBuilder(); };
+  $("#bWizGo").onclick = () => {
+    const prog = buildWizardProgram({ level: wizardState.level, days: wizardState.days, priorities: wizardState.priorities, structIdx: wizardState.structIdx });
+    S.programs.push(prog);
+    save();
+    toast("Programme généré — brouillon modifiable");
+    builderView = { mode:"program", programId: prog.id, sessionId:null };
+    renderBuilder();
+  };
+}
+function renderBuilderVolume(el) {
+  const p = builderProgram();
+  const vol = weeklyVolumeByMuscle(p);
+  const spw = p.sessionsPerWeek || p.sessions.length;
+  const mult = p.sessions.length ? spw / p.sessions.length : 0;
+  // Détail auditable : contributions par exercice pour chaque muscle
+  const detail = {};
+  p.sessions.forEach(sess => sess.exos.forEach(exo => {
+    const sets = (exo.t && exo.t.hyp && exo.t.hyp.s) || 3;
+    const { prim, sec } = exoMuscles(exo);
+    prim.forEach(m => (detail[m] = detail[m] || []).push(`${exo.name} : ${sets} directes`));
+    sec.forEach(m => (detail[m] = detail[m] || []).push(`${exo.name} : ${sets} × 0,5 indirectes = ${sets*0.5}`));
+  }));
+  const rows = Object.entries(MUSCLES).map(([key, label]) => {
+    const v = vol[key] || 0;
+    const zone = v === 0 ? "zero" : v < VOL_LOW ? "low" : v <= VOL_HIGH ? "ok" : "high";
+    const pct = Math.min(100, v / 25 * 100);
+    const tag = zone === "zero" ? "non travaillé" : zone === "low" ? "maintien / reprise" : zone === "ok" ? "optimal" : "au-delà du repère";
+    const det = (detail[key] || []).map(d => `<div>· ${escHtml(d)}</div>`).join("")
+      + (detail[key] ? `<div style="margin-top:3px;">soit ${((vol[key]||0)/ (mult||1)).toLocaleString("fr-FR")} séries × ${mult.toLocaleString("fr-FR")} (rythme ${spw}/sem ÷ ${p.sessions.length} séance${p.sessions.length>1?"s":""}) = <b>${v.toLocaleString("fr-FR")}</b></div>` : "");
+    return `<div class="vol-row" data-mu="${key}">
+      <div class="vol-head"><span>${label}</span><span class="num vol-val ${zone}">${v ? v.toLocaleString("fr-FR") : "—"} <small>${tag}</small></span></div>
+      <div class="vol-track"><div class="vol-lo" style="left:${VOL_LOW/25*100}%"></div><div class="vol-hi" style="left:${VOL_HIGH/25*100}%"></div><div class="vol-bar ${zone}" style="width:${pct}%"></div></div>
+      ${det ? `<div class="vol-detail" style="display:none;">${det}</div>` : ""}
+    </div>`;
+  }).join("");
+  const backLbl = builderView.from === "program" ? escHtml(p.name) : "Mes programmes";
+  el.innerHTML = `<button class="b-back" id="bBackVol">← ${backLbl}</button>
+    <h2 style="margin:4px 0 4px;">📊 ${escHtml(p.name)}</h2>
+    <p style="color:var(--muted);font-size:12.5px;margin:0 0 12px;">Séries hebdomadaires par muscle — ${p.sessions.length} séance${p.sessions.length>1?"s":""} × rythme ${spw}/sem, référence bloc Hypertrophie. Directes = 1, indirectes (muscle secondaire) = 0,5. <b>Tape une ligne pour voir le calcul.</b></p>
+    ${rows}
+    <p style="color:var(--muted);font-size:12px;line-height:1.5;margin-top:12px;">Repère : ~${VOL_LOW}-${VOL_HIGH} séries/muscle/semaine pour progresser (Schoenfeld 2017 ; Baz-Valle 2022). Sous ${VOL_LOW} : maintien ou reprise — un choix légitime, pas une erreur. Au-delà de ${VOL_HIGH} : surtout de la fatigue en plus. Les traits verticaux marquent ces deux repères.</p>`;
+  $$("#builderBody .vol-row").forEach(r => r.onclick = () => {
+    const d = r.querySelector(".vol-detail");
+    if (d) d.style.display = d.style.display === "none" ? "block" : "none";
+  });
+  $("#bBackVol").onclick = () => {
+    if (builderView.from === "program") { builderView.mode = "program"; }
+    else { builderView = { mode:"programs", programId:null, sessionId:null }; }
+    renderBuilder();
+  };
+}
+function renderBuilderProgram(el) {
+  const p = builderProgram();
+  el.innerHTML = `<button class="b-back" id="bBackProgs">← Mes programmes</button>
+    <div class="b-inline" style="margin-top:4px;"><input type="text" id="bProgName" value="${escHtml(p.name)}" maxlength="60">
+    <button class="btn" id="bProgRename">OK</button></div>
+    <div class="b-inline" style="align-items:center;">
+      <span style="color:var(--muted);font-size:13px;">Séances / semaine :</span>
+      <input type="number" id="bProgSpw" inputmode="numeric" min="1" max="7" step="1" value="${p.sessionsPerWeek || 3}"
+        style="width:64px;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--text);text-align:center;">
+      <button class="btn" id="bProgSpwSave">OK</button>
+      ${p.id !== S.activeProgramId ? `<button class="btn" id="bProgActivate" style="margin-left:auto;">Activer</button>` : `<span style="margin-left:auto;color:var(--accent);font-size:12.5px;font-weight:700;">Actif ✓</span>`}
+    </div>
+    <h2 style="margin:8px 0 10px;">Séances <button class="b-vol-inline" id="bProgVol">📊 Volume</button></h2>
+    <div id="bSessList"></div>
+    <div class="b-inline"><input type="text" id="bNewSessName" placeholder="Nom de la nouvelle séance" maxlength="60">
+    <button class="btn" id="bNewSessBtn">Ajouter</button></div>`;
+  const list = $("#bSessList");
+  if (!p.sessions.length) list.innerHTML = `<div class="empty" style="margin-bottom:10px;">Aucune séance pour l'instant.</div>`;
+  p.sessions.forEach((sess, i) => {
+    const row = document.createElement("div"); row.className = "b-row";
+    row.innerHTML = `<div class="grow"><div class="nm">${escHtml(sess.name)}</div>
+      <div class="sub">${sess.exos.length} exercice${sess.exos.length>1?"s":""}</div></div>
+      <button class="b-up" ${i===0?"disabled":""}>↑</button>
+      <button class="b-down" ${i===p.sessions.length-1?"disabled":""}>↓</button>
+      <button class="b-edit">✏️</button><button class="warn b-del">🗑</button>`;
+    row.querySelector(".b-up").onclick = () => moveSession(p.id, sess.id, -1);
+    row.querySelector(".b-down").onclick = () => moveSession(p.id, sess.id, +1);
+    row.querySelector(".b-edit").onclick = () => { builderView.mode = "session"; builderView.sessionId = sess.id; renderBuilder(); };
+    row.querySelector(".b-del").onclick = () => {
+      if (confirm(`Supprimer la séance « ${sess.name} » ? L'historique enregistré reste conservé.`)) deleteSession(p.id, sess.id);
+    };
+    list.appendChild(row);
+  });
+  $("#bBackProgs").onclick = () => { builderView = { mode:"programs", programId:null, sessionId:null }; renderBuilder(); };
+  $("#bProgRename").onclick = () => { if (renameProgram(p.id, $("#bProgName").value)) toast("Nom enregistré"); };
+  $("#bProgSpwSave").onclick = () => {
+    const v = parseInt($("#bProgSpw").value, 10);
+    if (!v || v < 1 || v > 7) { toast("Valeur invalide (1 à 7)"); return; }
+    p.sessionsPerWeek = v; save(); renderReglages(); if (p.id===S.activeProgramId) renderSeance();
+    toast("Rythme enregistré");
+  };
+  const act = $("#bProgActivate");
+  if (act) act.onclick = () => { if (activateProgram(p.id)) renderBuilder(); };
+  $("#bProgVol").onclick = () => { builderView.mode = "volume"; builderView.from = "program"; renderBuilder(); };
+  $("#bNewSessBtn").onclick = () => {
+    const sess = addSessionTo(p.id, $("#bNewSessName").value);
+    if (sess) { builderView.mode = "session"; builderView.sessionId = sess.id; renderBuilder(); }
+  };
+}
+function renderBuilderSession(el) {
+  const p = builderProgram(), sess = builderSession();
+  el.innerHTML = `<button class="b-back" id="bBackProg">← ${escHtml(p.name)}</button>
+    <div class="b-inline" style="margin-top:4px;"><input type="text" id="bSessName" value="${escHtml(sess.name)}" maxlength="60">
+    <button class="btn" id="bSessRename">OK</button></div>
+    <h2 style="margin:8px 0 10px;">Exercices</h2>
+    <div id="bExoList"></div>
+    <div id="bOrderWarns"></div>
+    <button class="b-add" id="bAddExo">＋ Ajouter un exercice</button>
+    <p style="color:var(--muted);font-size:12.5px;">L'ordre ci-dessus est l'ordre d'exécution en séance. Les cibles (fourchettes, séries, repos) sont attribuées automatiquement selon le type du mouvement, et la charge démarre « à tester » — le moteur prend le relais dès la première séance enregistrée.</p>`;
+  const list = $("#bExoList");
+  if (!sess.exos.length) list.innerHTML = `<div class="empty" style="margin-bottom:10px;">Séance vide : ajoute des exercices depuis la base.</div>`;
+  sess.exos.forEach((exo, i) => {
+    const db = dbEntryForExo(exo.id);
+    const matKey = exo.mat || (exo.type==="pdc" ? "pdc" : exo.type==="assist" ? "assist" : (exo.rack || "barre"));
+    const matLbl = MATERIELS[matKey] ? MATERIELS[matKey].label : "—";
+    const row = document.createElement("div"); row.className = "b-row";
+    row.innerHTML = `<div class="grow"><div class="nm">${escHtml(exo.name)}</div>
+      <div class="sub">${matLbl}${db ? " · " + db.prim.map(m=>MUSCLES[m]).join(", ") : (exo.freeM ? " · " + exo.freeM.prim.map(m=>MUSCLES[m]).join(", ") : "")}</div></div>
+      <button class="b-up" ${i===0?"disabled":""}>↑</button>
+      <button class="b-down" ${i===sess.exos.length-1?"disabled":""}>↓</button>
+      <button class="warn b-del">🗑</button>`;
+    row.querySelector(".b-up").onclick = () => moveExo(p.id, sess.id, exo.id, -1);
+    row.querySelector(".b-down").onclick = () => moveExo(p.id, sess.id, exo.id, +1);
+    row.querySelector(".b-del").onclick = () => {
+      if (confirm(`Retirer « ${exo.name} » de la séance ? Son historique et son 1RM restent conservés.`)) deleteExo(p.id, sess.id, exo.id);
+    };
+    list.appendChild(row);
+  });
+  $("#bBackProg").onclick = () => { builderView.mode = "program"; builderView.sessionId = null; renderBuilder(); };
+  $("#bSessRename").onclick = () => { if (renameSession(p.id, sess.id, $("#bSessName").value)) toast("Nom enregistré"); };
+  $("#bAddExo").onclick = () => openPicker(p, sess);
+  // Avertissements d'ordre (souples) + réordonnancement en un geste
+  const warns = analyzeOrder(sess);
+  const wEl = $("#bOrderWarns");
+  if (warns.length) {
+    wEl.innerHTML = `<div class="b-orderbox">
+      ${warns.map(w => `<div class="b-orderwarn">⚠️ ${escHtml(w)}</div>`).join("")}
+      <button class="btn" id="bReorder" style="width:100%;margin-top:8px;">🪄 Réordonner pour moi (poly → isolations → gainage)</button>
+      <div class="b-ordernote">Recommandation, pas obligation : l'ordre ne change pas l'hypertrophie (Nunes 2021) — il sert la force, la technique et la sécurité. Ton ordre reste respecté à l'intérieur de chaque groupe.</div>
+    </div>`;
+    $("#bReorder").onclick = () => { if (reorderSession(p.id, sess.id)) toast("Séance réordonnée"); };
+  } else {
+    wEl.innerHTML = sess.exos.length >= 2 ? `<div class="b-orderok">✓ Ordre conseillé respecté : polyarticulaires d'abord, gainage en fin.</div>` : "";
+  }
+}
+
+/* ---- Modal picker : base d'exercices filtrable + exercice libre ---- */
+const CAT_LABELS = { legs:"Jambes", push:"Push", pull:"Pull", core:"Gainage" };
+let pickerFilter = { cat:null, muscle:null };
+function openPicker(p, sess) {
+  pickerFilter = { cat:null, muscle:null };
+  $("#pickerModal").style.display = "flex";
+  renderPickerList(p, sess);
+}
+function closePicker() { $("#pickerModal").style.display = "none"; }
+$("#pickerModal").addEventListener("click", e => { if (e.target.id === "pickerModal") closePicker(); });
+function renderPickerList(p, sess) {
+  const card = $("#pickerCard");
+  const catPills = ["legs","push","pull","core"].map(c =>
+    `<button class="pill ${pickerFilter.cat===c?"on":""}" data-cat="${c}">${CAT_LABELS[c]}</button>`).join("");
+  const muscleOpts = `<option value="">Tous les muscles</option>` +
+    Object.entries(MUSCLES).map(([k,v]) => `<option value="${k}" ${pickerFilter.muscle===k?"selected":""}>${v}</option>`).join("");
+  const items = EXODB.filter(m =>
+    (!pickerFilter.cat || m.cat === pickerFilter.cat) &&
+    (!pickerFilter.muscle || m.prim.includes(pickerFilter.muscle) || (m.sec||[]).includes(pickerFilter.muscle)));
+  card.innerHTML = `<button class="modal-close" id="pkClose">✕</button>
+    <h3>Ajouter un exercice</h3>
+    <div class="pillbar">${catPills}</div>
+    <select class="prog-select" id="pkMuscle" style="margin-bottom:10px;">${muscleOpts}</select>
+    <div id="pkList"></div>
+    <button class="b-add" id="pkFree" style="margin-top:8px;">✳️ Exercice libre (hors base)</button>`;
+  const list = $("#pkList");
+  if (!items.length) list.innerHTML = `<div class="empty">Aucun mouvement pour ce filtre.</div>`;
+  items.forEach(m => {
+    const row = document.createElement("div"); row.className = "b-row";
+    const roleLbl = (m.role==="bigPoly"||m.role==="poly") ? "Polyarticulaire" : (m.role==="gainage"||m.role==="gainageTps") ? "Gainage" : m.role==="sante" ? "Santé d'épaule" : "Isolation";
+    row.innerHTML = `<div class="grow"><div class="nm">${escHtml(m.name)}</div>
+      <div class="sub">${roleLbl} · ${m.prim.map(x=>MUSCLES[x]).join(", ")}</div></div><span style="color:var(--muted)">›</span>`;
+    row.onclick = () => renderPickerMat(p, sess, m);
+    list.appendChild(row);
+  });
+  $$("#pickerCard .pill").forEach(b => b.onclick = () => {
+    pickerFilter.cat = (pickerFilter.cat === b.dataset.cat) ? null : b.dataset.cat;
+    renderPickerList(p, sess);
+  });
+  $("#pkMuscle").onchange = e => { pickerFilter.muscle = e.target.value || null; renderPickerList(p, sess); };
+  $("#pkClose").onclick = closePicker;
+  $("#pkFree").onclick = () => renderPickerFree(p, sess);
+}
+function renderPickerMat(p, sess, m) {
+  const card = $("#pickerCard");
+  const pills = m.mat.map(mt => `<button class="pill" data-mat="${mt}">${MATERIELS[mt].label}</button>`).join("");
+  card.innerHTML = `<button class="modal-close" id="pkClose">✕</button>
+    <button class="b-back" id="pkBack">← Base d'exercices</button>
+    <h3>${escHtml(m.name)}</h3>
+    <p style="color:var(--muted);font-size:13px;">Sur quel matériel fais-tu cet exercice ? Ce choix branche les paliers de charge réels (jamais un poids inexistant).</p>
+    <div class="pillbar" id="pkMats">${pills}</div>
+    <div id="pkIncrRow" style="display:none;margin:6px 0 10px;">
+      <span style="color:var(--muted);font-size:13px;">Plus petit ajout possible en disques (kg) :</span>
+      <input type="number" id="pkIncr" inputmode="decimal" step="0.5" min="0.5" value="1"
+        style="width:70px;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--text);text-align:center;margin-left:8px;">
+    </div>
+    <button class="btn" id="pkAdd" disabled style="width:100%;height:46px;">Ajouter à la séance</button>`;
+  let chosen = null;
+  $$("#pkMats .pill").forEach(b => b.onclick = () => {
+    chosen = b.dataset.mat;
+    $$("#pkMats .pill").forEach(x => x.classList.toggle("on", x === b));
+    $("#pkIncrRow").style.display = (chosen === "barre" || chosen === "plate") ? "block" : "none";
+    $("#pkAdd").disabled = false;
+  });
+  $("#pkBack").onclick = () => renderPickerList(p, sess);
+  $("#pkClose").onclick = closePicker;
+  $("#pkAdd").onclick = () => {
+    const incr = parseFloat($("#pkIncr").value) || 1;
+    const exo = makeExoFromDb(m.id, chosen, { incr });
+    if (addExoToSession(p.id, sess.id, exo)) { closePicker(); toast("Ajouté : " + exo.name); }
+  };
+}
+function renderPickerFree(p, sess) {
+  const card = $("#pickerCard");
+  const matPills = Object.entries(MATERIELS).map(([k,v]) => `<button class="pill" data-mat="${k}">${v.label}</button>`).join("");
+  const rolePills = [["poly","Polyarticulaire"],["iso","Isolation"],["gainage","Gainage"]].map(([k,v]) => `<button class="pill" data-role="${k}">${v}</button>`).join("");
+  const muscleOpts = Object.entries(MUSCLES).map(([k,v]) => `<option value="${k}">${v}</option>`).join("");
+  card.innerHTML = `<button class="modal-close" id="pkClose">✕</button>
+    <button class="b-back" id="pkBack">← Base d'exercices</button>
+    <h3>Exercice libre</h3>
+    <input type="text" id="pkFreeName" placeholder="Nom de l'exercice" maxlength="60"
+      style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--text);padding:0 12px;font-size:14.5px;margin-bottom:10px;">
+    <p style="color:var(--muted);font-size:13px;margin:0 0 6px;">Type de mouvement (fixe les fourchettes et repos par défaut) :</p>
+    <div class="pillbar" id="pkRoles">${rolePills}</div>
+    <p style="color:var(--muted);font-size:13px;margin:0 0 6px;">Muscle principal (pour le futur comptage de volume) :</p>
+    <select class="prog-select" id="pkFreeMuscle" style="margin-bottom:10px;">${muscleOpts}</select>
+    <p style="color:var(--muted);font-size:13px;margin:0 0 6px;">Matériel :</p>
+    <div class="pillbar" id="pkMats">${matPills}</div>
+    <div id="pkIncrRow" style="display:none;margin:6px 0 10px;">
+      <span style="color:var(--muted);font-size:13px;">Plus petit ajout possible en disques (kg) :</span>
+      <input type="number" id="pkIncr" inputmode="decimal" step="0.5" min="0.5" value="1"
+        style="width:70px;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--text);text-align:center;margin-left:8px;">
+    </div>
+    <button class="btn" id="pkAdd" style="width:100%;height:46px;">Ajouter à la séance</button>`;
+  let mat = null, role = null;
+  $$("#pkMats .pill").forEach(b => b.onclick = () => {
+    mat = b.dataset.mat;
+    $$("#pkMats .pill").forEach(x => x.classList.toggle("on", x === b));
+    $("#pkIncrRow").style.display = (mat === "barre" || mat === "plate") ? "block" : "none";
+  });
+  $$("#pkRoles .pill").forEach(b => b.onclick = () => {
+    role = b.dataset.role;
+    $$("#pkRoles .pill").forEach(x => x.classList.toggle("on", x === b));
+  });
+  $("#pkBack").onclick = () => renderPickerList(p, sess);
+  $("#pkClose").onclick = closePicker;
+  $("#pkAdd").onclick = () => {
+    if (!mat) { toast("Choisis un matériel."); return; }
+    const exo = makeFreeExo($("#pkFreeName").value, mat, role, $("#pkFreeMuscle").value, { incr: parseFloat($("#pkIncr")?.value) || 1 });
+    if (!exo) { toast("Nom et muscle requis."); return; }
+    if (addExoToSession(p.id, sess.id, exo)) { closePicker(); toast("Ajouté : " + exo.name); }
+  };
+}
+
+$("#openBuilderBtn").onclick = () => {
+  builderView = { mode:"programs", programId:null, sessionId:null };
+  renderBuilder();
+  showScreen("builder");
+};
 $("#bwSave").onclick = () => {
   const v = parseFloat($("#bwInput").value);
   if (!v || v<30 || v>250) { toast("Valeur invalide"); return; }
@@ -1698,6 +2948,12 @@ renderSeance();
 // Dès la première séance enregistrée, l'app s'ouvrira directement sur l'écran Séance.
 if (!S.logs.length && !S.draft) document.querySelector('nav button[data-scr="guide"]').click();
 window.__bootOk = true; // démarrage complet : désarme le filet d'erreur fatale
+/* Pont de test (jsdom/Playwright) : les déclarations let/const du script ne sont pas exposées
+   sur window, contrairement aux fonctions. Ce getter en LECTURE SEULE permet aux tests
+   headless d'inspecter l'état vivant. Inerte en usage normal. */
+window.__dbg = { get S(){ return S; }, get cur(){ return cur; }, get PROGRAM(){ return PROGRAM; },
+  get EXODB(){ return EXODB; }, get MUSCLES(){ return MUSCLES; }, get MATERIELS(){ return MATERIELS; },
+  get STRETCHES(){ return STRETCHES; }, get SEED_TO_DB(){ return SEED_TO_DB; }, get RACKS(){ return RACKS; } };
 if (draftRestored) {
   const dt = S.draft && S.draft.ts ? new Date(S.draft.ts).toLocaleDateString("fr-FR",{day:"numeric",month:"short"}) : "";
   toast("Séance en cours restaurée"+(dt? " ("+dt+")" : ""));
