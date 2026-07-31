@@ -468,7 +468,7 @@ setTimeout(function(){
     <p>Efface tout l'historique et les réglages (le programme préchargé est conservé).</p>
     <button class="btn warn" id="resetBtn">Réinitialiser toutes les données</button>
   </div>
-  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-07-23-n</p>
+  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-07-23-s</p>
 </div>
 
 <!-- ================= CRÉATEUR DE PROGRAMMES (accessible depuis Réglages) ================= -->
@@ -558,7 +558,9 @@ const STRETCHES = {
 /* Les 6 natures de matériel. Le branchement moteur (rack / incr / type) est fait par
    makeExoFromDb — le matériel est LA clé qui garantit de ne jamais proposer un poids inexistant. */
 const MATERIELS = {
-  lb:       { label:"Machine / poulie (plaques en livres)", suffix:"machine" },
+  lb:       { label:"Machine / poulie — plaques 10 lb", sub:"Plaques 10 lb", suffix:"machine" },
+  lb15:     { label:"Machine / poulie — plaques 15 lb", sub:"Plaques 15 lb", suffix:"machine 15 lb" }, // + petits poids de 2,3 kg
+  kgmach:   { label:"Machine / poulie — graduée en kg", sub:"Plaques en kg", suffix:"machine kg" },    // incrément libre
   plate:    { label:"Machine à disques (plateau à charger)", suffix:"machine à disques" }, // plate-loaded : incrément libre en kg, comme la presse du seed (incr 1)
   dbSingle: { label:"Haltère (un seul)",                    suffix:"haltère" },
   dbPair:   { label:"Paire d'haltères",                     suffix:"haltères" },
@@ -578,12 +580,35 @@ const T_ROLES = {
   mollets:    { force:{r:"10-12",s:4,rest:90}, hyp:{r:"15-20",s:3,rest:60}, end:{r:"20-25",s:3,rest:45} },
   sante:      { force:{r:"12-15",s:3,rest:45}, hyp:{r:"12-15",s:3,rest:45}, end:{r:"12-15",s:3,rest:45} },
   gainage:    { force:{r:"10-12",s:3,rest:60}, hyp:{r:"15-20",s:3,rest:45}, end:{r:"20-25",s:3,rest:40} },
-  gainageTps: { force:{r:"30-45s",s:3,rest:60},hyp:{r:"45s",s:3,rest:45},   end:{r:"45-60s",s:3,rest:40} }
+  gainageTps: { force:{r:"30-45",s:3,rest:60}, hyp:{r:"40-50",s:3,rest:45}, end:{r:"45-60",s:3,rest:40} } // secondes (convention du seed)
 };
 function targetsFromRole(role) {
   const t = T_ROLES[role] || T_ROLES.iso;
-  const mk = b => ({ c:null, r:t[b].r, s:t[b].s, rest:t[b].rest });
+  const sec = role === "gainageTps"; // maintien chronométré : cibles en secondes
+  const mk = b => ({ c:null, r:t[b].r, s:t[b].s, rest:t[b].rest, ...(sec ? {unit:"sec"} : {}) });
   return { force:mk("force"), hyp:mk("hyp"), end:mk("end") };
+}
+/* Cibles d'un palier d'échelle : plus le mouvement est dur, plus les fourchettes baissent
+   (un dragon flag à 20 répétitions n'existe pas). Rangs 0-1 : volume élevé ; 2-3 : moyen ;
+   4+ (paliers avancés) : bas. Les mouvements chronométrés gardent des secondes. */
+const T_RANK_REPS = [{r:"15-25"},{r:"15-25"},{r:"12-18"},{r:"10-15"},{r:"8-12"},{r:"8-12"}];
+const T_RANK_SECS = [{r:"20-30"},{r:"30-45"},{r:"30-45"},{r:"25-40"},{r:"20-30"},{r:"20-30"}];
+function targetsForLadder(m) {
+  const t = targetsFromRole(m.role);
+  if (m.rank == null) return t;
+  const isTime = m.role === "gainageTps";
+  const tbl = isTime ? T_RANK_SECS : T_RANK_REPS;
+  const r = (tbl[Math.min(m.rank, tbl.length-1)]).r;
+  ["force","hyp","end"].forEach(b => { t[b].r = r; if (isTime) t[b].unit = "sec"; });
+  return t;
+}
+// Paliers d'une échelle, du plus facile au plus dur.
+function ladderSteps(name) {
+  return EXODB.filter(e => e.ladder === name).sort((a,b) => a.rank - b.rank);
+}
+function ladderOfExo(exoId) {
+  const m = dbEntryForExo(exoId);
+  return m && m.ladder ? m : null;
 }
 
 const EXODB = [
@@ -632,15 +657,55 @@ const EXODB = [
   { id:"curlmarteau",  name:"Curl marteau",                   cat:"pull", role:"iso",     prim:["biceps"], sec:[], mat:["dbPair"] },
   { id:"curlincline",  name:"Curl incliné",                   cat:"pull", role:"isoDelicat", prim:["biceps"], sec:[], mat:["dbPair"], warn:"Position étirée : charge modérée, pas d'élan." },
   /* ---------- CORE ---------- */
-  { id:"crunch",       name:"Crunch",                         cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc","lb"] },
-  { id:"relevesgenoux",name:"Relevés de genoux suspendus",    cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc"] },
-  { id:"planche",      name:"Planche",                        cat:"core", role:"gainageTps", prim:["abdos"], sec:["lomb"], mat:["pdc"] },
-  { id:"planchelat",   name:"Planche latérale",               cat:"core", role:"gainageTps", prim:["abdos"], sec:[], mat:["pdc"] },
+  { id:"crunch",       name:"Crunch",                         cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc","lb"], ladder:"flexion", rank:0 },
+  { id:"relevesgenoux",name:"Relevés de genoux suspendus",    cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"suspendu", rank:1 },
+  { id:"planche",      name:"Planche",                        cat:"core", role:"gainageTps", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"lateral", rank:1 },
+  { id:"planchelat",   name:"Planche latérale",               cat:"core", role:"gainageTps", prim:["abdos"], sec:[], mat:["pdc"], ladder:"lateral", rank:3 },
   { id:"pallof",       name:"Pallof press (anti-rotation)",   cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["lb"] },
   { id:"roulette",     name:"Roulette abdominale",            cat:"core", role:"gainage", prim:["abdos"], sec:["lomb","dosL"], mat:["pdc"], warn:"Exercice avancé : amplitude progressive, bassin verrouillé (aucune cambrure)." },
-  { id:"superman",     name:"Superman",                       cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers"], mat:["pdc"] },
-  { id:"extlombaire",  name:"Extension lombaire (banc à 45°)",cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers","ischios"], mat:["pdc","dbSingle"] },
+  { id:"crunchinv",    name:"Crunch inversé (relevé de bassin)", cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"flexion", rank:1 },
+  { id:"vups",         name:"V-ups (buste et jambes)",         cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"flexion", rank:2 },
+  { id:"vsithold",     name:"V-sit maintenu",                  cat:"core", role:"gainageTps", prim:["abdos"], sec:[], mat:["pdc"], ladder:"flexion", rank:3 },
+  { id:"dragonflag",   name:"Dragon flag",                     cat:"core", role:"gainage", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"flexion", rank:4, adv:true, warn:"Palier avancé : exige un gainage anti-extension solide. Bassin verrouillé, aucune cambrure — arrête la série dès que le bas du dos décolle." },
+  { id:"planchegenoux",name:"Planche sur les genoux",          cat:"core", role:"gainageTps", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"lateral", rank:0 },
+  { id:"planchetouche",name:"Planche + touché d'épaule",       cat:"core", role:"gainageTps", prim:["abdos"], sec:["lomb","deltA"], mat:["pdc"], ladder:"lateral", rank:2 },
+  { id:"planchelatjambe", name:"Planche latérale, jambe levée", cat:"core", role:"gainageTps", prim:["abdos"], sec:["fessiers"], mat:["pdc"], ladder:"lateral", rank:4 },
+  { id:"planchelatgenou", name:"Planche latérale, genou à la poitrine", cat:"core", role:"gainage", prim:["abdos"], sec:["fessiers"], mat:["pdc"], ladder:"lateral", rank:5 },
+  { id:"relevesbanc",  name:"Relevé de genoux sur banc / chaise romaine", cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"suspendu", rank:0 },
+  { id:"genouxbarre",  name:"Genoux à la barre",               cat:"core", role:"gainage", prim:["abdos"], sec:["dosL"], mat:["pdc"], ladder:"suspendu", rank:2 },
+  { id:"wipers",       name:"Essuie-glaces (windshield wipers)", cat:"core", role:"gainage", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"suspendu", rank:3, adv:true, warn:"Palier avancé : rotation sous charge, exige un gainage déjà solide. Jambes fléchies tant que le contrôle n'est pas total." },
+  { id:"lsit",         name:"L-sit (maintien en appui)",       cat:"core", role:"gainageTps", prim:["abdos"], sec:["triceps","deltA"], mat:["pdc"], warn:"Exercice de SUPPORT : très exigeant pour les triceps et les épaules, ce n'est pas un simple palier abdominal." },
+  { id:"supermanalt",  name:"Superman alterné (bras/jambe opposés)", cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers","abdos"], mat:["pdc"], ladder:"lombaires", rank:1 },
+  { id:"extlombairelest", name:"Extension lombaire lestée (banc 45°)", cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers","ischios"], mat:["dbSingle","lb"], ladder:"lombaires", rank:3 },
+  { id:"superman",     name:"Superman",                       cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers"], mat:["pdc"], ladder:"lombaires", rank:0 },
+  { id:"extlombaire",  name:"Extension lombaire (banc à 45°)",cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers","ischios"], mat:["pdc","dbSingle"], ladder:"lombaires", rank:2 },
 ];
+
+/* ---- SUBSTITUTIONS AUTORISÉES DANS LE PROGRAMME PAR DÉFAUT ----
+   Le programme par défaut n'est pas librement modifiable (il est reconstruit à chaque mise à
+   jour de l'app), mais certains créneaux acceptent des variantes ÉQUIVALENTES : c'est le cas
+   du gainage, où varier la façon de solliciter la sangle abdominale est bénéfique et sans
+   conséquence sur l'équilibre du programme. Chaque créneau déclare ses remplaçants admis
+   (mouvements EXODB) : ni liberté totale, ni immobilité.
+   Les exercices lourds (presse, développés, tirages) n'y figurent PAS : les remplacer
+   changerait la structure et le volume du programme — c'est le rôle d'un programme perso. */
+/* Créneaux substituables du programme par défaut -> l'ÉCHELLE dont ils font partie.
+   Les remplaçants admis sont tous les paliers de cette échelle : on peut monter d'un cran
+   quand on plafonne, mais aussi redescendre (un palier trop dur ne se force pas). */
+const SUB_LADDERS = { crunch:"flexion", releves:"suspendu", planche:"lateral", superman:"lombaires", lomb:"lombaires" };
+/* Calculé À LA DEMANDE (et non à l'initialisation) : SEED_TO_DB et EXODB sont déclarés plus
+   bas dans le fichier, et une const n'est pas accessible avant sa ligne de déclaration. */
+let _SUBS_CACHE = null;
+function substitutionsFor(slot) {
+  if (!_SUBS_CACHE) {
+    _SUBS_CACHE = Object.fromEntries(Object.entries(SUB_LADDERS).map(([sl, lad]) => {
+      const seedDb = SEED_TO_DB[sl];
+      return [sl, ladderSteps(lad).map(m => m.id).filter(id => id !== seedDb)];
+    }));
+  }
+  return slot === undefined ? _SUBS_CACHE : (_SUBS_CACHE[slot] || null);
+}
+function isSubstitutableSlot(slot) { return !!SUB_LADDERS[slot]; }
 
 /* Mapping des exercices SEED vers leurs mouvements EXODB : donne accès aux muscles
    (comptage de volume, étirements) sans jamais modifier les exercices seed eux-mêmes. */
@@ -650,7 +715,7 @@ const SEED_TO_DB = {
   pompes:"pompes", devinc:"devinclineh", devcou:"devcouche", devmil:"devmilitaire",
   elat:"elevlat", dips:"dips", triceps:"tricepspoulie", releves:"relevesgenoux", lomb:"extlombaire",
   tractions:"tractions", tir1b:"rowing1bras", tirh:"tirageh", tirv:"tiragev",
-  facepull:"facepull", curl:"curlpoulie", planche:"planche"
+  facepull:"facepull", curl:"curlpoulie", planche:"planchetouche"
 };
 
 /* Mouvement EXODB d'un exoId quelconque (seed via SEED_TO_DB, custom via le préfixe db_),
@@ -669,8 +734,12 @@ function dbEntryForExo(exoId) {
    opts.incr : plus petit ajout possible pour une barre chargeable (défaut 1 kg, comme le seed). */
 function makeExoFromDb(dbId, mat, opts = {}) {
   const m = EXODB.find(e => e.id === dbId);
-  if (!m || !MATERIELS[mat] || !m.mat.includes(mat)) return null;
-  const exo = { id: `db_${dbId}_${mat}`, name: exoDisplayName(m, mat), mat, role: m.role, oneRm: null, t: targetsFromRole(m.role) };
+  /* lb15 et kgmach sont des VARIANTES de la nature "machine à plaques" : elles sont admises
+     partout où lb l'est (chaque salle a ses colonnes), sans dupliquer les listes d'EXODB. */
+  const matOk = m.mat.includes(mat) || ((mat === "lb15" || mat === "kgmach") && m.mat.includes("lb"));
+  if (!m || !MATERIELS[mat] || !matOk) return null;
+  const exo = { id: `db_${dbId}_${mat}`, name: exoDisplayName(m, mat), mat, role: m.role, oneRm: null, t: targetsForLadder(m) };
+  if (m.ladder) { exo.ladder = m.ladder; exo.rank = m.rank; if (m.adv) exo.adv = true; }
   if (mat === "pdc") {
     exo.type = "pdc";
     ["force","hyp","end"].forEach(b => exo.t[b].c = 0); // convention seed : pdc -> charge 0
@@ -679,18 +748,21 @@ function makeExoFromDb(dbId, mat, opts = {}) {
   } else {
     exo.type = "charge";
     if (mat === "barre" || mat === "plate") exo.incr = opts.incr || 1; // charge libre en kg (barre ou machine à disques)
-    else exo.rack = mat;                                // lb / dbPair / dbSingle -> table RACKS
+    else if (mat === "kgmach") exo.incr = opts.incr || 5;              // colonne en kg : pas de table, incrément de la salle
+    else exo.rack = mat;                                // lb / lb15 / dbPair / dbSingle -> table RACKS
   }
   const warns = [];
   if (m.warn) warns.push(m.warn);
   if (mat === "dbPair") warns.push("Charge = total des 2 haltères.");
   if (warns.length) exo.warn = warns.join(" ");
   if (m.noRm) exo.noRm = true;
-  seedRmBridge(dbId, mat, exo); // hérite du 1RM du jumeau seed s'il existe (estimation initiale)
+  // noBridge : appelé pendant migrate(), avant l'affectation de S -> pas de pont possible
+  if (!opts.noBridge) seedRmBridge(dbId, mat, exo); // hérite du 1RM du jumeau seed (estimation initiale)
   return exo;
 }
 function exoDisplayName(m, mat) {
   const suffix = MATERIELS[mat].suffix;
+  if (mat === "lb15" || mat === "kgmach") return `${m.name} — ${suffix}`; // toujours distinguer la colonne
   return (m.mat.length > 1 && suffix) ? `${m.name} — ${suffix}` : m.name;
 }
 
@@ -749,9 +821,9 @@ return [
         t:{force:{c:23,r:"5-6",s:5,rest:150}, hyp:{c:31,r:"8-12",s:4,rest:90}, end:{c:46,r:"20-25",s:3,rest:50}} },
       { id:"tir1b", rack:"dbSingle", name:"Tirage à un bras (haltère, par bras)", type:"charge", oneRm:null,
         t:{force:{c:29,r:"5-6",s:4,rest:120}, hyp:{c:25.5,r:"8-12",s:3,rest:90}, end:{c:19,r:"20-25",s:3,rest:50}} },
-      { id:"tirh", rack:"lb", name:"Tirage horizontal prise large", type:"charge", oneRm:null,
+      { id:"tirh", rack:"lb15", name:"Tirage horizontal prise large", type:"charge", oneRm:null,
         t:{force:{c:61,r:"5-6",s:4,rest:120}, hyp:{c:54,r:"8-12",s:4,rest:90}, end:{c:39,r:"20-25",s:3,rest:50}} },
-      { id:"tirv", rack:"lb", name:"Tirage vertical prise large", type:"charge", oneRm:null,
+      { id:"tirv", rack:"lb15", name:"Tirage vertical prise large", type:"charge", oneRm:null,
         t:{force:{c:69,r:"5-6",s:4,rest:120}, hyp:{c:61,r:"8-12",s:4,rest:90}, end:{c:45,r:"20-25",s:3,rest:50}} },
       { id:"facepull", rack:"lb", name:"Face pull à la poulie", type:"charge", oneRm:null, noRm:true,
         warn:"Exercice de santé d'épaule : reste TOUJOURS léger (12-15 reps), même en bloc Force. Jamais utilisé pour calculer un 1RM.",
@@ -759,7 +831,7 @@ return [
       { id:"curl", rack:"lb", name:"Biceps curl", type:"charge", oneRm:null,
         t:{force:{c:30,r:"6-8",s:4,rest:90}, hyp:{c:27,r:"8-12",s:3,rest:75}, end:{c:20,r:"20-25",s:3,rest:45}} },
       { id:"planche", name:"Planche + touché épaule", type:"pdc", oneRm:null,
-        t:{force:{c:0,r:"45",s:3,rest:60}, hyp:{c:0,r:"45",s:3,rest:45}, end:{c:0,r:"45",s:3,rest:40}} },
+        t:{force:{c:0,r:"45",s:3,rest:60,unit:"sec"}, hyp:{c:0,r:"45",s:3,rest:45,unit:"sec"}, end:{c:0,r:"45",s:3,rest:40,unit:"sec"}} },
     ]
   }
 ];
@@ -809,7 +881,7 @@ const DEFAULT_PROGRAM_ID = "defaut";
    mises à jour du programme par défaut vers les appareils qui ont déjà un state v2 en
    localStorage — schemaVersion à lui seul ne suffit pas, car un state déjà en v2 n'est
    jamais retouché par la migration sinon. */
-const SEED_VERSION = 6;
+const SEED_VERSION = 8; // v8 : planche déclarée chronométrée (unit sec) ; v7 : tirages sur colonne 15 lb
 
 function defaultState() {
   return {
@@ -821,6 +893,7 @@ function defaultState() {
     restPref: {},        // "exoId.bloc" -> repos personnalisé en secondes
     oneRmOverride: {},   // exoId -> 1RM recalculé
     nameArchive: { sessions:{}, exos:{} }, // noms des séances/exos custom SUPPRIMÉS -> l'Historique reste lisible
+    substitutions: {},   // programme par défaut : exoId seed -> { db, mat } (réappliqué après chaque reseed)
     programs: [           // liste de programmes (le seed + futurs programmes créés par l'utilisateur)
       /* sessionsPerWeek : nombre de séances effectuées par semaine — pilote l'avancement du
          cycle de 6 semaines (weekOfCycle) et, plus tard, le calcul du volume hebdomadaire par
@@ -853,6 +926,7 @@ function migrate(data) {
   // actuel. Les AUTRES programmes (créés par l'utilisateur) ne sont JAMAIS touchés par le
   // reseed — c'est ce qui garantit qu'une mise à jour du seed n'écrase pas leurs séances.
   if (!merged.nameArchive) merged.nameArchive = { sessions:{}, exos:{} };
+  if (!merged.substitutions) merged.substitutions = {};
   merged.programs = merged.programs.map(p => {
     if (p.id === DEFAULT_PROGRAM_ID) {
       p = { ...p, name: "Programme par défaut" }; // le nom du programme par défaut appartient à l'app (états Coach importés, vieux exports)
@@ -867,6 +941,7 @@ function migrate(data) {
     }
     return p;
   });
+  applySubstitutions(merged); // le reseed vient de reconstruire le programme par défaut : on réinjecte les choix de l'utilisateur
   merged.schemaVersion = CURRENT_SCHEMA_VERSION;
   return merged;
 }
@@ -880,19 +955,32 @@ syncProgram();
    Or refreshUndoneTargets() ci-dessous appelle le moteur DÈS le chargement quand une séance
    est en cours — donc la constante doit exister avant. */
 const PLAFOND_HYP = 15; // hypertrophie : au-delà de 15 reps, Epley décroche — on doit monter
+/* Tractions/dips SANS assistance : on ne leste pas, on monte en répétitions. Plafond visé
+   avant d'envisager du lest (charges élevées = contrainte importante sur l'épaule). */
+const PLAFOND_PDC_ASSIST = 25;
 
 /* Tables de paliers réels de la salle (déclarées ici, avant le premier appel au moteur qui a
    lieu au chargement quand une séance est en cours — voir la note sur PLAFOND_HYP).
    Chaque exercice à charge porte un `rack:"lb"|"dbPair"|"dbSingle"` (ou un `incr` fixe pour la
    barre chargeable de 1 en 1). snapToRack() cale toute charge cible sur un poids réellement
    disponible ; au-delà du dernier palier, on prolonge du dernier pas observé. */
+/* Plaques de base des machines à colonne en 15 lb (déclarées AVANT RACKS : utilisées dans
+   son initialisation). Première plaque à 10 lb, puis pas de 15 lb. */
+const LB15_PLATES = [4.5,11,18,25,32,39,45,52,59,66,73,79,86,93,100,107,113,120,127,134];
 const RACKS = {
   // Machines à plaques en livres + demi-plaque de 2,3 kg (pas alterné +2,3/+2,2). Max 93,3.
   lb: [4.5,6.8,9,11.3,14,16.3,18,20.3,23,25.3,27,29.3,32,34.3,36,38.3,41,43.3,45,47.3,50,52.3,54,56.3,59,61.3,64,66.3,68,70.3,73,75.3,77,79.3,82,84.3,86,88.3,91,93.3],
   // Paire d'haltères (total) : 1..10 kg/haltère de 1 en 1, puis 12,14.. de 2 en 2 -> ×2. Max 100.
   dbPair: [2,4,6,8,10,12,14,16,18,20,24,28,32,36,40,44,48,52,56,60,64,68,72,76,80,84,88,92,96,100],
   // Haltère simple (par bras) : 1..10 de 1 en 1, puis 12,14.. de 2 en 2. Max 50.
-  dbSingle: [1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50]
+  dbSingle: [1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50],
+  /* Machines à colonne dont les plaques montent de 15 lb (première à 10 lb) : tirages à la
+     poulie de certaines salles. Sur ces machines on peut poser 1 ou 2 petits poids de 5 lb
+     (2,3 kg) -> la table est GÉNÉRÉE : chaque plaque, plaque+2,3 et plaque+4,6.
+     L'échelle reste monotone (4,6 < ~7 kg d'écart entre deux plaques), donc snapToRack
+     fonctionne sans modification. */
+  lb15: LB15_PLATES.flatMap(p => [p, Math.round((p+2.3)*10)/10, Math.round((p+4.6)*10)/10])
+                   .sort((a,b) => a-b)
 };
 function load() {
   try {
@@ -910,6 +998,110 @@ function activeProgram() {
   return S.programs.find(p => p.id === S.activeProgramId) || S.programs[0];
 }
 function syncProgram() { PROGRAM = activeProgram().sessions; }
+/* ---- Substitutions du programme par défaut ----
+   applySubstitutions() est appelée par migrate() APRÈS le reseed : elle remplace, en gardant
+   sa position, chaque exercice dont l'id figure dans state.substitutions. L'exercice de
+   remplacement porte `subFor` (l'id du créneau d'origine), ce qui permet de retrouver le
+   créneau et de revenir en arrière. Le nom de l'exercice remplacé est archivé pour que
+   l'Historique déjà enregistré reste lisible. */
+function applySubstitutions(state) {
+  if (!state.substitutions) return;
+  const prog = state.programs.find(p => p.id === DEFAULT_PROGRAM_ID);
+  if (!prog) return;
+  prog.sessions.forEach(sess => {
+    sess.exos = sess.exos.map(exo => {
+      const sub = state.substitutions[exo.id];
+      if (!sub || !isSubstitutableSlot(exo.id)) return exo;
+      if (!substitutionsFor(exo.id).includes(sub.db)) return exo; // liste blanche : garde-fou
+      const repl = makeExoFromDb(sub.db, sub.mat, { noBridge: true });
+      if (!repl) return exo;
+      repl.subFor = exo.id;
+      if (state.nameArchive) state.nameArchive.exos[exo.id] = state.nameArchive.exos[exo.id] || exo.name;
+      return repl;
+    });
+  });
+}
+// Matériel par défaut d'un mouvement de remplacement : le poids du corps quand il est admis.
+function defaultMatFor(dbId) {
+  const m = EXODB.find(e => e.id === dbId);
+  if (!m) return null;
+  return m.mat.includes("pdc") ? "pdc" : m.mat[0];
+}
+function substituteExo(slotId, dbId) {
+  if (!isSubstitutableSlot(slotId) || !substitutionsFor(slotId).includes(dbId)) return false;
+  // Deux créneaux d'une même échelle (superman et extension lombaire) ne doivent pas converger
+  // vers le même mouvement : ce serait le même exercice deux fois dans la semaine.
+  const prog0 = S.programs.find(p => p.id === DEFAULT_PROGRAM_ID);
+  if (prog0 && prog0.sessions.some(sess => sess.exos.some(e =>
+        slotOf(e) !== slotId && dbEntryForExo(e.id) && dbEntryForExo(e.id).id === dbId))) {
+    toast("Cet exercice est déjà présent ailleurs dans le programme."); return false;
+  }
+  if (S.activeProgramId === DEFAULT_PROGRAM_ID && hasProgress()) {
+    toast("Termine ou abandonne la séance en cours avant de changer un exercice."); return false;
+  }
+  S.substitutions[slotId] = { db: dbId, mat: defaultMatFor(dbId) };
+  applySubstitutions(S);
+  save();
+  if (S.activeProgramId === DEFAULT_PROGRAM_ID) { syncProgram(); renderSeance(); }
+  renderBuilder();
+  return true;
+}
+function revertSubstitution(slotId) {
+  if (!S.substitutions[slotId]) return false;
+  if (S.activeProgramId === DEFAULT_PROGRAM_ID && hasProgress()) {
+    toast("Termine ou abandonne la séance en cours avant de changer un exercice."); return false;
+  }
+  delete S.substitutions[slotId];
+  // Le seul moyen sûr de restaurer l'exercice d'origine : reconstruire le programme par défaut.
+  const prog = S.programs.find(p => p.id === DEFAULT_PROGRAM_ID);
+  if (prog) prog.sessions = seedProgramSessions();
+  applySubstitutions(S); // les AUTRES substitutions restent en place
+  save();
+  if (S.activeProgramId === DEFAULT_PROGRAM_ID) { syncProgram(); renderSeance(); }
+  renderBuilder();
+  return true;
+}
+/* Palier suivant conseillé : proposé quand le HAUT de la fourchette est tenu sur toutes les
+   séries lors des DEUX dernières séances. Les paliers marqués `adv` ne sont JAMAIS suggérés
+   automatiquement (dragon flag, essuie-glaces) : ils restent accessibles à la main.
+   Renvoie le mouvement EXODB suivant, ou null. */
+function nextLadderStep(exo, bloc) {
+  const m = ladderOfExo(exo.id);
+  if (!m) return null;
+  const steps = ladderSteps(m.ladder);
+  const next = steps.find(s => s.rank > m.rank && !s.adv);
+  if (!next) return null;
+  const t = exo.t && exo.t[blocFor(exo, bloc)];
+  if (!t) return null;
+  const [, hi] = parseRange(t.r);
+  const two = lastTwoSessionsFor(exo, blocFor(exo, bloc));
+  if (two.length < 2) return null;
+  const capped = two.every(s => s.sets.length && s.sets.every(x => x.r >= hi));
+  return capped ? next : null;
+}
+/* Palier PRÉCÉDENT conseillé : proposé quand le bas de la fourchette n'est pas atteint sur les
+   deux dernières séances. Symétrique de nextLadderStep — un palier trop dur ne se force pas,
+   on redescend et on reconstruit. */
+function prevLadderStep(exo, bloc) {
+  const m = ladderOfExo(exo.id);
+  if (!m || m.rank === 0) return null;
+  const steps = ladderSteps(m.ladder);
+  const prev = [...steps].reverse().find(s => s.rank < m.rank);
+  if (!prev) return null;
+  const t = exo.t && exo.t[blocFor(exo, bloc)];
+  if (!t) return null;
+  const [lo] = parseRange(t.r);
+  const two = lastTwoSessionsFor(exo, blocFor(exo, bloc));
+  if (two.length < 2) return null;
+  const under = two.every(s => s.sets.length && s.sets.some(x => x.r < lo));
+  return under ? prev : null;
+}
+// Créneau substituable auquel appartient un exercice (lui-même, ou celui qu'il remplace).
+function slotOf(exo) {
+  if (exo.subFor && isSubstitutableSlot(exo.subFor)) return exo.subFor;
+  return isSubstitutableSlot(exo.id) ? exo.id : null;
+}
+
 /* ---- Résolutions INTER-PROGRAMMES ----
    L'historique, les 1RM et les repos perso sont indexés par sessionId/exoId et survivent au
    changement de programme actif. Ces deux helpers cherchent donc dans TOUS les programmes :
@@ -1292,8 +1484,18 @@ function lastTwoSessionsFor(exo, bloc){
     .map(l => ({ sets: l.entries[exo.id] }));
 }
 // Arrondit une charge cible au palier réel de l'exercice (ou au demi-kilo sinon).
+/* Colle un poids au palier RÉELLEMENT disponible :
+   - table `rack` si l'exo en a une (machines en livres, haltères) ;
+   - sinon multiple de l'incrément DÉCLARÉ (barre, machine à disques, colonne en kg) : une
+     presse à plateau réglée au kilo ne propose pas 47,5 kg, et une colonne à plaques de 5 kg
+     encore moins. On utilise `exo.incr` (déclaré à la création) et non l'incrément appris de
+     l'historique, qui peut refléter un palier exceptionnel ;
+   - dernier recours (exo sans rack ni incr) : arrondi à 2,5 kg, l'ancien comportement. */
 function snapWeight(exo, w){
-  return exo.rack ? snapToRack(exo.rack, w) : round25(w);
+  if (exo.rack) return snapToRack(exo.rack, w);
+  const step = exo.incr;
+  if (step && step > 0) return Math.round(Math.round(w/step)*step*10)/10;
+  return round25(w);
 }
 // Reps prédites en passant de eff1 -> eff2 (charges EFFECTIVES) à e1RM constant (Epley)
 function predictReps(eff1, r1, eff2){ return Math.round(eff1*(30+r1)/eff2 - 30); }
@@ -1401,6 +1603,25 @@ function recommend(exo, bloc){
           : "2 séances de suite sous le plancher à ce poids : descente d'un palier — on reconstruira la montée sur des bases solides" };
       }
     }
+  }
+
+  /* --- Assisté SANS assistance (0 kg) : ce sont des tractions/dips au poids du corps. On ne
+     leste pas — on progresse en RÉPÉTITIONS jusqu'à un plafond élevé (25), le lest ne se
+     discutant qu'ensuite. Le 1RM reste calculé (charge effective = poids de corps), donc la
+     courbe de progression est continue avec la période assistée. --- */
+  if (isAssist && w <= 0){
+    const capReps = PLAFOND_PDC_ASSIST;
+    const atCap = minR >= capReps;
+    if (effort === "limite")
+      return { w: 0, targets: orderTargets(pad(refReps), lo, capReps),
+               conseil: "sans assistance et c'était limite : on consolide au même nombre de reps" };
+    if (atCap)
+      return { w: 0, targets: orderTargets(pad(refReps).map(()=>capReps), lo, capReps),
+               conseil: capReps + " reps au poids du corps : tu as la marge pour envisager du lest (ceinture ou haltère), à ajouter très progressivement" };
+    const step = effort === "facile" ? 2 : 1;
+    const targets = orderTargets(pad(refReps).map(r => Math.min(capReps, r + step)), lo, capReps);
+    return { w: 0, targets,
+             conseil: "plus d'assistance : tu tires ton poids de corps. On progresse en répétitions (objectif " + capReps + ") avant de parler de lest" };
   }
 
   /* ===== RESSENTI "LIMITE" (0-1 RIR) : consolidation stricte — mêmes poids, mêmes reps. ===== */
@@ -1552,6 +1773,7 @@ function buildExoCard(exo) {
     </div>
     ${rec && rec.conseil ? `<div class="exo-advice">💡 ${rec.conseil}</div>` : ""}
     ${!rec && tl.main==="à tester" ? `<div class="exo-advice">${testAdviceHtml(cur.bloc)}</div>` : ""}
+    ${ladderAdviceHtml(exo)}
     ${exo.warn && !rec ? `<div class="exo-note">⚠ ${exo.warn}</div>` : ""}
     <div class="col-labels"><span></span><span>${exo.type==="assist"?"Assist. (kg)":"Poids (kg)"}</span><span>${t.unit==="sec"?"Secondes":"Reps"}</span><span>Fait</span></div>
     <div class="sets"></div>
@@ -2037,6 +2259,7 @@ function wireProgToggle(card, buildHtml) {
 function fmtZone(exo, load) {
   if (exo.type==="assist") {
     const assist = round05(S.bodyweight - load);
+    if (Math.abs(assist) < 0.25) return "poids du corps"; // plus d'assistance, pas encore de lest
     return (assist>0? "−"+assist : "+"+(-assist))+" kg";
   }
   return round05(load)+" kg";
@@ -2238,6 +2461,7 @@ function makeFreeExo(name, mat, role, muscle, opts = {}) {
   else {
     exo.type = "charge";
     if (mat === "barre" || mat === "plate") exo.incr = opts.incr || 1;
+    else if (mat === "kgmach") exo.incr = opts.incr || 5;
     else exo.rack = mat;
   }
   if (mat === "dbPair") exo.warn = "Charge = total des 2 haltères.";
@@ -2261,6 +2485,21 @@ function archiveSessionNames(sess) {
    de l'échec alimente l'estimation (Epley/Brzycki, précises jusqu'à ~12-15 reps).
    Endurance : cas particulier — les séries de 20+ reps sont HORS plage d'estimation (le moteur
    ignore r>15), il faut le dire honnêtement plutôt que laisser croire au calibrage automatique. */
+/* Bandeau "palier suivant" sous un exercice d'échelle dont le plafond est tenu. Informatif :
+   le changement se fait dans ⚙️ Réglages > Créer/modifier mes programmes > 🔁. */
+function ladderAdviceHtml(exo) {
+  if (!ladderOfExo(exo.id)) return ""; // pas un exercice d'échelle
+  /* Le conseil vaut dans TOUS les programmes ; seul le chemin pour changer l'exercice diffère :
+     créneau du programme par défaut -> écran 🔁 ; programme perso -> éditeur de séance. */
+  const where = slotOf(exo)
+    ? "Change-le dans ⚙️ Réglages → Créer / modifier mes programmes → 🔁."
+    : "Change-le dans ⚙️ Réglages → Créer / modifier mes programmes, en éditant cette séance.";
+  const next = nextLadderStep(exo, cur.bloc);
+  if (next) return `<div class="exo-advice">🎯 Tu tiens le haut de la fourchette : tu peux passer au palier suivant — <b>${escHtml(next.name)}</b>. ${where}</div>`;
+  const prev = prevLadderStep(exo, cur.bloc);
+  if (prev) return `<div class="exo-advice">↩︎ Tu restes sous le bas de la fourchette : ce palier est trop dur pour l'instant. Reviens à <b>${escHtml(prev.name)}</b> et remonte quand tu le tiendras. ${where}</div>`;
+  return "";
+}
 function testAdviceHtml(bloc) {
   if (bloc === "end") return `💡 Nouvel exercice, charge inconnue : démarre léger et ajuste pour tenir 20-25 reps. Le 1RM se calibrera automatiquement aux blocs plus lourds — ou fais une première série de 12-15 reps si tu veux le calibrer dès maintenant.`;
   const fourchette = bloc === "force" ? "5-8" : "8-12";
@@ -2522,10 +2761,12 @@ function archivedExoName(id) { return (S.nameArchive && S.nameArchive.exos[id]) 
 function renderBuilder() {
   const el = $("#builderBody");
   if (builderView.mode === "volume" && !builderProgram()) builderView.mode = "programs";
+  if (builderView.mode === "subs" && !builderProgram()) builderView.mode = "programs";
   if (builderView.mode === "program" && !builderProgram()) builderView.mode = "programs";
   if (builderView.mode === "session" && !builderSession()) builderView.mode = "program";
   if (builderView.mode === "programs") return renderBuilderPrograms(el);
   if (builderView.mode === "wizard") return renderBuilderWizard(el);
+  if (builderView.mode === "subs") return renderBuilderSubs(el);
   if (builderView.mode === "volume") return renderBuilderVolume(el);
   if (builderView.mode === "program") return renderBuilderProgram(el);
   return renderBuilderSession(el);
@@ -2547,9 +2788,11 @@ function renderBuilderPrograms(el) {
       <div class="sub">${p.sessions.length} séance${p.sessions.length>1?"s":""} · ${p.sessionsPerWeek || p.sessions.length || "?"}×/sem${active}</div></div>`
       + `<button class="b-vol" title="Volume par muscle">📊</button>`
       + (p.id === DEFAULT_PROGRAM_ID
-         ? `<button disabled title="Non modifiable">🔒</button>`
+         ? `<button class="b-sub" title="Changer certains exercices">🔁</button>`
          : `<button class="b-edit">✏️</button><button class="warn b-del">🗑</button>`);
     row.querySelector(".b-vol").onclick = () => { builderView = { mode:"volume", programId:p.id, sessionId:null, from:"programs" }; renderBuilder(); };
+    const subBtn = row.querySelector(".b-sub");
+    if (subBtn) subBtn.onclick = () => { builderView = { mode:"subs", programId:p.id, sessionId:null }; renderBuilder(); };
     if (p.id !== DEFAULT_PROGRAM_ID) {
       row.querySelector(".b-edit").onclick = () => { builderView = { mode:"program", programId:p.id, sessionId:null }; renderBuilder(); };
       row.querySelector(".b-del").onclick = () => {
@@ -2629,6 +2872,47 @@ function renderBuilderWizard(el) {
     builderView = { mode:"program", programId: prog.id, sessionId:null };
     renderBuilder();
   };
+}
+function renderBuilderSubs(el) {
+  const p = S.programs.find(x => x.id === DEFAULT_PROGRAM_ID);
+  let rows = "";
+  p.sessions.forEach(sess => sess.exos.forEach(exo => {
+    const slot = slotOf(exo);
+    if (!slot) return;
+    const isSub = !!S.substitutions[slot];
+    // Échelle complète, du plus facile au plus dur : le palier occupé est mis en évidence.
+    const lad = SUB_LADDERS[slot];
+    const steps = ladderSteps(lad);
+    const curDb = dbEntryForExo(exo.id);
+    const seedDb = SEED_TO_DB[slot];
+    const opts = steps.map(m => {
+      const on = curDb && curDb.id === m.id;
+      const isOrigin = m.id === seedDb;
+      const label = (m.adv ? "⚠️ " : "") + m.name;
+      const attr = isOrigin ? `data-revert="${slot}"` : `data-slot="${slot}" data-db="${m.id}"`;
+      return `<button class="pill ${on?"on":""}" ${attr} title="Palier ${m.rank}">${escHtml(label)}</button>`;
+    }).join(" <span style=\"color:var(--line);align-self:center;\">›</span> ");
+    const advNote = steps.some(m => m.adv)
+      ? `<div style="color:var(--muted);font-size:11.5px;margin-top:6px;">⚠️ = palier avancé : exige un gainage anti-extension déjà solide (bassin verrouillé, aucune cambrure). Jamais suggéré automatiquement.</div>` : "";
+    rows += `<div class="b-row" style="display:block;">
+      <div class="nm">${escHtml(exo.name)}${isSub?` <span style="color:var(--accent);font-size:11.5px;">· remplacé</span>`:""}</div>
+      <div class="sub" style="margin-bottom:6px;">${escHtml(sess.name)} · du plus facile au plus dur</div>
+      <div class="pillbar" style="margin-bottom:0;align-items:center;">${opts}</div>
+      ${advNote}
+    </div>`;
+  }));
+  el.innerHTML = `<button class="b-back" id="bBackSubs">← Mes programmes</button>
+    <h2 style="margin:4px 0 4px;">🔁 Changer certains exercices</h2>
+    <p style="color:var(--muted);font-size:12.5px;margin:0 0 12px;">Chaque exercice de gainage appartient à une <b>échelle de progression</b> : quand tu tiens le haut de la fourchette, passe au palier suivant. Tu peux aussi redescendre — un palier trop dur ne se force pas. Tes choix sont conservés lors des mises à jour de l'app.</p>
+    ${rows || `<div class="empty">Aucun exercice substituable.</div>`}
+    <p style="color:var(--muted);font-size:12px;line-height:1.5;margin-top:12px;">Chaque variante a son propre historique et son propre 1RM (ce sont des mouvements différents). L'historique de l'exercice remplacé reste consultable dans l'onglet Historique. Les exercices lourds (presse, développés, tirages) ne sont pas substituables : les changer modifierait la structure du programme — crée plutôt ton propre programme.</p>`;
+  $("#bBackSubs").onclick = () => { builderView = { mode:"programs", programId:null, sessionId:null }; renderBuilder(); };
+  $$("#builderBody .pill[data-db]").forEach(b => b.onclick = () => {
+    if (substituteExo(b.dataset.slot, b.dataset.db)) toast("Exercice remplacé");
+  });
+  $$("#builderBody .pill[data-revert]").forEach(b => b.onclick = () => {
+    if (revertSubstitution(b.dataset.revert)) toast("Exercice d'origine restauré");
+  });
 }
 function renderBuilderVolume(el) {
   const p = builderProgram();
@@ -2813,29 +3097,61 @@ function renderPickerList(p, sess) {
 }
 function renderPickerMat(p, sess, m) {
   const card = $("#pickerCard");
-  const pills = m.mat.map(mt => `<button class="pill" data-mat="${mt}">${MATERIELS[mt].label}</button>`).join("");
+  /* La nature "machine à plaques" ouvre un SOUS-CHOIX de colonne (10 lb / 15 lb / kg) : d'une
+     salle à l'autre le même exercice n'a pas les mêmes paliers. Chaque variante donne un
+     exercice d'id distinct, donc son propre 1RM — ce sont des machines différentes. */
+  const pills = m.mat.map(mt => `<button class="pill" data-mat="${mt}">${mt === "lb" ? "Machine / poulie (plaques)" : MATERIELS[mt].label}</button>`).join("");
   card.innerHTML = `<button class="modal-close" id="pkClose">✕</button>
     <button class="b-back" id="pkBack">← Base d'exercices</button>
     <h3>${escHtml(m.name)}</h3>
     <p style="color:var(--muted);font-size:13px;">Sur quel matériel fais-tu cet exercice ? Ce choix branche les paliers de charge réels (jamais un poids inexistant).</p>
     <div class="pillbar" id="pkMats">${pills}</div>
+    <div id="pkMachRow" style="display:none;margin:2px 0 8px;">
+      <p style="color:var(--muted);font-size:13px;margin:0 0 6px;">Comment sont graduées les plaques de cette machine ?</p>
+      <div class="pillbar" id="pkMachPills">
+        <button class="pill on" data-mach="lb">Plaques 10 lb</button>
+        <button class="pill" data-mach="lb15">Plaques 15 lb</button>
+        <button class="pill" data-mach="kgmach">Plaques en kg</button>
+      </div>
+    </div>
     <div id="pkIncrRow" style="display:none;margin:6px 0 10px;">
-      <span style="color:var(--muted);font-size:13px;">Plus petit ajout possible en disques (kg) :</span>
+      <span style="color:var(--muted);font-size:13px;" id="pkIncrLbl">Plus petit ajout possible en disques (kg) :</span>
       <input type="number" id="pkIncr" inputmode="decimal" step="0.5" min="0.5" value="1"
         style="width:70px;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--text);text-align:center;margin-left:8px;">
     </div>
     <button class="btn" id="pkAdd" disabled style="width:100%;height:46px;">Ajouter à la séance</button>`;
   let chosen = null;
+  const refreshIncrRow = () => {
+    const isFree = chosen === "barre" || chosen === "plate";
+    const isKg = chosen === "kgmach";
+    $("#pkIncrRow").style.display = (isFree || isKg) ? "block" : "none";
+    if (isKg) { $("#pkIncrLbl").textContent = "Écart entre deux plaques (kg) :"; $("#pkIncr").value = "5"; }
+    else if (isFree) { $("#pkIncrLbl").textContent = "Plus petit ajout possible en disques (kg) :"; $("#pkIncr").value = "1"; }
+  };
   $$("#pkMats .pill").forEach(b => b.onclick = () => {
-    chosen = b.dataset.mat;
+    const mt = b.dataset.mat;
     $$("#pkMats .pill").forEach(x => x.classList.toggle("on", x === b));
-    $("#pkIncrRow").style.display = (chosen === "barre" || chosen === "plate") ? "block" : "none";
+    if (mt === "lb") {                      // machine à plaques -> sous-choix de graduation
+      $("#pkMachRow").style.display = "block";
+      const on = $("#pkMachPills .pill.on");
+      chosen = on ? on.dataset.mach : "lb";
+    } else {
+      $("#pkMachRow").style.display = "none";
+      chosen = mt;
+    }
+    refreshIncrRow();
+    $("#pkAdd").disabled = false;
+  });
+  $$("#pkMachPills .pill").forEach(b => b.onclick = () => {
+    $$("#pkMachPills .pill").forEach(x => x.classList.toggle("on", x === b));
+    chosen = b.dataset.mach;
+    refreshIncrRow();
     $("#pkAdd").disabled = false;
   });
   $("#pkBack").onclick = () => renderPickerList(p, sess);
   $("#pkClose").onclick = closePicker;
   $("#pkAdd").onclick = () => {
-    const incr = parseFloat($("#pkIncr").value) || 1;
+    const incr = parseFloat($("#pkIncr").value) || (chosen === "kgmach" ? 5 : 1);
     const exo = makeExoFromDb(m.id, chosen, { incr });
     if (addExoToSession(p.id, sess.id, exo)) { closePicker(); toast("Ajouté : " + exo.name); }
   };
@@ -2866,7 +3182,7 @@ function renderPickerFree(p, sess) {
   $$("#pkMats .pill").forEach(b => b.onclick = () => {
     mat = b.dataset.mat;
     $$("#pkMats .pill").forEach(x => x.classList.toggle("on", x === b));
-    $("#pkIncrRow").style.display = (mat === "barre" || mat === "plate") ? "block" : "none";
+    $("#pkIncrRow").style.display = (mat === "barre" || mat === "plate" || mat === "kgmach") ? "block" : "none";
   });
   $$("#pkRoles .pill").forEach(b => b.onclick = () => {
     role = b.dataset.role;
@@ -2876,7 +3192,7 @@ function renderPickerFree(p, sess) {
   $("#pkClose").onclick = closePicker;
   $("#pkAdd").onclick = () => {
     if (!mat) { toast("Choisis un matériel."); return; }
-    const exo = makeFreeExo($("#pkFreeName").value, mat, role, $("#pkFreeMuscle").value, { incr: parseFloat($("#pkIncr")?.value) || 1 });
+    const exo = makeFreeExo($("#pkFreeName").value, mat, role, $("#pkFreeMuscle").value, { incr: parseFloat($("#pkIncr")?.value) || (mat === "kgmach" ? 5 : 1) });
     if (!exo) { toast("Nom et muscle requis."); return; }
     if (addExoToSession(p.id, sess.id, exo)) { closePicker(); toast("Ajouté : " + exo.name); }
   };
