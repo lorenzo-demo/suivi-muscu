@@ -79,6 +79,11 @@
     display:grid; grid-template-columns: 24px 1.25fr 1fr 64px;
     gap:6px; align-items:center; padding:9px 10px; border-bottom:1px solid var(--line);
   }
+  /* Mode temps : le bouton chrono s'ajoute. Au poids du corps la colonne Poids ne sert à rien
+     (charge toujours 0) — on la retire et tout tient sur une ligne. Sinon, colonnes resserrées. */
+  .set-row.timed { grid-template-columns: 24px 1fr 1.1fr 40px 56px; gap:5px; }
+  .set-row.timed.noload { grid-template-columns: 24px 1fr 44px 60px; }
+  .set-row.timed .stepper button { width:28px; }
   .set-row:last-child { border-bottom:none; }
   .set-idx { color: var(--muted); font-size:13px; font-weight:700; text-align:center; }
   .stepper { display:flex; align-items:center; background: var(--surface2); border-radius:10px; overflow:hidden; }
@@ -105,6 +110,8 @@
     padding: 6px 10px 2px; font-size:11px; color:var(--muted);
     text-transform:uppercase; letter-spacing:.06em;
   }
+  .col-labels.timed { grid-template-columns: 24px 1fr 1.1fr 40px 56px; gap:5px; }
+  .col-labels.timed.noload { grid-template-columns: 24px 1fr 44px 60px; }
   .col-labels span:nth-child(2), .col-labels span:nth-child(3) { text-align:center; }
   .col-labels span:last-child { text-align:center; }
 
@@ -283,6 +290,12 @@
     width:100%; max-height:82vh; overflow-y:auto; padding:16px 14px calc(env(safe-area-inset-bottom, 0px) + 16px); }
   .modal-card h3 { margin:0 0 10px; font-size:16px; }
   .modal-close { float:right; background:none; border:none; color:var(--muted); font-size:20px; padding:0 4px; }
+  .unit-sel { display:flex; gap:6px; margin:8px 0 2px; }
+  .unit-sel button { flex:0 0 auto; height:30px; padding:0 12px; border:1px solid var(--line);
+    background:var(--surface2); color:var(--muted); border-radius:999px; font-size:12px; font-weight:700; }
+  .unit-sel button.on { color:var(--accent); border-color:var(--accent); }
+  .set-timer { width:38px; height:38px; border:1px solid var(--accent); background:none;
+    color:var(--accent); border-radius:9px; font-size:14px; margin-right:6px; }
   .b-orderbox { border:1px solid #8a6d1f; background:rgba(212,167,44,.08); border-radius:10px; padding:10px 12px; margin-bottom:10px; }
   .b-orderwarn { color:#d4a72c; font-size:12.5px; line-height:1.45; margin-bottom:6px; }
   .b-ordernote { color:var(--muted); font-size:11.5px; line-height:1.4; margin-top:8px; }
@@ -468,7 +481,7 @@ setTimeout(function(){
     <p>Efface tout l'historique et les réglages (le programme préchargé est conservé).</p>
     <button class="btn warn" id="resetBtn">Réinitialiser toutes les données</button>
   </div>
-  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-07-23-s</p>
+  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-07-23-u</p>
 </div>
 
 <!-- ================= CRÉATEUR DE PROGRAMMES (accessible depuis Réglages) ================= -->
@@ -485,7 +498,7 @@ setTimeout(function(){
 <div id="restbar">
   <div>
     <div class="t num" id="restTime">0:00</div>
-    <div class="lbl">Repos avant la prochaine série</div>
+    <div class="lbl" id="restLbl">Repos avant la prochaine série</div>
   </div>
   <div>
     <button id="restMinus">-30s</button>
@@ -894,6 +907,7 @@ function defaultState() {
     oneRmOverride: {},   // exoId -> 1RM recalculé
     nameArchive: { sessions:{}, exos:{} }, // noms des séances/exos custom SUPPRIMÉS -> l'Historique reste lisible
     substitutions: {},   // programme par défaut : exoId seed -> { db, mat } (réappliqué après chaque reseed)
+    unitPref: {},        // exoId -> "sec" | "reps" : choix de l'utilisateur, prioritaire sur l'unité du programme
     programs: [           // liste de programmes (le seed + futurs programmes créés par l'utilisateur)
       /* sessionsPerWeek : nombre de séances effectuées par semaine — pilote l'avancement du
          cycle de 6 semaines (weekOfCycle) et, plus tard, le calcul du volume hebdomadaire par
@@ -927,6 +941,7 @@ function migrate(data) {
   // reseed — c'est ce qui garantit qu'une mise à jour du seed n'écrase pas leurs séances.
   if (!merged.nameArchive) merged.nameArchive = { sessions:{}, exos:{} };
   if (!merged.substitutions) merged.substitutions = {};
+  if (!merged.unitPref) merged.unitPref = {};
   merged.programs = merged.programs.map(p => {
     if (p.id === DEFAULT_PROGRAM_ID) {
       p = { ...p, name: "Programme par défaut" }; // le nom du programme par défaut appartient à l'app (états Coach importés, vieux exports)
@@ -1079,6 +1094,25 @@ function nextLadderStep(exo, bloc) {
   const capped = two.every(s => s.sets.length && s.sets.every(x => x.r >= hi));
   return capped ? next : null;
 }
+/* ---- Unité d'un exercice : répétitions ou secondes ----
+   L'unité peut venir du programme (t.unit) mais la préférence de l'utilisateur prime et vit
+   HORS du programme (S.unitPref), donc elle survit aux mises à jour du programme par défaut.
+   Un même mouvement peut se faire en reps ou en temps (60 crunchs OU 60 secondes de crunch). */
+function exoUnit(exo, bloc) {
+  const pref = S.unitPref && S.unitPref[exo.id];
+  if (pref) return pref;
+  const t = exo.t && exo.t[bloc || blocFor(exo, cur.bloc)];
+  return (t && t.unit === "sec") ? "sec" : "reps";
+}
+function isTimeMode(exo, bloc) { return exoUnit(exo, bloc) === "sec"; }
+function setExoUnit(exo, unit) {
+  const natural = (exo.t && exo.t[blocFor(exo, cur.bloc)] || {}).unit === "sec" ? "sec" : "reps";
+  if (unit === natural) delete S.unitPref[exo.id]; // retour à l'unité naturelle : pas d'entrée inutile
+  else S.unitPref[exo.id] = unit;
+  save();
+  renderSeance();
+}
+
 /* Palier PRÉCÉDENT conseillé : proposé quand le bas de la fourchette n'est pas atteint sur les
    deux dernières séances. Symétrique de nextLadderStep — un palier trop dur ne se force pas,
    on redescend et on reconstruit. */
@@ -1521,7 +1555,7 @@ function recommend(exo, bloc){
 
   /* --- Poids du corps : progression en reps (ou secondes) uniquement --- */
   if (exo.type === "pdc"){
-    const step = t.unit==="sec" ? (effort==="facile"?10:5) : (effort==="facile"?2:1);
+    const step = isTimeMode(exo, bloc) ? (effort==="facile"?10:5) : (effort==="facile"?2:1);
     const base = pad(reps);
     const targets = effort==="limite" ? base : base.map(r=>r+step);
     return { w: 0, targets, conseil: effort==="limite" ? "c'était limite : consolide au même niveau" : null };
@@ -1724,7 +1758,7 @@ function targetLabel(exo, bloc) {
   if (rec) { // le moteur de progression pilote dès qu'un historique existe dans ce bloc
     const vise = "vise " + rec.targets.join("·");
     if (exo.type==="pdc") {
-      const unit = t.unit==="sec" ? " sec" : " reps";
+      const unit = isTimeMode(exo, cur.bloc) ? " sec" : " reps";
       return { main: rec.targets[0]+unit, sub: vise };
     }
     if (exo.type==="assist")
@@ -1775,7 +1809,13 @@ function buildExoCard(exo) {
     ${!rec && tl.main==="à tester" ? `<div class="exo-advice">${testAdviceHtml(cur.bloc)}</div>` : ""}
     ${ladderAdviceHtml(exo)}
     ${exo.warn && !rec ? `<div class="exo-note">⚠ ${exo.warn}</div>` : ""}
-    <div class="col-labels"><span></span><span>${exo.type==="assist"?"Assist. (kg)":"Poids (kg)"}</span><span>${t.unit==="sec"?"Secondes":"Reps"}</span><span>Fait</span></div>
+    <div class="unit-sel">
+      <button class="${isTimeMode(exo, cur.bloc)?"":"on"}" data-unit="reps">Répétitions</button>
+      <button class="${isTimeMode(exo, cur.bloc)?"on":""}" data-unit="sec">Temps</button>
+    </div>
+    <div class="col-labels${isTimeMode(exo, cur.bloc) ? (exo.type==="pdc" ? " timed noload" : " timed") : ""}">
+      <span></span>${isTimeMode(exo, cur.bloc) && exo.type==="pdc" ? "" : `<span>${exo.type==="assist"?"Assist. (kg)":"Poids (kg)"}</span>`}
+      <span>${isTimeMode(exo, cur.bloc)?"Secondes":"Reps"}</span>${isTimeMode(exo, cur.bloc)?`<span></span>`:""}<span>Fait</span></div>
     <div class="sets"></div>
     <div class="exo-tools">
       <div class="rest-ctl">
@@ -1821,6 +1861,14 @@ function buildExoCard(exo) {
     if (v<=0) { toast("Repos à 0:00 — augmente d'abord la durée"); return; }
     startRest(v);
   };
+  /* --- Répétitions / Temps : préférence par exercice, conservée d'une séance à l'autre --- */
+  card.querySelectorAll('.unit-sel button').forEach(b => b.onclick = () => {
+    const u = b.dataset.unit;
+    if (u === exoUnit(exo, cur.bloc)) return;
+    if ((cur.entries[exo.id]||[]).some(s => s.done)) { toast("Séries déjà validées sur cet exercice : change l'unité à la prochaine séance."); return; }
+    setExoUnit(exo, u);
+    toast(u === "sec" ? "Mode temps : chrono ▶ sur chaque série" : "Mode répétitions");
+  });
 
   /* --- commentaire / sensations : sauvegarde discrète (debounce) dans le brouillon --- */
   const notesEl = card.querySelector(".notes-input");
@@ -1858,26 +1906,43 @@ function buildExoCard(exo) {
 }
 
 function buildSetRow(exo, st, i) {
-  const row = document.createElement("div"); row.className="set-row";
+  const timeMode = isTimeMode(exo, cur.bloc);
+  const stepR = timeMode ? 5 : 1; // en secondes, ±1 serait interminable (0 -> 60)
+  const noLoad = timeMode && exo.type === "pdc"; // charge toujours 0 : colonne inutile
+  const row = document.createElement("div");
+  row.className = "set-row" + (timeMode ? " timed" : "") + (noLoad ? " noload" : "");
   row.innerHTML = `
     <div class="set-idx">${i+1}</div>
-    <div class="stepper">
+    ${noLoad ? "" : `<div class="stepper">
       <button data-a="w-">−</button>
       <input type="number" inputmode="decimal" step="0.5" value="${st.w}">
       <button data-a="w+">+</button>
-    </div>
+    </div>`}
     <div class="stepper">
       <button data-a="r-">−</button>
-      <input type="number" inputmode="numeric" step="1" value="${st.r}">
+      <input type="number" inputmode="numeric" step="${stepR}" value="${st.r}">
       <button data-a="r+">+</button>
     </div>
+    ${timeMode ? `<button class="set-timer" data-a="chrono" title="Lancer le chrono de série">▶</button>` : ""}
     <button class="set-ok ${st.done?"done":""}">${st.done?"✓":"OK"}</button>`;
-  const [wIn, rIn] = row.querySelectorAll("input");
-  row.querySelector('[data-a="w-"]').onclick = ()=>{ wIn.value = Math.max(0, (+wIn.value)-1); st.w=+wIn.value; saveDraft(); };
-  row.querySelector('[data-a="w+"]').onclick = ()=>{ wIn.value = (+wIn.value)+1; st.w=+wIn.value; saveDraft(); };
-  row.querySelector('[data-a="r-"]').onclick = ()=>{ rIn.value = Math.max(0, (+rIn.value)-1); st.r=+rIn.value; saveDraft(); };
-  row.querySelector('[data-a="r+"]').onclick = ()=>{ rIn.value = (+rIn.value)+1; st.r=+rIn.value; saveDraft(); };
-  wIn.onchange = ()=>{ st.w = +wIn.value || 0; saveDraft(); };
+  const inputs = row.querySelectorAll("input");
+  const wIn = noLoad ? { value: st.w } : inputs[0];   // objet factice : st.w reste à 0, aucune saisie
+  const rIn = noLoad ? inputs[0] : inputs[1];
+  if (!noLoad) {
+    row.querySelector('[data-a="w-"]').onclick = ()=>{ wIn.value = Math.max(0, (+wIn.value)-1); st.w=+wIn.value; saveDraft(); };
+    row.querySelector('[data-a="w+"]').onclick = ()=>{ wIn.value = (+wIn.value)+1; st.w=+wIn.value; saveDraft(); };
+  }
+  row.querySelector('[data-a="r-"]').onclick = ()=>{ rIn.value = Math.max(0, (+rIn.value)-stepR); st.r=+rIn.value; saveDraft(); };
+  row.querySelector('[data-a="r+"]').onclick = ()=>{ rIn.value = (+rIn.value)+stepR; st.r=+rIn.value; saveDraft(); };
+  const chronoBtn = row.querySelector('[data-a="chrono"]');
+  if (chronoBtn) chronoBtn.onclick = () => {
+    /* Chrono de SÉRIE : décompte depuis la cible. À l'arrêt (fin ou manuel), le temps
+       RÉELLEMENT tenu se reporte dans le champ — si tu craques à 45 s sur 60, on note 45.
+       La validation reste manuelle (bouton OK), qui enchaîne sur le repos comme d'habitude. */
+    const target = +rIn.value || 30;
+    startSetTimer(target, tenu => { rIn.value = tenu; st.r = tenu; saveDraft(); });
+  };
+  if (!noLoad) wIn.onchange = ()=>{ st.w = +wIn.value || 0; saveDraft(); };
   rIn.onchange = ()=>{ st.r = +rIn.value || 0; saveDraft(); };
   const okBtn = row.querySelector(".set-ok");
   okBtn.onclick = () => {
@@ -1922,9 +1987,10 @@ $("#finishBtn").onclick = () => {
   if (!sess) return; // programme sans séance : rien à enregistrer
   const entries = {};
   let any = false;
+  const units = {}; // unité au moment de la séance : un changement ultérieur ne rend pas l'historique faux
   sess.exos.forEach(exo => {
     const done = (cur.entries[exo.id]||[]).filter(s=>s.done && s.r>0);
-    if (done.length) { entries[exo.id] = done.map(s=>({w:s.w,r:s.r})); any = true; }
+    if (done.length) { entries[exo.id] = done.map(s=>({w:s.w,r:s.r})); units[exo.id] = exoUnit(exo, cur.bloc); any = true; }
   });
   if (!any) { toast("Aucune série validée"); return; }
   // Notes/sensations par exercice : on garde celles qui ont du texte, même si l'exercice
@@ -1934,7 +2000,7 @@ $("#finishBtn").onclick = () => {
     const t = (cur.notes[exo.id]||"").trim();
     if (t) notes[exo.id] = t;
   });
-  const log = { id: Date.now(), date: new Date().toISOString(), sessionId: sess.id, bloc: cur.bloc, entries };
+  const log = { id: Date.now(), date: new Date().toISOString(), sessionId: sess.id, bloc: cur.bloc, entries, units };
   if (Object.keys(notes).length) log.notes = notes;
   const effort = {};
   sess.exos.forEach(exo => { if (cur.effort[exo.id]) effort[exo.id] = cur.effort[exo.id]; });
@@ -2017,7 +2083,35 @@ function beep() {
   } catch(e){}
   if (navigator.vibrate) navigator.vibrate([300,150,300,150,300]);
 }
+/* ---- Chrono de SÉRIE (mode temps) ----
+   Réutilise la barre du bas (résistante à la mise en veille : elle calcule sur une heure de
+   fin, pas un décompte). Différences : libellé dédié, et à l'arrêt on rend le temps
+   RÉELLEMENT tenu au champ de saisie via le callback. */
+let setTimerOnStop = null, setTimerStart = 0, setTimerTarget = 0;
+function startSetTimer(sec, onStop) {
+  stopRest();
+  try {
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+  } catch(e){}
+  setTimerOnStop = onStop; setTimerStart = Date.now(); setTimerTarget = sec;
+  restEndAt = Date.now() + sec*1000;
+  restT = sec;
+  $("#restbar").classList.add("show");
+  $("#restLbl").textContent = "Série en cours — appuie sur Stop si tu craques avant";
+  drawRest();
+  restIv = setInterval(tickRest, 1000);
+}
+function finishSetTimer() {
+  if (!setTimerOnStop) return;
+  const tenu = Math.min(setTimerTarget, Math.max(0, Math.round((Date.now() - setTimerStart)/1000)));
+  const cb = setTimerOnStop;
+  setTimerOnStop = null;
+  cb(tenu);
+  toast(tenu >= setTimerTarget ? "Série tenue : " + tenu + " s" : "Temps tenu : " + tenu + " s — valide avec OK");
+}
 function startRest(sec) {
+  setTimerOnStop = null; // un repos annule un éventuel chrono de série en cours
   stopRest();
   try { // déblocage audio Android : doit être initié par un geste utilisateur
     audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
@@ -2032,7 +2126,7 @@ function startRest(sec) {
 function tickRest() {
   restT = Math.max(0, Math.round((restEndAt - Date.now())/1000));
   drawRest();
-  if (restT<=0) { beep(); stopRest(); }
+  if (restT<=0) { beep(); finishSetTimer(); stopRest(); }
 }
 function drawRest(){
   const m = Math.floor(restT/60), s = String(restT%60).padStart(2,"0");
@@ -2041,8 +2135,9 @@ function drawRest(){
 function stopRest(){
   clearInterval(restIv); restIv = null; restEndAt = 0;
   $("#restbar").classList.remove("show");
+  $("#restLbl").textContent = "Repos avant la prochaine série";
 }
-$("#restStop").onclick = stopRest;
+$("#restStop").onclick = () => { finishSetTimer(); stopRest(); };
 $("#restPlus").onclick = ()=>{ if (!restIv) return; restEndAt += 30000; tickRest(); };
 $("#restMinus").onclick = ()=>{ if (!restIv) return; restEndAt = Math.max(Date.now(), restEndAt-30000); tickRest(); };
 
@@ -2091,7 +2186,7 @@ function renderHisto() {
       detailEl.innerHTML = exoIds.map(exoId => {
         const exo = sess?.exos.find(e=>e.id===exoId);
         const sets = log.entries[exoId];
-        const isSec = exo?.type==="pdc" && exo.t[log.bloc]?.unit==="sec";
+        const isSec = log.units ? log.units[exoId]==="sec" : (exo?.type==="pdc" && exo.t[log.bloc]?.unit==="sec");
         const setsTxt = sets ? sets.map(s => isSec ? `${s.r} sec` : exo?.type==="pdc" ? `${s.r} reps` : `${s.w} kg × ${s.r}`).join(" · ") : "—";
         const note = log.notes && log.notes[exoId];
         const eff = log.effort && log.effort[exoId];
@@ -2185,7 +2280,7 @@ function renderProg() {
     if (exo.type==="pdc") {
       const hist = repHistory(exo);
       const best = bestByBloc(hist);
-      const unitFor = bloc => (exo.t[bloc]?.unit==="sec" ? " sec" : " reps");
+      const unitFor = bloc => (isTimeMode(exo, bloc) ? " sec" : " reps");
       const zones = hist.length ? `
         <div class="zones">
           <div>Force<b class="num">${best.force!=null? best.force+unitFor("force") : "—"}</b></div>
