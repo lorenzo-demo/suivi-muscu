@@ -481,7 +481,7 @@ setTimeout(function(){
     <p>Efface tout l'historique et les réglages (le programme préchargé est conservé).</p>
     <button class="btn warn" id="resetBtn">Réinitialiser toutes les données</button>
   </div>
-  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-07-23-u</p>
+  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-07-23-v</p>
 </div>
 
 <!-- ================= CRÉATEUR DE PROGRAMMES (accessible depuis Réglages) ================= -->
@@ -609,10 +609,15 @@ const T_RANK_SECS = [{r:"20-30"},{r:"30-45"},{r:"30-45"},{r:"25-40"},{r:"20-30"}
 function targetsForLadder(m) {
   const t = targetsFromRole(m.role);
   if (m.rank == null) return t;
-  const isTime = m.role === "gainageTps";
-  const tbl = isTime ? T_RANK_SECS : T_RANK_REPS;
-  const r = (tbl[Math.min(m.rank, tbl.length-1)]).r;
-  ["force","hyp","end"].forEach(b => { t[b].r = r; if (isTime) t[b].unit = "sec"; });
+  /* Chaque palier porte SA cible (goal) : les valeurs sont fixées exercice par exercice, elles
+     ne se déduisent pas du rang (tenir 120 s de planche et 60 s de planche latérale demandent
+     un effort comparable). unit "sec" = maintien chronométré, sinon répétitions. */
+  const g = m.goal;
+  if (!g) return t;
+  ["force","hyp","end"].forEach(b => {
+    t[b].r = g.r;
+    if (g.unit === "sec") t[b].unit = "sec"; else delete t[b].unit;
+  });
   return t;
 }
 // Paliers d'une échelle, du plus facile au plus dur.
@@ -670,28 +675,28 @@ const EXODB = [
   { id:"curlmarteau",  name:"Curl marteau",                   cat:"pull", role:"iso",     prim:["biceps"], sec:[], mat:["dbPair"] },
   { id:"curlincline",  name:"Curl incliné",                   cat:"pull", role:"isoDelicat", prim:["biceps"], sec:[], mat:["dbPair"], warn:"Position étirée : charge modérée, pas d'élan." },
   /* ---------- CORE ---------- */
-  { id:"crunch",       name:"Crunch",                         cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc","lb"], ladder:"flexion", rank:0 },
-  { id:"relevesgenoux",name:"Relevés de genoux suspendus",    cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"suspendu", rank:1 },
-  { id:"planche",      name:"Planche",                        cat:"core", role:"gainageTps", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"lateral", rank:1 },
-  { id:"planchelat",   name:"Planche latérale",               cat:"core", role:"gainageTps", prim:["abdos"], sec:[], mat:["pdc"], ladder:"lateral", rank:3 },
+  { id:"crunch",       name:"Crunch",                         cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc","lb"], ladder:"flexion", rank:0, goal:{r:"25-30"} },
+  { id:"relevesgenoux",name:"Relevés de genoux suspendus",    cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"suspendu", rank:1, goal:{r:"15-25"} },
+  { id:"planche",      name:"Planche",                        cat:"core", role:"gainageTps", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"lateral", rank:1, goal:{r:"90-120",unit:"sec"} },
+  { id:"planchelat",   name:"Planche latérale",               cat:"core", role:"gainageTps", prim:["abdos"], sec:[], mat:["pdc"], ladder:"lateral", rank:3, goal:{r:"45-60",unit:"sec"} },
   { id:"pallof",       name:"Pallof press (anti-rotation)",   cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["lb"] },
   { id:"roulette",     name:"Roulette abdominale",            cat:"core", role:"gainage", prim:["abdos"], sec:["lomb","dosL"], mat:["pdc"], warn:"Exercice avancé : amplitude progressive, bassin verrouillé (aucune cambrure)." },
-  { id:"crunchinv",    name:"Crunch inversé (relevé de bassin)", cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"flexion", rank:1 },
-  { id:"vups",         name:"V-ups (buste et jambes)",         cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"flexion", rank:2 },
-  { id:"vsithold",     name:"V-sit maintenu",                  cat:"core", role:"gainageTps", prim:["abdos"], sec:[], mat:["pdc"], ladder:"flexion", rank:3 },
-  { id:"dragonflag",   name:"Dragon flag",                     cat:"core", role:"gainage", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"flexion", rank:4, adv:true, warn:"Palier avancé : exige un gainage anti-extension solide. Bassin verrouillé, aucune cambrure — arrête la série dès que le bas du dos décolle." },
-  { id:"planchegenoux",name:"Planche sur les genoux",          cat:"core", role:"gainageTps", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"lateral", rank:0 },
-  { id:"planchetouche",name:"Planche + touché d'épaule",       cat:"core", role:"gainageTps", prim:["abdos"], sec:["lomb","deltA"], mat:["pdc"], ladder:"lateral", rank:2 },
-  { id:"planchelatjambe", name:"Planche latérale, jambe levée", cat:"core", role:"gainageTps", prim:["abdos"], sec:["fessiers"], mat:["pdc"], ladder:"lateral", rank:4 },
-  { id:"planchelatgenou", name:"Planche latérale, genou à la poitrine", cat:"core", role:"gainage", prim:["abdos"], sec:["fessiers"], mat:["pdc"], ladder:"lateral", rank:5 },
-  { id:"relevesbanc",  name:"Relevé de genoux sur banc / chaise romaine", cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"suspendu", rank:0 },
-  { id:"genouxbarre",  name:"Genoux à la barre",               cat:"core", role:"gainage", prim:["abdos"], sec:["dosL"], mat:["pdc"], ladder:"suspendu", rank:2 },
-  { id:"wipers",       name:"Essuie-glaces (windshield wipers)", cat:"core", role:"gainage", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"suspendu", rank:3, adv:true, warn:"Palier avancé : rotation sous charge, exige un gainage déjà solide. Jambes fléchies tant que le contrôle n'est pas total." },
+  { id:"crunchinv",    name:"Crunch inversé (relevé de bassin)", cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"flexion", rank:1, goal:{r:"25-30"} },
+  { id:"vups",         name:"V-ups (buste et jambes)",         cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"flexion", rank:2, goal:{r:"15-25"} },
+  { id:"vsithold",     name:"V-sit maintenu",                  cat:"core", role:"gainageTps", prim:["abdos"], sec:[], mat:["pdc"], ladder:"flexion", rank:3, goal:{r:"25-40",unit:"sec"} },
+  { id:"dragonflag",   name:"Dragon flag",                     cat:"core", role:"gainage", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"flexion", rank:4, goal:{r:"8-12"}, adv:true, warn:"Palier avancé : exige un gainage anti-extension solide. Bassin verrouillé, aucune cambrure — arrête la série dès que le bas du dos décolle." },
+  { id:"planchegenoux",name:"Planche sur les genoux",          cat:"core", role:"gainageTps", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"lateral", rank:0, goal:{r:"90-120",unit:"sec"} },
+  { id:"planchetouche",name:"Planche + touché d'épaule",       cat:"core", role:"gainageTps", prim:["abdos"], sec:["lomb","deltA"], mat:["pdc"], ladder:"lateral", rank:2, goal:{r:"90-120",unit:"sec"} },
+  { id:"planchelatjambe", name:"Planche latérale, jambe levée", cat:"core", role:"gainageTps", prim:["abdos"], sec:["fessiers"], mat:["pdc"], ladder:"lateral", rank:4, goal:{r:"45-60",unit:"sec"} },
+  { id:"planchelatgenou", name:"Planche latérale, genou à la poitrine", cat:"core", role:"gainage", prim:["abdos"], sec:["fessiers"], mat:["pdc"], ladder:"lateral", rank:5, goal:{r:"15-25"} },
+  { id:"relevesbanc",  name:"Relevé de genoux sur banc / chaise romaine", cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"suspendu", rank:0, goal:{r:"15-25"} },
+  { id:"genouxbarre",  name:"Genoux à la barre",               cat:"core", role:"gainage", prim:["abdos"], sec:["dosL"], mat:["pdc"], ladder:"suspendu", rank:2, goal:{r:"15-25"} },
+  { id:"wipers",       name:"Essuie-glaces (windshield wipers)", cat:"core", role:"gainage", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"suspendu", rank:3, goal:{r:"15-25"}, adv:true, warn:"Palier avancé : rotation sous charge, exige un gainage déjà solide. Jambes fléchies tant que le contrôle n'est pas total." },
   { id:"lsit",         name:"L-sit (maintien en appui)",       cat:"core", role:"gainageTps", prim:["abdos"], sec:["triceps","deltA"], mat:["pdc"], warn:"Exercice de SUPPORT : très exigeant pour les triceps et les épaules, ce n'est pas un simple palier abdominal." },
-  { id:"supermanalt",  name:"Superman alterné (bras/jambe opposés)", cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers","abdos"], mat:["pdc"], ladder:"lombaires", rank:1 },
-  { id:"extlombairelest", name:"Extension lombaire lestée (banc 45°)", cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers","ischios"], mat:["dbSingle","lb"], ladder:"lombaires", rank:3 },
-  { id:"superman",     name:"Superman",                       cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers"], mat:["pdc"], ladder:"lombaires", rank:0 },
-  { id:"extlombaire",  name:"Extension lombaire (banc à 45°)",cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers","ischios"], mat:["pdc","dbSingle"], ladder:"lombaires", rank:2 },
+  { id:"supermanalt",  name:"Superman alterné (bras/jambe opposés)", cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers","abdos"], mat:["pdc"], ladder:"lombaires", rank:1, goal:{r:"15-25"} },
+  { id:"extlombairelest", name:"Extension lombaire lestée (banc 45°)", cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers","ischios"], mat:["dbSingle","lb"], ladder:"lombaires", rank:3, goal:{r:"15-25"} },
+  { id:"superman",     name:"Superman",                       cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers"], mat:["pdc"], ladder:"lombaires", rank:0, goal:{r:"15-25"} },
+  { id:"extlombaire",  name:"Extension lombaire (banc à 45°)",cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers","ischios"], mat:["pdc","dbSingle"], ladder:"lombaires", rank:2, goal:{r:"15-25"} },
 ];
 
 /* ---- SUBSTITUTIONS AUTORISÉES DANS LE PROGRAMME PAR DÉFAUT ----
@@ -797,9 +802,9 @@ return [
         warn:"Genou fléchi = travail du soléaire, complémentaire des mollets debout (gastrocnémien).",
         t:{force:{c:null,r:"6-8",s:3,rest:60}, hyp:{c:null,r:"12-15",s:3,rest:60}, end:{c:null,r:"20-25",s:3,rest:60}} },
       { id:"superman",name:"Superman (gainage lombaire)", type:"pdc", oneRm:null,
-        t:{force:{c:0,r:"8-10 lent",s:3,rest:60}, hyp:{c:0,r:"12-15",s:3,rest:45}, end:{c:0,r:"20",s:3,rest:40}} },
+        t:{force:{c:0,r:"15-25",s:3,rest:60}, hyp:{c:0,r:"15-25",s:3,rest:45}, end:{c:0,r:"15-25",s:3,rest:40}} },
       { id:"crunch",  name:"Crunch", type:"pdc", oneRm:null,
-        t:{force:{c:0,r:"10-12",s:3,rest:60}, hyp:{c:0,r:"15-20",s:3,rest:45}, end:{c:0,r:"25-30",s:3,rest:40}} },
+        t:{force:{c:0,r:"25-30",s:3,rest:60}, hyp:{c:0,r:"25-30",s:3,rest:45}, end:{c:0,r:"25-30",s:3,rest:40}} },
     ]
   },
   {
@@ -822,9 +827,9 @@ return [
       { id:"triceps", rack:"lb", name:"Extension triceps à la poulie", type:"charge", oneRm:null, warn:"Petite articulation : prudence en bloc Force, ne force jamais la montée.",
         t:{force:{c:34,r:"6-8",s:4,rest:90}, hyp:{c:31.5,r:"8-12",s:3,rest:75}, end:{c:23,r:"20-25",s:3,rest:45}} },
       { id:"releves", name:"Relevés de genoux suspendus", type:"pdc", oneRm:null,
-        t:{force:{c:0,r:"8-10 lent",s:3,rest:60}, hyp:{c:0,r:"12-15",s:3,rest:60}, end:{c:0,r:"20",s:3,rest:45}} },
+        t:{force:{c:0,r:"15-25",s:3,rest:60}, hyp:{c:0,r:"15-25",s:3,rest:60}, end:{c:0,r:"15-25",s:3,rest:45}} },
       { id:"lomb",    name:"Extension dorsale lombaire", type:"pdc", oneRm:null,
-        t:{force:{c:0,r:"10-12",s:3,rest:60}, hyp:{c:0,r:"15",s:3,rest:60}, end:{c:0,r:"20-25",s:3,rest:45}} },
+        t:{force:{c:0,r:"15-25",s:3,rest:60}, hyp:{c:0,r:"15-25",s:3,rest:60}, end:{c:0,r:"15-25",s:3,rest:45}} },
     ]
   },
   {
@@ -844,7 +849,7 @@ return [
       { id:"curl", rack:"lb", name:"Biceps curl", type:"charge", oneRm:null,
         t:{force:{c:30,r:"6-8",s:4,rest:90}, hyp:{c:27,r:"8-12",s:3,rest:75}, end:{c:20,r:"20-25",s:3,rest:45}} },
       { id:"planche", name:"Planche + touché épaule", type:"pdc", oneRm:null,
-        t:{force:{c:0,r:"45",s:3,rest:60,unit:"sec"}, hyp:{c:0,r:"45",s:3,rest:45,unit:"sec"}, end:{c:0,r:"45",s:3,rest:40,unit:"sec"}} },
+        t:{force:{c:0,r:"90-120",s:3,rest:60,unit:"sec"}, hyp:{c:0,r:"90-120",s:3,rest:45,unit:"sec"}, end:{c:0,r:"90-120",s:3,rest:40,unit:"sec"}} },
     ]
   }
 ];
@@ -894,7 +899,7 @@ const DEFAULT_PROGRAM_ID = "defaut";
    mises à jour du programme par défaut vers les appareils qui ont déjà un state v2 en
    localStorage — schemaVersion à lui seul ne suffit pas, car un state déjà en v2 n'est
    jamais retouché par la migration sinon. */
-const SEED_VERSION = 8; // v8 : planche déclarée chronométrée (unit sec) ; v7 : tirages sur colonne 15 lb
+const SEED_VERSION = 9; // v9 : cibles de gainage alignées sur les échelles (planche 90-120 s, abdos/lombaires 15-25) ; v8 : planche chronométrée ; v7 : tirages 15 lb
 
 function defaultState() {
   return {
@@ -1088,7 +1093,7 @@ function nextLadderStep(exo, bloc) {
   if (!next) return null;
   const t = exo.t && exo.t[blocFor(exo, bloc)];
   if (!t) return null;
-  const [, hi] = parseRange(t.r);
+  const [, hi] = parseRange(targetRange(exo, blocFor(exo, bloc)));
   const two = lastTwoSessionsFor(exo, blocFor(exo, bloc));
   if (two.length < 2) return null;
   const capped = two.every(s => s.sets.length && s.sets.every(x => x.r >= hi));
@@ -1105,6 +1110,23 @@ function exoUnit(exo, bloc) {
   return (t && t.unit === "sec") ? "sec" : "reps";
 }
 function isTimeMode(exo, bloc) { return exoUnit(exo, bloc) === "sec"; }
+/* Fourchette de l'exercice DANS L'UNITÉ EFFECTIVE. Si l'utilisateur bascule reps <-> temps,
+   la cible est convertie à raison de ~3 secondes par répétition (rythme de gainage contrôlé) :
+   25-30 crunchs <-> 75-90 s. Sans conversion, un crunch passé en temps hériterait d'une cible
+   de "25-30 secondes", absurdement courte, et déclencherait une montée d'échelle prématurée.
+   Arrondi à 5 pour rester lisible. */
+const SEC_PER_REP = 3;
+function targetRange(exo, bloc) {
+  const b = bloc || blocFor(exo, cur.bloc);
+  const t = (exo.t && exo.t[b]) || {};
+  const natural = t.unit === "sec" ? "sec" : "reps";
+  const eff = exoUnit(exo, b);
+  if (eff === natural || !t.r) return t.r || "";
+  const round5 = v => Math.max(5, Math.round(v/5)*5);
+  const [lo, hi] = parseRange(t.r); // fourchette BRUTE : ne jamais rappeler targetRange ici
+  const f = eff === "sec" ? (v => round5(v*SEC_PER_REP)) : (v => round5(v/SEC_PER_REP));
+  return f(lo) + "-" + f(hi);
+}
 function setExoUnit(exo, unit) {
   const natural = (exo.t && exo.t[blocFor(exo, cur.bloc)] || {}).unit === "sec" ? "sec" : "reps";
   if (unit === natural) delete S.unitPref[exo.id]; // retour à l'unité naturelle : pas d'entrée inutile
@@ -1124,7 +1146,7 @@ function prevLadderStep(exo, bloc) {
   if (!prev) return null;
   const t = exo.t && exo.t[blocFor(exo, bloc)];
   if (!t) return null;
-  const [lo] = parseRange(t.r);
+  const [lo] = parseRange(targetRange(exo, blocFor(exo, bloc)));
   const two = lastTwoSessionsFor(exo, blocFor(exo, bloc));
   if (two.length < 2) return null;
   const under = two.every(s => s.sets.length && s.sets.some(x => x.r < lo));
@@ -1561,7 +1583,7 @@ function recommend(exo, bloc){
     return { w: 0, targets, conseil: effort==="limite" ? "c'était limite : consolide au même niveau" : null };
   }
 
-  const [lo, hi] = parseRange(t.r);
+  const [lo, hi] = parseRange(targetRange(exo, bloc));
   const isAssist = exo.type==="assist";
   const eff = wt => isAssist ? S.bodyweight - wt : wt;   // charge effective (assist : PDC − assistance)
   const incr = exoIncrement(exo);
@@ -1767,18 +1789,18 @@ function targetLabel(exo, bloc) {
   }
   // --- Amorçage (aucune séance loggée dans ce bloc) : comportement e1RM classique ---
   if (exo.type==="pdc") {
-    return { main: "—", sub: t.r+" × "+t.s };
+    return { main: "—", sub: targetRange(exo, bloc)+" × "+t.s };
   }
   const c = computeTargetCharge(exo, bloc);
   if (c==null) {
     // noRm (ex: face pull) : jamais chiffré, volontairement — pas de "à tester" trompeur.
     // Un exo "charge" normal juste jamais encore loggé garde "à tester" (invite à tester une charge).
-    return exo.noRm ? {main:"—", sub:t.r+" × "+t.s} : {main:"à tester", sub:t.r+" × "+t.s};
+    return exo.noRm ? {main:"—", sub:targetRange(exo, bloc)+" × "+t.s} : {main:"à tester", sub:targetRange(exo, bloc)+" × "+t.s};
   }
   if (exo.type==="assist") {
-    return {main:"−"+c+" kg", sub:"("+round05(S.bodyweight-c)+" kg soulevés) · "+t.r+" × "+t.s};
+    return {main:"−"+c+" kg", sub:"("+round05(S.bodyweight-c)+" kg soulevés) · "+targetRange(exo, bloc)+" × "+t.s};
   }
-  return {main:c+" kg", sub:t.r+" × "+t.s};
+  return {main:c+" kg", sub:targetRange(exo, bloc)+" × "+t.s};
 }
 
 function buildExoCard(exo) {
@@ -1790,7 +1812,7 @@ function buildExoCard(exo) {
       cur.entries[exo.id] = Array.from({length:t.s}, (_,i)=>({w:rec.w, r:rec.targets[Math.min(i, rec.targets.length-1)], done:false}));
     } else {
       const initW = exo.type==="pdc" ? 0 : (computeTargetCharge(exo, cur.bloc) ?? 0);
-      const initR = parseInt(t.r)||10;
+      const initR = parseInt(targetRange(exo, eb))||10;
       cur.entries[exo.id] = Array.from({length:t.s}, ()=>({w:initW, r:initR, done:false}));
     }
   }
