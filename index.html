@@ -481,7 +481,7 @@ setTimeout(function(){
     <p>Efface tout l'historique et les réglages (le programme préchargé est conservé).</p>
     <button class="btn warn" id="resetBtn">Réinitialiser toutes les données</button>
   </div>
-  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-07-23-v</p>
+  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-07-23-z</p>
 </div>
 
 <!-- ================= CRÉATEUR DE PROGRAMMES (accessible depuis Réglages) ================= -->
@@ -640,7 +640,9 @@ const EXODB = [
   { id:"hipthrust",    name:"Hip thrust",                     cat:"legs", role:"bigPoly", prim:["fessiers"], sec:["ischios"], mat:["barre","plate"] },
   { id:"legext",       name:"Extension jambes",               cat:"legs", role:"iso",     prim:["quads"], sec:[], mat:["lb"] },
   { id:"legcurl",      name:"Flexion jambes (leg curl)",      cat:"legs", role:"iso",     prim:["ischios"], sec:[], mat:["lb"] },
-  { id:"molletsdeb",   name:"Mollets debout",                 cat:"legs", role:"mollets", prim:["mollets"], sec:[], mat:["dbSingle","lb","plate","pdc"] },
+  { id:"molletsdeb",   name:"Mollets debout",                 cat:"legs", role:"mollets", prim:["mollets"], sec:[], mat:["dbSingle","lb","plate","pdc"], ladder:"mollets", rank:0 },
+  { id:"molletshack",  name:"Mollets à la machine à squat inclinée", cat:"legs", role:"mollets", prim:["mollets"], sec:[], mat:["plate"], ladder:"mollets", rank:1, warn:"Buste incliné, épaules sous les épaulières du chariot, jambes tendues : travail du gastrocnémien. Ne remplace pas le soléaire (qui exige le genou fléchi)." },
+  { id:"hacksquat",    name:"Squat à la machine inclinée (hack squat)", cat:"legs", role:"bigPoly", prim:["quads","fessiers"], sec:["ischios"], mat:["plate"], warn:"Trajectoire guidée : dos plaqué contre le chariot, pieds à plat. Charge plus facile à pousser qu'au squat libre." },
   { id:"molletsassis", name:"Mollets assis (soléaire)",       cat:"legs", role:"mollets", prim:["mollets"], sec:[], mat:["dbPair","lb"], warn:"Genou fléchi = travail du soléaire, complémentaire des mollets debout (gastrocnémien)." },
   { id:"abduction",    name:"Abduction de hanche",            cat:"legs", role:"isoDelicat", prim:["fessiers"], sec:[], mat:["lb"] },
   { id:"glutekick",    name:"Kickback fessier à la poulie",   cat:"legs", role:"iso",     prim:["fessiers"], sec:["ischios"], mat:["lb"] },
@@ -710,7 +712,11 @@ const EXODB = [
 /* Créneaux substituables du programme par défaut -> l'ÉCHELLE dont ils font partie.
    Les remplaçants admis sont tous les paliers de cette échelle : on peut monter d'un cran
    quand on plafonne, mais aussi redescendre (un palier trop dur ne se force pas). */
-const SUB_LADDERS = { crunch:"flexion", releves:"suspendu", planche:"lateral", superman:"lombaires", lomb:"lombaires" };
+const SUB_LADDERS = { crunch:"flexion", releves:"suspendu", planche:"lateral", superman:"lombaires", lomb:"lombaires", mollets:"mollets" };
+/* Créneaux substituables sans progression ordonnée (variantes équivalentes). Vide aujourd'hui :
+   les mollets debout sont devenus une échelle, et les mollets ASSIS n'ont pas d'alternative —
+   le soléaire n'est sollicité que genou fléchi, aucune machine debout ne le remplace. */
+const SUB_LISTS = {};
 /* Calculé À LA DEMANDE (et non à l'initialisation) : SEED_TO_DB et EXODB sont déclarés plus
    bas dans le fichier, et une const n'est pas accessible avant sa ligne de déclaration. */
 let _SUBS_CACHE = null;
@@ -720,10 +726,14 @@ function substitutionsFor(slot) {
       const seedDb = SEED_TO_DB[sl];
       return [sl, ladderSteps(lad).map(m => m.id).filter(id => id !== seedDb)];
     }));
+    Object.entries(SUB_LISTS).forEach(([sl, ids]) => {
+      const seedDb = SEED_TO_DB[sl];
+      _SUBS_CACHE[sl] = ids.filter(id => id !== seedDb && EXODB.some(e => e.id === id));
+    });
   }
   return slot === undefined ? _SUBS_CACHE : (_SUBS_CACHE[slot] || null);
 }
-function isSubstitutableSlot(slot) { return !!SUB_LADDERS[slot]; }
+function isSubstitutableSlot(slot) { return !!SUB_LADDERS[slot] || !!SUB_LISTS[slot]; }
 
 /* Mapping des exercices SEED vers leurs mouvements EXODB : donne accès aux muscles
    (comptage de volume, étirements) sans jamais modifier les exercices seed eux-mêmes. */
@@ -793,9 +803,9 @@ return [
         t:{force:{c:169,r:"5-6",s:5,rest:150}, hyp:{c:149,r:"8-12",s:4,rest:90}, end:{c:109,r:"20-25",s:3,rest:50}} },
       { id:"hip", incr:1, name:"Hip thrust", type:"charge", oneRm:null,
         t:{force:{c:34,r:"5-6",s:5,rest:150}, hyp:{c:30,r:"8-12",s:4,rest:90}, end:{c:22,r:"20-25",s:3,rest:50}} },
-      { id:"extj", rack:"lb", name:"Extension jambes (quadriceps)", type:"charge", oneRm:null, 
+      { id:"extj", rack:"lb15", name:"Extension jambes (quadriceps)", type:"charge", oneRm:null, 
         t:{force:{c:56,r:"5-6",s:4,rest:120}, hyp:{c:50,r:"8-12",s:3,rest:75}, end:{c:36,r:"20-25",s:3,rest:45}} },
-      { id:"flexj", rack:"lb", name:"Flexion jambes (ischios)", type:"charge", oneRm:null, 
+      { id:"flexj", rack:"lb15", name:"Flexion jambes (ischios)", type:"charge", oneRm:null, 
         t:{force:{c:52,r:"5-6",s:4,rest:120}, hyp:{c:46,r:"8-12",s:3,rest:75}, end:{c:34,r:"20-25",s:3,rest:45}} },
       { id:"mollets", rack:"dbSingle", name:"Mollets debout", type:"charge", oneRm:null,         t:{force:{c:null,r:"6-8",s:4,rest:90}, hyp:{c:null,r:"12-15",s:3,rest:60}, end:{c:null,r:"20-25",s:3,rest:45}} },
       { id:"molletsassis", rack:"dbPair", name:"Mollets assis (soléaire)", type:"charge", oneRm:null,
@@ -899,7 +909,7 @@ const DEFAULT_PROGRAM_ID = "defaut";
    mises à jour du programme par défaut vers les appareils qui ont déjà un state v2 en
    localStorage — schemaVersion à lui seul ne suffit pas, car un state déjà en v2 n'est
    jamais retouché par la migration sinon. */
-const SEED_VERSION = 9; // v9 : cibles de gainage alignées sur les échelles (planche 90-120 s, abdos/lombaires 15-25) ; v8 : planche chronométrée ; v7 : tirages 15 lb
+const SEED_VERSION = 10; // v10 : extension/flexion jambes sur colonne 15 lb + petits poids de 1,1 kg ; v9 : cibles de gainage // v9 : cibles de gainage alignées sur les échelles (planche 90-120 s, abdos/lombaires 15-25) ; v8 : planche chronométrée ; v7 : tirages 15 lb
 
 function defaultState() {
   return {
@@ -947,6 +957,8 @@ function migrate(data) {
   if (!merged.nameArchive) merged.nameArchive = { sessions:{}, exos:{} };
   if (!merged.substitutions) merged.substitutions = {};
   if (!merged.unitPref) merged.unitPref = {};
+  // Renommage d'un mouvement de la base (build w -> x) : on reporte les substitutions existantes
+  Object.values(merged.substitutions).forEach(sub => { if (sub && sub.db === "molletsmachdeb") sub.db = "molletshack"; });
   merged.programs = merged.programs.map(p => {
     if (p.id === DEFAULT_PROGRAM_ID) {
       p = { ...p, name: "Programme par défaut" }; // le nom du programme par défaut appartient à l'app (états Coach importés, vieux exports)
@@ -987,6 +999,11 @@ const PLAFOND_PDC_ASSIST = 25;
 /* Plaques de base des machines à colonne en 15 lb (déclarées AVANT RACKS : utilisées dans
    son initialisation). Première plaque à 10 lb, puis pas de 15 lb. */
 const LB15_PLATES = [4.5,11,18,25,32,39,45,52,59,66,73,79,86,93,100,107,113,120,127,134];
+/* Charges d'appoint posables sur la colonne : deux petits poids de 5 lb (2,3 kg) et un de
+   2,5 lb (1,1 kg, valeur affichée en salle). Toutes les combinaisons possibles, triées.
+   Le maximum (5,7) reste inférieur à l'écart entre deux plaques (~6,8), donc l'échelle
+   obtenue est strictement croissante — snapToRack fonctionne sans modification. */
+const LB15_ADDONS = [0, 1.1, 2.3, 3.4, 4.6, 5.7];
 const RACKS = {
   // Machines à plaques en livres + demi-plaque de 2,3 kg (pas alterné +2,3/+2,2). Max 93,3.
   lb: [4.5,6.8,9,11.3,14,16.3,18,20.3,23,25.3,27,29.3,32,34.3,36,38.3,41,43.3,45,47.3,50,52.3,54,56.3,59,61.3,64,66.3,68,70.3,73,75.3,77,79.3,82,84.3,86,88.3,91,93.3],
@@ -999,7 +1016,7 @@ const RACKS = {
      (2,3 kg) -> la table est GÉNÉRÉE : chaque plaque, plaque+2,3 et plaque+4,6.
      L'échelle reste monotone (4,6 < ~7 kg d'écart entre deux plaques), donc snapToRack
      fonctionne sans modification. */
-  lb15: LB15_PLATES.flatMap(p => [p, Math.round((p+2.3)*10)/10, Math.round((p+4.6)*10)/10])
+  lb15: LB15_PLATES.flatMap(p => LB15_ADDONS.map(a => Math.round((p+a)*10)/10))
                    .sort((a,b) => a-b)
 };
 function load() {
@@ -1097,7 +1114,24 @@ function nextLadderStep(exo, bloc) {
   const two = lastTwoSessionsFor(exo, blocFor(exo, bloc));
   if (two.length < 2) return null;
   const capped = two.every(s => s.sets.length && s.sets.every(x => x.r >= hi));
-  return capped ? next : null;
+  if (!capped) return null;
+  /* Exercice CHARGÉ : tenir le haut de la fourchette veut d'abord dire "monte la charge".
+     Le palier suivant ne se justifie que si le matériel ne permet plus de progresser —
+     ex. mollets debout à l'haltère plafonnés à 50 kg -> passer à la machine chargée. */
+  if (exo.type === "charge") {
+    const w = two[0].sets.reduce((mx, s) => Math.max(mx, s.w || 0), 0);
+    if (exo.rack) {
+      /* Table de paliers : le palier suivant ne se justifie qu'au DERNIER cran réel.
+         (snapToRack prolonge au-delà de la table par convention, on ne peut donc pas se
+         fier à nextWeight pour détecter le plafond.) */
+      const arr = RACKS[exo.rack] || [];
+      const max = arr.length ? arr[arr.length-1] : Infinity;
+      if (w < max - 1e-9) return null;
+    } else {
+      return null; // charge libre (barre, machine à disques) : jamais de plafond matériel
+    }
+  }
+  return next;
 }
 /* ---- Unité d'un exercice : répétitions ou secondes ----
    L'unité peut venir du programme (t.unit) mais la préférence de l'utilisateur prime et vit
@@ -2997,9 +3031,11 @@ function renderBuilderSubs(el) {
     const slot = slotOf(exo);
     if (!slot) return;
     const isSub = !!S.substitutions[slot];
-    // Échelle complète, du plus facile au plus dur : le palier occupé est mis en évidence.
+    // Échelle : paliers ordonnés. Créneau simple (SUB_LISTS) : variantes équivalentes.
     const lad = SUB_LADDERS[slot];
-    const steps = ladderSteps(lad);
+    const steps = lad ? ladderSteps(lad)
+                      : [...new Set([SEED_TO_DB[slot], ...(SUB_LISTS[slot]||[])])]
+                          .map(id => EXODB.find(e => e.id === id)).filter(Boolean);
     const curDb = dbEntryForExo(exo.id);
     const seedDb = SEED_TO_DB[slot];
     const opts = steps.map(m => {
@@ -3008,12 +3044,12 @@ function renderBuilderSubs(el) {
       const label = (m.adv ? "⚠️ " : "") + m.name;
       const attr = isOrigin ? `data-revert="${slot}"` : `data-slot="${slot}" data-db="${m.id}"`;
       return `<button class="pill ${on?"on":""}" ${attr} title="Palier ${m.rank}">${escHtml(label)}</button>`;
-    }).join(" <span style=\"color:var(--line);align-self:center;\">›</span> ");
+    }).join(lad ? " <span style=\"color:var(--line);align-self:center;\">›</span> " : " ");
     const advNote = steps.some(m => m.adv)
       ? `<div style="color:var(--muted);font-size:11.5px;margin-top:6px;">⚠️ = palier avancé : exige un gainage anti-extension déjà solide (bassin verrouillé, aucune cambrure). Jamais suggéré automatiquement.</div>` : "";
     rows += `<div class="b-row" style="display:block;">
       <div class="nm">${escHtml(exo.name)}${isSub?` <span style="color:var(--accent);font-size:11.5px;">· remplacé</span>`:""}</div>
-      <div class="sub" style="margin-bottom:6px;">${escHtml(sess.name)} · du plus facile au plus dur</div>
+      <div class="sub" style="margin-bottom:6px;">${escHtml(sess.name)}${lad ? " · du plus facile au plus dur" : " · variantes équivalentes"}</div>
       <div class="pillbar" style="margin-bottom:0;align-items:center;">${opts}</div>
       ${advNote}
     </div>`;
