@@ -45,7 +45,7 @@ dos/bras) prêt à l'emploi. Échauffement adapté au bloc, chronomètre de repo
 mise en veille, commentaires et ressenti par exercice, étirements en fin de séance.
 
 ### Créer les tiens
-Un créateur complet : compose tes séances depuis une base de **65 mouvements** documentés
+Un créateur complet : compose tes séances depuis une base de **76 mouvements** documentés
 (muscles primaires et secondaires, matériel admis, avertissements techniques), assemble-les en
 programmes, définis ton rythme hebdomadaire. Chaque exercice créé bénéficie immédiatement de
 tout le moteur — 1RM, cycle, progression, paliers réels — exactement comme les exercices
@@ -132,5 +132,5 @@ Le stockage utilise un schéma versionné avec migration automatique — les mis
 l'application enrichissent le programme par défaut sans jamais toucher aux programmes
 personnels, ni aux substitutions d'exercices, ni aux préférences.
 
-Plus de **400 tests headless** (jsdom) couvrent le moteur de progression, les tables de paliers,
+Plus de **450 tests headless** (jsdom) couvrent le moteur de progression, les tables de paliers,
 le créateur, l'assistant, les échelles de gainage et les migrations de données.

@@ -290,6 +290,10 @@
     width:100%; max-height:82vh; overflow-y:auto; padding:16px 14px calc(env(safe-area-inset-bottom, 0px) + 16px); }
   .modal-card h3 { margin:0 0 10px; font-size:16px; }
   .modal-close { float:right; background:none; border:none; color:var(--muted); font-size:20px; padding:0 4px; }
+  .lev-tag { font-size:10px; font-weight:700; padding:2px 6px; border-radius:999px;
+    border:1px solid currentColor; margin-left:4px; vertical-align:middle; }
+  .lv1 { color:#3FA65C; } .lv2 { color:#d4a72c; } .lv3 { color:#E05445; }
+  .pill.lv1.on { border-color:#3FA65C; } .pill.lv2.on { border-color:#d4a72c; } .pill.lv3.on { border-color:#E05445; }
   .unit-sel { display:flex; gap:6px; margin:8px 0 2px; }
   .unit-sel button { flex:0 0 auto; height:30px; padding:0 12px; border:1px solid var(--line);
     background:var(--surface2); color:var(--muted); border-radius:999px; font-size:12px; font-weight:700; }
@@ -481,7 +485,7 @@ setTimeout(function(){
     <p>Efface tout l'historique et les réglages (le programme préchargé est conservé).</p>
     <button class="btn warn" id="resetBtn">Réinitialiser toutes les données</button>
   </div>
-  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-07-23-z</p>
+  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-07-24-a</p>
 </div>
 
 <!-- ================= CRÉATEUR DE PROGRAMMES (accessible depuis Réglages) ================= -->
@@ -631,74 +635,85 @@ function ladderOfExo(exoId) {
 
 const EXODB = [
   /* ---------- LEGS ---------- */
-  { id:"squat",        name:"Squat",                          cat:"legs", role:"bigPoly", prim:["quads","fessiers"], sec:["ischios","lomb","abdos"], mat:["barre","dbSingle","pdc"], warn:"Technique exigeante : fais valider ton squat avant de charger." },
-  { id:"presse",       name:"Presse à cuisse",                cat:"legs", role:"bigPoly", prim:["quads","fessiers"], sec:["ischios"], mat:["plate","lb"] },
-  { id:"fentes",       name:"Fentes marchées ou statiques",   cat:"legs", role:"poly",    prim:["quads","fessiers"], sec:["ischios","abdos"], mat:["dbPair","barre","pdc"] },
-  { id:"fentebulgare", name:"Fentes bulgares",                cat:"legs", role:"poly",    prim:["quads","fessiers"], sec:["ischios"], mat:["dbPair","dbSingle","pdc"] },
-  { id:"sdt",          name:"Soulevé de terre",               cat:"legs", role:"bigPoly", prim:["fessiers","ischios","lomb"], sec:["quads","dosE","abdos"], mat:["barre"], warn:"Technique exigeante : dos neutre impératif, fais valider ton mouvement avant de charger." },
-  { id:"sdtroumain",   name:"Soulevé de terre roumain",       cat:"legs", role:"poly",    prim:["ischios","fessiers"], sec:["lomb"], mat:["barre","dbPair"], warn:"Dos neutre, descente contrôlée jusqu'à l'étirement des ischios — pas plus bas." },
-  { id:"hipthrust",    name:"Hip thrust",                     cat:"legs", role:"bigPoly", prim:["fessiers"], sec:["ischios"], mat:["barre","plate"] },
-  { id:"legext",       name:"Extension jambes",               cat:"legs", role:"iso",     prim:["quads"], sec:[], mat:["lb"] },
-  { id:"legcurl",      name:"Flexion jambes (leg curl)",      cat:"legs", role:"iso",     prim:["ischios"], sec:[], mat:["lb"] },
-  { id:"molletsdeb",   name:"Mollets debout",                 cat:"legs", role:"mollets", prim:["mollets"], sec:[], mat:["dbSingle","lb","plate","pdc"], ladder:"mollets", rank:0 },
-  { id:"molletshack",  name:"Mollets à la machine à squat inclinée", cat:"legs", role:"mollets", prim:["mollets"], sec:[], mat:["plate"], ladder:"mollets", rank:1, warn:"Buste incliné, épaules sous les épaulières du chariot, jambes tendues : travail du gastrocnémien. Ne remplace pas le soléaire (qui exige le genou fléchi)." },
-  { id:"hacksquat",    name:"Squat à la machine inclinée (hack squat)", cat:"legs", role:"bigPoly", prim:["quads","fessiers"], sec:["ischios"], mat:["plate"], warn:"Trajectoire guidée : dos plaqué contre le chariot, pieds à plat. Charge plus facile à pousser qu'au squat libre." },
-  { id:"molletsassis", name:"Mollets assis (soléaire)",       cat:"legs", role:"mollets", prim:["mollets"], sec:[], mat:["dbPair","lb"], warn:"Genou fléchi = travail du soléaire, complémentaire des mollets debout (gastrocnémien)." },
-  { id:"abduction",    name:"Abduction de hanche",            cat:"legs", role:"isoDelicat", prim:["fessiers"], sec:[], mat:["lb"] },
-  { id:"glutekick",    name:"Kickback fessier à la poulie",   cat:"legs", role:"iso",     prim:["fessiers"], sec:["ischios"], mat:["lb"] },
+  { id:"squatgobelet", name:"Squat gobelet (haltère contre la poitrine)", cat:"legs", lev:2, role:"bigPoly", prim:["quads","fessiers"], sec:["abdos"], mat:["dbSingle"], warn:"Buste vertical, coudes à l'intérieur des genoux : la meilleure marche avant le squat barre." },
+  { id:"pressehoriz",  name:"Presse à cuisse horizontale", cat:"legs", lev:1, role:"bigPoly", prim:["quads","fessiers"], sec:["ischios"], mat:["lb"] },
+  { id:"smithsquat",   name:"Squat à la barre guidée (Smith)", cat:"legs", lev:2, role:"bigPoly", prim:["quads","fessiers"], sec:["ischios"], mat:["barre"], warn:"Trajectoire imposée : plus tolérante que la barre libre, mais moins de travail des stabilisateurs." },
+  { id:"elevlatmach",  name:"Élévations latérales à la machine", cat:"push", lev:1, role:"isoDelicat", prim:["deltL"], sec:[], mat:["lb","plate"], warn:"Trajectoire guidée : idéale pour sentir le deltoïde latéral sans élan." },
+  { id:"devepmachine", name:"Développé épaules à la machine", cat:"push", lev:1, role:"poly", prim:["deltA"], sec:["deltL","triceps"], mat:["lb","plate"] },
+  { id:"tricepsmach",  name:"Extension triceps à la machine", cat:"push", lev:1, role:"iso", prim:["triceps"], sec:[], mat:["lb"] },
+  { id:"pompesgenoux", name:"Pompes sur les genoux", cat:"push", lev:1, role:"poly", prim:["pecs"], sec:["triceps","deltA"], mat:["pdc"] },
+  { id:"curlmachine",  name:"Curl biceps à la machine", cat:"pull", lev:1, role:"iso", prim:["biceps"], sec:[], mat:["lb"] },
+  { id:"rowingmach",   name:"Rowing à la machine (assis, appui poitrine)", cat:"pull", lev:1, role:"poly", prim:["dosE"], sec:["dosL","biceps"], mat:["lb","plate"] },
+  { id:"tractionselas",name:"Tractions avec élastique", cat:"pull", lev:2, role:"poly", prim:["dosL"], sec:["biceps"], mat:["pdc"], warn:"L'élastique aide surtout en bas du mouvement : une alternative à la machine assistée." },
+  { id:"legcurldeb",   name:"Flexion jambes debout (une jambe)", cat:"legs", lev:1, role:"iso", prim:["ischios"], sec:[], mat:["lb"] },
+  { id:"squat",        name:"Squat",                          cat:"legs", lev:3, role:"bigPoly", prim:["quads","fessiers"], sec:["ischios","lomb","abdos"], mat:["barre","dbSingle","pdc"], warn:"Technique exigeante : fais valider ton squat avant de charger." },
+  { id:"presse",       name:"Presse à cuisse",                cat:"legs", lev:1, role:"bigPoly", prim:["quads","fessiers"], sec:["ischios"], mat:["plate","lb"] },
+  { id:"fentes",       name:"Fentes marchées ou statiques",   cat:"legs", lev:2, role:"poly",    prim:["quads","fessiers"], sec:["ischios","abdos"], mat:["dbPair","barre","pdc"] },
+  { id:"fentebulgare", name:"Fentes bulgares",                cat:"legs", lev:2, role:"poly",    prim:["quads","fessiers"], sec:["ischios"], mat:["dbPair","dbSingle","pdc"] },
+  { id:"sdt",          name:"Soulevé de terre",               cat:"legs", lev:3, role:"bigPoly", prim:["fessiers","ischios","lomb"], sec:["quads","dosE","abdos"], mat:["barre"], warn:"Technique exigeante : dos neutre impératif, fais valider ton mouvement avant de charger." },
+  { id:"sdtroumain",   name:"Soulevé de terre roumain",       cat:"legs", lev:2, role:"poly",    prim:["ischios","fessiers"], sec:["lomb"], mat:["barre","dbPair"], warn:"Dos neutre, descente contrôlée jusqu'à l'étirement des ischios — pas plus bas." },
+  { id:"hipthrust",    name:"Hip thrust",                     cat:"legs", lev:2, role:"bigPoly", prim:["fessiers"], sec:["ischios"], mat:["barre","plate"] },
+  { id:"legext",       name:"Extension jambes",               cat:"legs", lev:1, role:"iso",     prim:["quads"], sec:[], mat:["lb"] },
+  { id:"legcurl",      name:"Flexion jambes (leg curl)",      cat:"legs", lev:1, role:"iso",     prim:["ischios"], sec:[], mat:["lb"] },
+  { id:"molletsdeb",   name:"Mollets debout",                 cat:"legs", lev:1, role:"mollets", prim:["mollets"], sec:[], mat:["dbSingle","lb","plate","pdc"], ladder:"mollets", rank:0 },
+  { id:"molletshack",  name:"Mollets à la machine à squat inclinée", cat:"legs", lev:1, role:"mollets", prim:["mollets"], sec:[], mat:["plate"], ladder:"mollets", rank:1, warn:"Buste incliné, épaules sous les épaulières du chariot, jambes tendues : travail du gastrocnémien. Ne remplace pas le soléaire (qui exige le genou fléchi)." },
+  { id:"hacksquat",    name:"Squat à la machine inclinée (hack squat)", cat:"legs", lev:1, role:"bigPoly", prim:["quads","fessiers"], sec:["ischios"], mat:["plate"], warn:"Trajectoire guidée : dos plaqué contre le chariot, pieds à plat. Charge plus facile à pousser qu'au squat libre." },
+  { id:"molletsassis", name:"Mollets assis (soléaire)",       cat:"legs", lev:1, role:"mollets", prim:["mollets"], sec:[], mat:["dbPair","lb"], warn:"Genou fléchi = travail du soléaire, complémentaire des mollets debout (gastrocnémien)." },
+  { id:"abduction",    name:"Abduction de hanche",            cat:"legs", lev:1, role:"isoDelicat", prim:["fessiers"], sec:[], mat:["lb"] },
+  { id:"glutekick",    name:"Kickback fessier à la poulie",   cat:"legs", lev:1, role:"iso",     prim:["fessiers"], sec:["ischios"], mat:["lb"] },
   /* ---------- PUSH ---------- */
-  { id:"pompes",       name:"Pompes",                         cat:"push", role:"poly",    prim:["pecs"], sec:["triceps","deltA"], mat:["pdc"] },
-  { id:"devcouche",    name:"Développé couché",               cat:"push", role:"bigPoly", prim:["pecs"], sec:["triceps","deltA"], mat:["barre","dbPair"] },
-  { id:"devinclineh",  name:"Développé incliné",              cat:"push", role:"bigPoly", prim:["pecs"], sec:["deltA","triceps"], mat:["dbPair","barre"] },
-  { id:"devmachine",   name:"Développé assis (machine convergente)", cat:"push", role:"poly", prim:["pecs"], sec:["triceps","deltA"], mat:["lb","plate"] },
-  { id:"dips",         name:"Dips",                           cat:"push", role:"poly",    prim:["pecs"], sec:["triceps","deltA"], mat:["assist","pdc"] },
-  { id:"ecartepoulie", name:"Écarté à la poulie",             cat:"push", role:"iso",     prim:["pecs"], sec:[], mat:["lb"] },
-  { id:"ecartehalt",   name:"Écarté couché haltères",         cat:"push", role:"isoDelicat", prim:["pecs"], sec:["deltA"], mat:["dbPair"], warn:"Coudes légèrement fléchis, descente contrôlée : ne cherche jamais le maxi ici." },
-  { id:"pecdeck",      name:"Pec deck (butterfly)",           cat:"push", role:"iso",     prim:["pecs"], sec:[], mat:["lb"] },
-  { id:"devmilitaire", name:"Développé militaire",            cat:"push", role:"poly",    prim:["deltA"], sec:["deltL","triceps"], mat:["barre","dbPair"] },
-  { id:"elevlat",      name:"Élévations latérales",           cat:"push", role:"isoDelicat", prim:["deltL"], sec:[], mat:["dbPair","lb"], warn:"Isolation stricte : léger à modéré, sans élan (risque de conflit d'épaule)." },
-  { id:"elevfront",    name:"Élévations frontales",           cat:"push", role:"isoDelicat", prim:["deltA"], sec:[], mat:["dbPair","lb"] },
-  { id:"oiseau",       name:"Oiseau (élévations buste penché)", cat:"push", role:"isoDelicat", prim:["deltP"], sec:["dosE"], mat:["dbPair","lb"] },
-  { id:"facepull",     name:"Face pull à la poulie",          cat:"push", role:"sante",   prim:["deltP"], sec:["dosE"], mat:["lb"], noRm:true, warn:"Exercice de santé d'épaule : reste TOUJOURS léger (12-15 reps), même en bloc Force. Jamais utilisé pour calculer un 1RM." },
-  { id:"tricepspoulie",name:"Extension triceps à la poulie",  cat:"push", role:"iso",     prim:["triceps"], sec:[], mat:["lb"], warn:"Petite articulation : prudence en bloc Force, ne force jamais la montée." },
-  { id:"tricepsnuque", name:"Extension triceps nuque",        cat:"push", role:"iso",     prim:["triceps"], sec:[], mat:["dbSingle","dbPair"], warn:"Petite articulation : prudence en bloc Force, ne force jamais la montée." },
-  { id:"barrefront",   name:"Barre au front",                 cat:"push", role:"iso",     prim:["triceps"], sec:[], mat:["barre"], warn:"Coudes sensibles : charge modérée, contrôle total de la descente." },
+  { id:"pompes",       name:"Pompes",                         cat:"push", lev:1, role:"poly",    prim:["pecs"], sec:["triceps","deltA"], mat:["pdc"] },
+  { id:"devcouche",    name:"Développé couché",               cat:"push", lev:3, role:"bigPoly", prim:["pecs"], sec:["triceps","deltA"], mat:["barre","dbPair"] },
+  { id:"devinclineh",  name:"Développé incliné",              cat:"push", lev:2, role:"bigPoly", prim:["pecs"], sec:["deltA","triceps"], mat:["dbPair","barre"] },
+  { id:"devmachine",   name:"Développé assis (machine convergente)", cat:"push", lev:1, role:"poly", prim:["pecs"], sec:["triceps","deltA"], mat:["lb","plate"] },
+  { id:"dips",         name:"Dips",                           cat:"push", lev:2, role:"poly",    prim:["pecs"], sec:["triceps","deltA"], mat:["assist","pdc"] },
+  { id:"ecartepoulie", name:"Écarté à la poulie",             cat:"push", lev:1, role:"iso",     prim:["pecs"], sec:[], mat:["lb"] },
+  { id:"ecartehalt",   name:"Écarté couché haltères",         cat:"push", lev:2, role:"isoDelicat", prim:["pecs"], sec:["deltA"], mat:["dbPair"], warn:"Coudes légèrement fléchis, descente contrôlée : ne cherche jamais le maxi ici." },
+  { id:"pecdeck",      name:"Pec deck (butterfly)",           cat:"push", lev:1, role:"iso",     prim:["pecs"], sec:[], mat:["lb"] },
+  { id:"devmilitaire", name:"Développé militaire",            cat:"push", lev:3, role:"poly",    prim:["deltA"], sec:["deltL","triceps"], mat:["barre","dbPair"] },
+  { id:"elevlat",      name:"Élévations latérales",           cat:"push", lev:2, role:"isoDelicat", prim:["deltL"], sec:[], mat:["dbPair","lb"], warn:"Isolation stricte : léger à modéré, sans élan (risque de conflit d'épaule)." },
+  { id:"elevfront",    name:"Élévations frontales",           cat:"push", lev:2, role:"isoDelicat", prim:["deltA"], sec:[], mat:["dbPair","lb"] },
+  { id:"oiseau",       name:"Oiseau (élévations buste penché)", cat:"push", lev:2, role:"isoDelicat", prim:["deltP"], sec:["dosE"], mat:["dbPair","lb"] },
+  { id:"facepull",     name:"Face pull à la poulie",          cat:"push", lev:1, role:"sante",   prim:["deltP"], sec:["dosE"], mat:["lb"], noRm:true, warn:"Exercice de santé d'épaule : reste TOUJOURS léger (12-15 reps), même en bloc Force. Jamais utilisé pour calculer un 1RM." },
+  { id:"tricepspoulie",name:"Extension triceps à la poulie",  cat:"push", lev:1, role:"iso",     prim:["triceps"], sec:[], mat:["lb"], warn:"Petite articulation : prudence en bloc Force, ne force jamais la montée." },
+  { id:"tricepsnuque", name:"Extension triceps nuque",        cat:"push", lev:2, role:"iso",     prim:["triceps"], sec:[], mat:["dbSingle","dbPair"], warn:"Petite articulation : prudence en bloc Force, ne force jamais la montée." },
+  { id:"barrefront",   name:"Barre au front",                 cat:"push", lev:3, role:"iso",     prim:["triceps"], sec:[], mat:["barre"], warn:"Coudes sensibles : charge modérée, contrôle total de la descente." },
   /* ---------- PULL ---------- */
-  { id:"tractions",    name:"Tractions",                      cat:"pull", role:"bigPoly", prim:["dosL"], sec:["biceps","dosE"], mat:["assist","pdc"] },
-  { id:"tiragev",      name:"Tirage vertical",                cat:"pull", role:"poly",    prim:["dosL"], sec:["biceps"], mat:["lb"] },
-  { id:"tirageh",      name:"Tirage horizontal",              cat:"pull", role:"poly",    prim:["dosE"], sec:["dosL","biceps","deltP"], mat:["lb"] },
-  { id:"rowingbarre",  name:"Rowing barre buste penché",      cat:"pull", role:"bigPoly", prim:["dosE"], sec:["dosL","biceps","lomb"], mat:["barre"], warn:"Dos neutre impératif : gainage verrouillé, pas d'à-coups." },
-  { id:"rowing1bras",  name:"Rowing à un bras",               cat:"pull", role:"poly",    prim:["dosE"], sec:["dosL","biceps"], mat:["dbSingle"] },
-  { id:"pullover",     name:"Pull-over",                      cat:"pull", role:"iso",     prim:["dosL"], sec:["pecs","triceps"], mat:["lb","dbSingle"] },
-  { id:"shrugs",       name:"Shrugs (haussements d'épaules)", cat:"pull", role:"iso",     prim:["dosE"], sec:[], mat:["dbPair","barre"] },
-  { id:"curlpoulie",   name:"Biceps curl à la poulie",        cat:"pull", role:"iso",     prim:["biceps"], sec:[], mat:["lb"] },
-  { id:"curlbarre",    name:"Curl barre",                     cat:"pull", role:"iso",     prim:["biceps"], sec:[], mat:["barre"] },
-  { id:"curlhalt",     name:"Curl haltères",                  cat:"pull", role:"iso",     prim:["biceps"], sec:[], mat:["dbPair"] },
-  { id:"curlmarteau",  name:"Curl marteau",                   cat:"pull", role:"iso",     prim:["biceps"], sec:[], mat:["dbPair"] },
-  { id:"curlincline",  name:"Curl incliné",                   cat:"pull", role:"isoDelicat", prim:["biceps"], sec:[], mat:["dbPair"], warn:"Position étirée : charge modérée, pas d'élan." },
+  { id:"tractions",    name:"Tractions",                      cat:"pull", lev:2, role:"bigPoly", prim:["dosL"], sec:["biceps","dosE"], mat:["assist","pdc"] },
+  { id:"tiragev",      name:"Tirage vertical",                cat:"pull", lev:1, role:"poly",    prim:["dosL"], sec:["biceps"], mat:["lb"] },
+  { id:"tirageh",      name:"Tirage horizontal",              cat:"pull", lev:1, role:"poly",    prim:["dosE"], sec:["dosL","biceps","deltP"], mat:["lb"] },
+  { id:"rowingbarre",  name:"Rowing barre buste penché",      cat:"pull", lev:3, role:"bigPoly", prim:["dosE"], sec:["dosL","biceps","lomb"], mat:["barre"], warn:"Dos neutre impératif : gainage verrouillé, pas d'à-coups." },
+  { id:"rowing1bras",  name:"Rowing à un bras",               cat:"pull", lev:2, role:"poly",    prim:["dosE"], sec:["dosL","biceps"], mat:["dbSingle"] },
+  { id:"pullover",     name:"Pull-over",                      cat:"pull", lev:1, role:"iso",     prim:["dosL"], sec:["pecs","triceps"], mat:["lb","dbSingle"] },
+  { id:"shrugs",       name:"Shrugs (haussements d'épaules)", cat:"pull", lev:2, role:"iso",     prim:["dosE"], sec:[], mat:["dbPair","barre"] },
+  { id:"curlpoulie",   name:"Biceps curl à la poulie",        cat:"pull", lev:1, role:"iso",     prim:["biceps"], sec:[], mat:["lb"] },
+  { id:"curlbarre",    name:"Curl barre",                     cat:"pull", lev:2, role:"iso",     prim:["biceps"], sec:[], mat:["barre"] },
+  { id:"curlhalt",     name:"Curl haltères",                  cat:"pull", lev:2, role:"iso",     prim:["biceps"], sec:[], mat:["dbPair"] },
+  { id:"curlmarteau",  name:"Curl marteau",                   cat:"pull", lev:2, role:"iso",     prim:["biceps"], sec:[], mat:["dbPair"] },
+  { id:"curlincline",  name:"Curl incliné",                   cat:"pull", lev:2, role:"isoDelicat", prim:["biceps"], sec:[], mat:["dbPair"], warn:"Position étirée : charge modérée, pas d'élan." },
   /* ---------- CORE ---------- */
-  { id:"crunch",       name:"Crunch",                         cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc","lb"], ladder:"flexion", rank:0, goal:{r:"25-30"} },
-  { id:"relevesgenoux",name:"Relevés de genoux suspendus",    cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"suspendu", rank:1, goal:{r:"15-25"} },
-  { id:"planche",      name:"Planche",                        cat:"core", role:"gainageTps", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"lateral", rank:1, goal:{r:"90-120",unit:"sec"} },
-  { id:"planchelat",   name:"Planche latérale",               cat:"core", role:"gainageTps", prim:["abdos"], sec:[], mat:["pdc"], ladder:"lateral", rank:3, goal:{r:"45-60",unit:"sec"} },
-  { id:"pallof",       name:"Pallof press (anti-rotation)",   cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["lb"] },
-  { id:"roulette",     name:"Roulette abdominale",            cat:"core", role:"gainage", prim:["abdos"], sec:["lomb","dosL"], mat:["pdc"], warn:"Exercice avancé : amplitude progressive, bassin verrouillé (aucune cambrure)." },
-  { id:"crunchinv",    name:"Crunch inversé (relevé de bassin)", cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"flexion", rank:1, goal:{r:"25-30"} },
-  { id:"vups",         name:"V-ups (buste et jambes)",         cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"flexion", rank:2, goal:{r:"15-25"} },
-  { id:"vsithold",     name:"V-sit maintenu",                  cat:"core", role:"gainageTps", prim:["abdos"], sec:[], mat:["pdc"], ladder:"flexion", rank:3, goal:{r:"25-40",unit:"sec"} },
-  { id:"dragonflag",   name:"Dragon flag",                     cat:"core", role:"gainage", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"flexion", rank:4, goal:{r:"8-12"}, adv:true, warn:"Palier avancé : exige un gainage anti-extension solide. Bassin verrouillé, aucune cambrure — arrête la série dès que le bas du dos décolle." },
-  { id:"planchegenoux",name:"Planche sur les genoux",          cat:"core", role:"gainageTps", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"lateral", rank:0, goal:{r:"90-120",unit:"sec"} },
-  { id:"planchetouche",name:"Planche + touché d'épaule",       cat:"core", role:"gainageTps", prim:["abdos"], sec:["lomb","deltA"], mat:["pdc"], ladder:"lateral", rank:2, goal:{r:"90-120",unit:"sec"} },
-  { id:"planchelatjambe", name:"Planche latérale, jambe levée", cat:"core", role:"gainageTps", prim:["abdos"], sec:["fessiers"], mat:["pdc"], ladder:"lateral", rank:4, goal:{r:"45-60",unit:"sec"} },
-  { id:"planchelatgenou", name:"Planche latérale, genou à la poitrine", cat:"core", role:"gainage", prim:["abdos"], sec:["fessiers"], mat:["pdc"], ladder:"lateral", rank:5, goal:{r:"15-25"} },
-  { id:"relevesbanc",  name:"Relevé de genoux sur banc / chaise romaine", cat:"core", role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"suspendu", rank:0, goal:{r:"15-25"} },
-  { id:"genouxbarre",  name:"Genoux à la barre",               cat:"core", role:"gainage", prim:["abdos"], sec:["dosL"], mat:["pdc"], ladder:"suspendu", rank:2, goal:{r:"15-25"} },
-  { id:"wipers",       name:"Essuie-glaces (windshield wipers)", cat:"core", role:"gainage", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"suspendu", rank:3, goal:{r:"15-25"}, adv:true, warn:"Palier avancé : rotation sous charge, exige un gainage déjà solide. Jambes fléchies tant que le contrôle n'est pas total." },
-  { id:"lsit",         name:"L-sit (maintien en appui)",       cat:"core", role:"gainageTps", prim:["abdos"], sec:["triceps","deltA"], mat:["pdc"], warn:"Exercice de SUPPORT : très exigeant pour les triceps et les épaules, ce n'est pas un simple palier abdominal." },
-  { id:"supermanalt",  name:"Superman alterné (bras/jambe opposés)", cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers","abdos"], mat:["pdc"], ladder:"lombaires", rank:1, goal:{r:"15-25"} },
-  { id:"extlombairelest", name:"Extension lombaire lestée (banc 45°)", cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers","ischios"], mat:["dbSingle","lb"], ladder:"lombaires", rank:3, goal:{r:"15-25"} },
-  { id:"superman",     name:"Superman",                       cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers"], mat:["pdc"], ladder:"lombaires", rank:0, goal:{r:"15-25"} },
-  { id:"extlombaire",  name:"Extension lombaire (banc à 45°)",cat:"core", role:"gainage", prim:["lomb"], sec:["fessiers","ischios"], mat:["pdc","dbSingle"], ladder:"lombaires", rank:2, goal:{r:"15-25"} },
+  { id:"crunch",       name:"Crunch",                         cat:"core", lev:1, role:"gainage", prim:["abdos"], sec:[], mat:["pdc","lb"], ladder:"flexion", rank:0, goal:{r:"25-30"} },
+  { id:"relevesgenoux",name:"Relevés de genoux suspendus",    cat:"core", lev:2, role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"suspendu", rank:1, goal:{r:"15-25"} },
+  { id:"planche",      name:"Planche",                        cat:"core", lev:1, role:"gainageTps", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"lateral", rank:1, goal:{r:"90-120",unit:"sec"} },
+  { id:"planchelat",   name:"Planche latérale",               cat:"core", lev:2, role:"gainageTps", prim:["abdos"], sec:[], mat:["pdc"], ladder:"lateral", rank:3, goal:{r:"45-60",unit:"sec"} },
+  { id:"pallof",       name:"Pallof press (anti-rotation)",   cat:"core", lev:1, role:"gainage", prim:["abdos"], sec:[], mat:["lb"] },
+  { id:"roulette",     name:"Roulette abdominale",            cat:"core", lev:3, role:"gainage", prim:["abdos"], sec:["lomb","dosL"], mat:["pdc"], warn:"Exercice avancé : amplitude progressive, bassin verrouillé (aucune cambrure)." },
+  { id:"crunchinv",    name:"Crunch inversé (relevé de bassin)", cat:"core", lev:2, role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"flexion", rank:1, goal:{r:"25-30"} },
+  { id:"vups",         name:"V-ups (buste et jambes)",         cat:"core", lev:2, role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"flexion", rank:2, goal:{r:"15-25"} },
+  { id:"vsithold",     name:"V-sit maintenu",                  cat:"core", lev:3, role:"gainageTps", prim:["abdos"], sec:[], mat:["pdc"], ladder:"flexion", rank:3, goal:{r:"25-40",unit:"sec"} },
+  { id:"dragonflag",   name:"Dragon flag",                     cat:"core", lev:3, role:"gainage", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"flexion", rank:4, goal:{r:"8-12"}, adv:true, warn:"Palier avancé : exige un gainage anti-extension solide. Bassin verrouillé, aucune cambrure — arrête la série dès que le bas du dos décolle." },
+  { id:"planchegenoux",name:"Planche sur les genoux",          cat:"core", lev:1, role:"gainageTps", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"lateral", rank:0, goal:{r:"90-120",unit:"sec"} },
+  { id:"planchetouche",name:"Planche + touché d'épaule",       cat:"core", lev:2, role:"gainageTps", prim:["abdos"], sec:["lomb","deltA"], mat:["pdc"], ladder:"lateral", rank:2, goal:{r:"90-120",unit:"sec"} },
+  { id:"planchelatjambe", name:"Planche latérale, jambe levée", cat:"core", lev:2, role:"gainageTps", prim:["abdos"], sec:["fessiers"], mat:["pdc"], ladder:"lateral", rank:4, goal:{r:"45-60",unit:"sec"} },
+  { id:"planchelatgenou", name:"Planche latérale, genou à la poitrine", cat:"core", lev:3, role:"gainage", prim:["abdos"], sec:["fessiers"], mat:["pdc"], ladder:"lateral", rank:5, goal:{r:"15-25"} },
+  { id:"relevesbanc",  name:"Relevé de genoux sur banc / chaise romaine", cat:"core", lev:1, role:"gainage", prim:["abdos"], sec:[], mat:["pdc"], ladder:"suspendu", rank:0, goal:{r:"15-25"} },
+  { id:"genouxbarre",  name:"Genoux à la barre",               cat:"core", lev:3, role:"gainage", prim:["abdos"], sec:["dosL"], mat:["pdc"], ladder:"suspendu", rank:2, goal:{r:"15-25"} },
+  { id:"wipers",       name:"Essuie-glaces (windshield wipers)", cat:"core", lev:3, role:"gainage", prim:["abdos"], sec:["lomb"], mat:["pdc"], ladder:"suspendu", rank:3, goal:{r:"15-25"}, adv:true, warn:"Palier avancé : rotation sous charge, exige un gainage déjà solide. Jambes fléchies tant que le contrôle n'est pas total." },
+  { id:"lsit",         name:"L-sit (maintien en appui)",       cat:"core", lev:3, role:"gainageTps", prim:["abdos"], sec:["triceps","deltA"], mat:["pdc"], warn:"Exercice de SUPPORT : très exigeant pour les triceps et les épaules, ce n'est pas un simple palier abdominal." },
+  { id:"supermanalt",  name:"Superman alterné (bras/jambe opposés)", cat:"core", lev:2, role:"gainage", prim:["lomb"], sec:["fessiers","abdos"], mat:["pdc"], ladder:"lombaires", rank:1, goal:{r:"15-25"} },
+  { id:"extlombairelest", name:"Extension lombaire lestée (banc 45°)", cat:"core", lev:2, role:"gainage", prim:["lomb"], sec:["fessiers","ischios"], mat:["dbSingle","lb"], ladder:"lombaires", rank:3, goal:{r:"15-25"} },
+  { id:"superman",     name:"Superman",                       cat:"core", lev:1, role:"gainage", prim:["lomb"], sec:["fessiers"], mat:["pdc"], ladder:"lombaires", rank:0, goal:{r:"15-25"} },
+  { id:"extlombaire",  name:"Extension lombaire (banc à 45°)",cat:"core", lev:1, role:"gainage", prim:["lomb"], sec:["fessiers","ischios"], mat:["pdc","dbSingle"], ladder:"lombaires", rank:2, goal:{r:"15-25"} },
 ];
 
 /* ---- SUBSTITUTIONS AUTORISÉES DANS LE PROGRAMME PAR DÉFAUT ----
@@ -2795,15 +2810,60 @@ function seedRmBridge(dbId, mat, exo) {
    les polyarticulaires couvrent tout le corps), gainage conservé (protection du dos), biais
    machines/gobelet (technique d'abord), et drapeau noForce (cycle Hyp/Hyp/End). */
 const WIZ_LEVELS = {
-  gd:      { label:"Grand débutant",   matBias:["lb","plate","assist","dbSingle","dbPair","pdc","barre"], noForce:true  },
-  reprise: { label:"Reprise / débutant", matBias:["lb","plate","dbPair","dbSingle","assist","pdc","barre"], noForce:false },
-  inter:   { label:"Intermédiaire",    matBias:["barre","dbPair","lb","plate","dbSingle","assist","pdc"], noForce:false }
+  gd:      { label:"Grand débutant",     matBias:["lb","plate","assist","dbSingle","dbPair","pdc","barre"], style:"guide", noForce:true  },
+  reprise: { label:"Reprise / débutant", matBias:["lb","plate","dbPair","dbSingle","assist","pdc","barre"], style:"mixte", noForce:false },
+  inter:   { label:"Intermédiaire",      matBias:["barre","dbPair","lb","plate","dbSingle","assist","pdc"], style:"libre", noForce:false }
 };
-function wpick(dbId, level) {
+/* Type d'exercices demandé par l'utilisateur : plafond d'exigence technique appliqué au
+   générateur, et ordre de préférence du matériel. Prérempli selon le niveau déclaré, mais
+   librement modifiable — quelqu'un qui reprend après une pause peut avoir dix ans de barre
+   derrière lui, et un intermédiaire qui revient de blessure préférer du guidé. */
+const WIZ_STYLES = {
+  guide: { label:"Guidé",  maxLev:1, matBias:["lb","plate","assist","dbSingle","dbPair","pdc","barre"],
+           desc:"Machines et trajectoires guidées : la technique s'apprend sans risque." },
+  mixte: { label:"Mixte",  maxLev:2, matBias:["lb","plate","dbPair","dbSingle","assist","pdc","barre"],
+           desc:"Machines et haltères : un bon équilibre entre sécurité et liberté de mouvement." },
+  libre: { label:"Libre",  maxLev:3, matBias:["barre","dbPair","lb","plate","dbSingle","assist","pdc"],
+           desc:"Barres et poids libres : plus de coordination, plus de stabilisateurs sollicités." }
+};
+function wpick(dbId, level, style) {
   const m = EXODB.find(e => e.id === dbId);
   if (!m) return null;
-  const mat = WIZ_LEVELS[level].matBias.find(mt => m.mat.includes(mt)) || m.mat[0];
+  const bias = (WIZ_STYLES[style] || WIZ_STYLES[WIZ_LEVELS[level].style]).matBias;
+  const mat = bias.find(mt => m.mat.includes(mt)) || m.mat[0];
   return makeExoFromDb(dbId, mat, { incr: 1 });
+}
+/* Remplace un mouvement trop exigeant pour le style demandé par l'équivalent le plus proche :
+   même rôle, mêmes muscles primaires, exigence compatible. Renvoie l'id d'origine si aucun
+   substitut n'existe (mieux vaut un exercice hors plafond qu'un trou dans la séance). */
+function wfit(dbId, maxLev, taken = []) {
+  const m = EXODB.find(e => e.id === dbId);
+  if (!m || (m.lev || 2) <= maxLev) return dbId;
+  // Familles de rôles : un gros polyarticulaire peut être remplacé par un polyarticulaire
+  // guidé (développé couché -> développé machine), une isolation par une autre isolation.
+  const fam = r => (r === "bigPoly" || r === "poly") ? "poly"
+                 : (r === "gainage" || r === "gainageTps") ? "gainage"
+                 : (r === "sante") ? "sante" : "iso";
+  const takenPrim = taken.map(id => (EXODB.find(e => e.id === id) || {prim:[]}).prim.join("|"));
+  const loaded = m.mat.some(mt => mt !== "pdc"); // l'original est-il un exercice chargé ?
+  /* Score de pénalité (plus bas = meilleur substitut) :
+     +2 si les muscles primaires sont déjà couverts par un exercice retenu (évite deux presses
+     ou deux variantes de pompes dans la même séance) ; +1 si l'on retombe sur du poids de
+     corps alors que l'original était chargé. À pénalité égale, on prend l'exercice le plus
+     proche du plafond d'exigence. */
+  const alt = EXODB
+    .filter(e => e.id !== dbId && !taken.includes(e.id) && (e.lev || 2) <= maxLev
+                 && fam(e.role) === fam(m.role) && e.cat === m.cat
+                 && e.prim.some(mu => m.prim.includes(mu)))
+    .map(e => {
+      let pen = 0;
+      if (takenPrim.includes(e.prim.join("|"))) pen += 2;
+      if (loaded && !e.mat.some(mt => mt !== "pdc")) pen += 1;
+      return [pen, e];
+    })
+    .sort((a,b) => a[0]-b[0] || (b[1].lev||2) - (a[1].lev||2))
+    .map(x => x[1])[0];
+  return alt ? alt.id : dbId;
 }
 /* Séances-types : listes d'ids EXODB par (type de séance, niveau). */
 const WIZ_TEMPLATES = {
@@ -2870,10 +2930,19 @@ function buildWizardProgram(opts) {
   const tplKeys = { fullbody:["fullbody"], hautbas:["bas","haut"], hautbas2:["bas","haut"],
                     ppl:["push","pull","legs"], ppl2:["push","pull","legs"] }[st.kind];
   const lvlKey = k => WIZ_TEMPLATES[k][level] ? level : "reprise"; // fullbody seul a une variante gd
+  const style = WIZ_STYLES[opts.style] ? opts.style : WIZ_LEVELS[level].style;
+  const maxLev = WIZ_STYLES[style].maxLev;
   const sessions = tplKeys.map((k, i) => ({
     id: uid("us"),
     name: st.names[i],
-    exos: WIZ_TEMPLATES[k][lvlKey(k)].map(dbId => wpick(dbId, level)).filter(Boolean)
+    exos: (() => {
+      const taken = []; // ids déjà retenus : wfit ne doit pas proposer un exercice en double
+      return WIZ_TEMPLATES[k][lvlKey(k)].map(dbId => {
+        const fit = wfit(dbId, maxLev, taken);
+        taken.push(fit);
+        return wpick(fit, level, style);
+      }).filter(Boolean).filter((e, i, arr) => arr.findIndex(x => x.id === e.id) === i);
+    })()
   }));
   // Priorités musculaires (principe de priorité) : exercice ciblé placé EN TÊTE de sa séance,
   // + une isolation ajoutée si le muscle n'a aucun exercice primaire dans le programme.
@@ -2891,10 +2960,10 @@ function buildWizardProgram(opts) {
         const ms = exoMuscles(e); return ms.prim.includes(mu) || ms.sec.includes(mu);
       })) || sessions[0];
       if (!target.exos.some(e => dbEntryForExo(e.id)?.id === iso.id)) {
-        const exo = wpick(iso.id, level);
         // insérée avant le gainage (ordre poly -> iso -> gainage respecté)
         const gi = target.exos.findIndex(e => orderGroup(e) === 2);
-        if (exo) { gi === -1 ? target.exos.push(exo) : target.exos.splice(gi, 0, exo); placed = true; }
+        const exo = wpick(iso.id, level, style);
+      if (exo && !target.exos.some(e => e.id === exo.id)) { gi === -1 ? target.exos.push(exo) : target.exos.splice(gi, 0, exo); placed = true; }
       }
     }
   });
@@ -2961,7 +3030,7 @@ function renderBuilderPrograms(el) {
     if (p) { builderView = { mode:"program", programId:p.id, sessionId:null }; renderBuilder(); }
   };
 }
-let wizardState = { level:null, days:null, priorities:[], structIdx:0 };
+let wizardState = { level:null, days:null, priorities:[], structIdx:0, style:null };
 function renderBuilderWizard(el) {
   const lvlPills = Object.entries(WIZ_LEVELS).map(([k,v]) =>
     `<button class="pill ${wizardState.level===k?"on":""}" data-lvl="${k}">${v.label}</button>`).join("");
@@ -2971,6 +3040,8 @@ function renderBuilderWizard(el) {
   const prioPills = Object.entries(MUSCLES).map(([k,v]) =>
     `<button class="pill ${wizardState.priorities.includes(k)?"on":""}" data-prio="${k}">${v}</button>`).join("");
   const showPrio = wizardState.level && wizardState.level !== "gd";
+  // Prérempli d'après le niveau déclaré, mais l'utilisateur a le dernier mot.
+  const styleNow = wizardState.style || (wizardState.level ? WIZ_LEVELS[wizardState.level].style : "mixte");
   let preview = "";
   if (wizardState.level && wizardState.days) {
     const sts = wizardStructures(wizardState.level, wizardState.days);
@@ -2992,6 +3063,10 @@ function renderBuilderWizard(el) {
     <div class="pillbar">${lvlPills}</div>
     <p style="color:var(--muted);font-size:13px;margin:0 0 6px;">Jours d'entraînement par semaine :</p>
     <div class="pillbar">${dayPills}</div>
+    ${wizardState.level ? `<p style="color:var(--muted);font-size:13px;margin:0 0 6px;">Type d'exercices :</p>
+    <div class="pillbar">${Object.entries(WIZ_STYLES).map(([k,v]) =>
+      `<button class="pill ${styleNow===k?"on":""}" data-style="${k}">${v.label}</button>`).join("")}</div>
+    <p style="color:var(--muted);font-size:11.5px;margin:-4px 0 10px;">${WIZ_STYLES[styleNow].desc}</p>` : ""}
     ${showPrio ? `<p style="color:var(--muted);font-size:13px;margin:0 0 6px;">Muscles prioritaires (2 max, optionnel) — placés en tête de séance avec une isolation en plus :</p>
     <div class="pillbar">${prioPills}</div>` : ""}
     ${preview}
@@ -2999,6 +3074,7 @@ function renderBuilderWizard(el) {
   $$("#builderBody .pill[data-lvl]").forEach(b => b.onclick = () => {
     wizardState.level = b.dataset.lvl;
     wizardState.structIdx = 0;
+    wizardState.style = null; // reprend la valeur par défaut du nouveau niveau
     if (wizardState.level === "gd") {
       wizardState.priorities = [];
       if (wizardState.days > 3) wizardState.days = 3; // plafond novice
@@ -3006,6 +3082,7 @@ function renderBuilderWizard(el) {
     renderBuilder();
   });
   $$("#builderBody .pill[data-days]").forEach(b => b.onclick = () => { wizardState.days = parseInt(b.dataset.days,10); wizardState.structIdx = 0; renderBuilder(); });
+  $$("#builderBody .pill[data-style]").forEach(b => b.onclick = () => { wizardState.style = b.dataset.style; renderBuilder(); });
   $$("#builderBody .pill[data-struct]").forEach(b => b.onclick = () => { wizardState.structIdx = parseInt(b.dataset.struct,10); renderBuilder(); });
   $$("#builderBody .pill[data-prio]").forEach(b => b.onclick = () => {
     const mu = b.dataset.prio;
@@ -3016,7 +3093,7 @@ function renderBuilderWizard(el) {
   });
   $("#bWizBack").onclick = () => { builderView = { mode:"programs", programId:null, sessionId:null }; renderBuilder(); };
   $("#bWizGo").onclick = () => {
-    const prog = buildWizardProgram({ level: wizardState.level, days: wizardState.days, priorities: wizardState.priorities, structIdx: wizardState.structIdx });
+    const prog = buildWizardProgram({ level: wizardState.level, days: wizardState.days, priorities: wizardState.priorities, structIdx: wizardState.structIdx, style: styleNow });
     S.programs.push(prog);
     save();
     toast("Programme généré — brouillon modifiable");
@@ -3207,9 +3284,17 @@ function renderBuilderSession(el) {
 
 /* ---- Modal picker : base d'exercices filtrable + exercice libre ---- */
 const CAT_LABELS = { legs:"Jambes", push:"Push", pull:"Pull", core:"Gainage" };
-let pickerFilter = { cat:null, muscle:null };
+/* Exigence technique d'un mouvement : trajectoire guidée et geste simple (1), semi-libre
+   demandant du contrôle (2), barre libre ou forte coordination (3). Sert au tri et au filtre
+   du sélecteur, et au choix des exercices par l'assistant. */
+const LEVELS = {
+  1: { label:"Guidé",         short:"Guidé",  desc:"Machines et gestes simples : la technique s'apprend sans risque." },
+  2: { label:"Intermédiaire", short:"Inter.", desc:"Haltères et poids du corps : demande du contrôle." },
+  3: { label:"Exigeant",      short:"Libre",  desc:"Barre libre ou forte coordination : technique à maîtriser." }
+};
+let pickerFilter = { cat:null, muscle:null, lev:null };
 function openPicker(p, sess) {
-  pickerFilter = { cat:null, muscle:null };
+  pickerFilter = { cat:null, muscle:null, lev:null };
   $("#pickerModal").style.display = "flex";
   renderPickerList(p, sess);
 }
@@ -3221,12 +3306,16 @@ function renderPickerList(p, sess) {
     `<button class="pill ${pickerFilter.cat===c?"on":""}" data-cat="${c}">${CAT_LABELS[c]}</button>`).join("");
   const muscleOpts = `<option value="">Tous les muscles</option>` +
     Object.entries(MUSCLES).map(([k,v]) => `<option value="${k}" ${pickerFilter.muscle===k?"selected":""}>${v}</option>`).join("");
+  // Tri par exigence croissante : ce qui est accessible d'abord, puis par ordre de la base.
   const items = EXODB.filter(m =>
     (!pickerFilter.cat || m.cat === pickerFilter.cat) &&
-    (!pickerFilter.muscle || m.prim.includes(pickerFilter.muscle) || (m.sec||[]).includes(pickerFilter.muscle)));
+    (!pickerFilter.lev || (m.lev||2) === pickerFilter.lev) &&
+    (!pickerFilter.muscle || m.prim.includes(pickerFilter.muscle) || (m.sec||[]).includes(pickerFilter.muscle)))
+    .map((m, i) => [m.lev || 2, i, m]).sort((a,b) => a[0]-b[0] || a[1]-b[1]).map(x => x[2]);
   card.innerHTML = `<button class="modal-close" id="pkClose">✕</button>
     <h3>Ajouter un exercice</h3>
     <div class="pillbar">${catPills}</div>
+    <div class="pillbar">${[1,2,3].map(l => `<button class="pill lv${l} ${pickerFilter.lev===l?"on":""}" data-lev="${l}">${LEVELS[l].label}</button>`).join("")}</div>
     <select class="prog-select" id="pkMuscle" style="margin-bottom:10px;">${muscleOpts}</select>
     <div id="pkList"></div>
     <button class="b-add" id="pkFree" style="margin-top:8px;">✳️ Exercice libre (hors base)</button>`;
@@ -3235,13 +3324,19 @@ function renderPickerList(p, sess) {
   items.forEach(m => {
     const row = document.createElement("div"); row.className = "b-row";
     const roleLbl = (m.role==="bigPoly"||m.role==="poly") ? "Polyarticulaire" : (m.role==="gainage"||m.role==="gainageTps") ? "Gainage" : m.role==="sante" ? "Santé d'épaule" : "Isolation";
-    row.innerHTML = `<div class="grow"><div class="nm">${escHtml(m.name)}</div>
+    const lv = m.lev || 2;
+    row.innerHTML = `<div class="grow"><div class="nm">${escHtml(m.name)} <span class="lev-tag lv${lv}">${LEVELS[lv].short}</span></div>
       <div class="sub">${roleLbl} · ${m.prim.map(x=>MUSCLES[x]).join(", ")}</div></div><span style="color:var(--muted)">›</span>`;
     row.onclick = () => renderPickerMat(p, sess, m);
     list.appendChild(row);
   });
-  $$("#pickerCard .pill").forEach(b => b.onclick = () => {
+  $$("#pickerCard .pill[data-cat]").forEach(b => b.onclick = () => {
     pickerFilter.cat = (pickerFilter.cat === b.dataset.cat) ? null : b.dataset.cat;
+    renderPickerList(p, sess);
+  });
+  $$("#pickerCard .pill[data-lev]").forEach(b => b.onclick = () => {
+    const l = parseInt(b.dataset.lev, 10);
+    pickerFilter.lev = (pickerFilter.lev === l) ? null : l;
     renderPickerList(p, sess);
   });
   $("#pkMuscle").onchange = e => { pickerFilter.muscle = e.target.value || null; renderPickerList(p, sess); };
