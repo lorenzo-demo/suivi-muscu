@@ -485,7 +485,7 @@ setTimeout(function(){
     <p>Efface tout l'historique et les réglages (le programme préchargé est conservé).</p>
     <button class="btn warn" id="resetBtn">Réinitialiser toutes les données</button>
   </div>
-  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-07-24-a</p>
+  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-08-03-d</p>
 </div>
 
 <!-- ================= CRÉATEUR DE PROGRAMMES (accessible depuis Réglages) ================= -->
@@ -576,7 +576,8 @@ const STRETCHES = {
    makeExoFromDb — le matériel est LA clé qui garantit de ne jamais proposer un poids inexistant. */
 const MATERIELS = {
   lb:       { label:"Machine / poulie — plaques 10 lb", sub:"Plaques 10 lb", suffix:"machine" },
-  lb15:     { label:"Machine / poulie — plaques 15 lb", sub:"Plaques 15 lb", suffix:"machine 15 lb" }, // + petits poids de 2,3 kg
+  lb15:     { label:"Machine / poulie — plaques 15 lb", sub:"15 lb (appoints 2,3 kg)", suffix:"machine 15 lb" },
+  lb15f:    { label:"Machine / poulie — plaques 15 lb (appoints fins)", sub:"15 lb (+ 1,1 kg)", suffix:"machine 15 lb" },
   kgmach:   { label:"Machine / poulie — graduée en kg", sub:"Plaques en kg", suffix:"machine kg" },    // incrément libre
   plate:    { label:"Machine à disques (plateau à charger)", suffix:"machine à disques" }, // plate-loaded : incrément libre en kg, comme la presse du seed (incr 1)
   dbSingle: { label:"Haltère (un seul)",                    suffix:"haltère" },
@@ -779,7 +780,7 @@ function makeExoFromDb(dbId, mat, opts = {}) {
   const m = EXODB.find(e => e.id === dbId);
   /* lb15 et kgmach sont des VARIANTES de la nature "machine à plaques" : elles sont admises
      partout où lb l'est (chaque salle a ses colonnes), sans dupliquer les listes d'EXODB. */
-  const matOk = m.mat.includes(mat) || ((mat === "lb15" || mat === "kgmach") && m.mat.includes("lb"));
+  const matOk = m.mat.includes(mat) || (["lb15","lb15f","kgmach"].includes(mat) && m.mat.includes("lb"));
   if (!m || !MATERIELS[mat] || !matOk) return null;
   const exo = { id: `db_${dbId}_${mat}`, name: exoDisplayName(m, mat), mat, role: m.role, oneRm: null, t: targetsForLadder(m) };
   if (m.ladder) { exo.ladder = m.ladder; exo.rank = m.rank; if (m.adv) exo.adv = true; }
@@ -805,7 +806,7 @@ function makeExoFromDb(dbId, mat, opts = {}) {
 }
 function exoDisplayName(m, mat) {
   const suffix = MATERIELS[mat].suffix;
-  if (mat === "lb15" || mat === "kgmach") return `${m.name} — ${suffix}`; // toujours distinguer la colonne
+  if (["lb15","lb15f","kgmach"].includes(mat)) return `${m.name} — ${suffix}`; // toujours distinguer la colonne
   return (m.mat.length > 1 && suffix) ? `${m.name} — ${suffix}` : m.name;
 }
 
@@ -818,9 +819,9 @@ return [
         t:{force:{c:169,r:"5-6",s:5,rest:150}, hyp:{c:149,r:"8-12",s:4,rest:90}, end:{c:109,r:"20-25",s:3,rest:50}} },
       { id:"hip", incr:1, name:"Hip thrust", type:"charge", oneRm:null,
         t:{force:{c:34,r:"5-6",s:5,rest:150}, hyp:{c:30,r:"8-12",s:4,rest:90}, end:{c:22,r:"20-25",s:3,rest:50}} },
-      { id:"extj", rack:"lb15", name:"Extension jambes (quadriceps)", type:"charge", oneRm:null, 
+      { id:"extj", rack:"lb15f", name:"Extension jambes (quadriceps)", type:"charge", oneRm:null, 
         t:{force:{c:56,r:"5-6",s:4,rest:120}, hyp:{c:50,r:"8-12",s:3,rest:75}, end:{c:36,r:"20-25",s:3,rest:45}} },
-      { id:"flexj", rack:"lb15", name:"Flexion jambes (ischios)", type:"charge", oneRm:null, 
+      { id:"flexj", rack:"lb15f", name:"Flexion jambes (ischios)", type:"charge", oneRm:null, 
         t:{force:{c:52,r:"5-6",s:4,rest:120}, hyp:{c:46,r:"8-12",s:3,rest:75}, end:{c:34,r:"20-25",s:3,rest:45}} },
       { id:"mollets", rack:"dbSingle", name:"Mollets debout", type:"charge", oneRm:null,         t:{force:{c:null,r:"6-8",s:4,rest:90}, hyp:{c:null,r:"12-15",s:3,rest:60}, end:{c:null,r:"20-25",s:3,rest:45}} },
       { id:"molletsassis", rack:"dbPair", name:"Mollets assis (soléaire)", type:"charge", oneRm:null,
@@ -924,7 +925,7 @@ const DEFAULT_PROGRAM_ID = "defaut";
    mises à jour du programme par défaut vers les appareils qui ont déjà un state v2 en
    localStorage — schemaVersion à lui seul ne suffit pas, car un state déjà en v2 n'est
    jamais retouché par la migration sinon. */
-const SEED_VERSION = 10; // v10 : extension/flexion jambes sur colonne 15 lb + petits poids de 1,1 kg ; v9 : cibles de gainage // v9 : cibles de gainage alignées sur les échelles (planche 90-120 s, abdos/lombaires 15-25) ; v8 : planche chronométrée ; v7 : tirages 15 lb
+const SEED_VERSION = 11; // v11 : machines à cuisses sur colonne 15 lb à appoints fins (petit poids de 1,1 kg), tirages sans // v10 : extension/flexion jambes sur colonne 15 lb + petits poids de 1,1 kg ; v9 : cibles de gainage // v9 : cibles de gainage alignées sur les échelles (planche 90-120 s, abdos/lombaires 15-25) ; v8 : planche chronométrée ; v7 : tirages 15 lb
 
 function defaultState() {
   return {
@@ -1014,11 +1015,14 @@ const PLAFOND_PDC_ASSIST = 25;
 /* Plaques de base des machines à colonne en 15 lb (déclarées AVANT RACKS : utilisées dans
    son initialisation). Première plaque à 10 lb, puis pas de 15 lb. */
 const LB15_PLATES = [4.5,11,18,25,32,39,45,52,59,66,73,79,86,93,100,107,113,120,127,134];
-/* Charges d'appoint posables sur la colonne : deux petits poids de 5 lb (2,3 kg) et un de
-   2,5 lb (1,1 kg, valeur affichée en salle). Toutes les combinaisons possibles, triées.
-   Le maximum (5,7) reste inférieur à l'écart entre deux plaques (~6,8), donc l'échelle
-   obtenue est strictement croissante — snapToRack fonctionne sans modification. */
-const LB15_ADDONS = [0, 1.1, 2.3, 3.4, 4.6, 5.7];
+/* Charges d'appoint posables sur la colonne — elles varient d'une machine à l'autre :
+   - lb15  : deux petits poids de 5 lb (2,3 kg). Cas des tirages à la poulie.
+   - lb15f : les mêmes, plus un de 2,5 lb (1,1 kg affiché en salle), d'où une progression plus
+     fine. Cas des machines à cuisses (extension et flexion de jambes).
+   Dans les deux cas l'appoint maximal reste inférieur à l'écart entre deux plaques (~6,8),
+   donc les échelles obtenues sont strictement croissantes — snapToRack est inchangé. */
+const LB15_ADDONS  = [0, 2.3, 4.6];
+const LB15F_ADDONS = [0, 1.1, 2.3, 3.4, 4.6, 5.7];
 const RACKS = {
   // Machines à plaques en livres + demi-plaque de 2,3 kg (pas alterné +2,3/+2,2). Max 93,3.
   lb: [4.5,6.8,9,11.3,14,16.3,18,20.3,23,25.3,27,29.3,32,34.3,36,38.3,41,43.3,45,47.3,50,52.3,54,56.3,59,61.3,64,66.3,68,70.3,73,75.3,77,79.3,82,84.3,86,88.3,91,93.3],
@@ -1031,8 +1035,8 @@ const RACKS = {
      (2,3 kg) -> la table est GÉNÉRÉE : chaque plaque, plaque+2,3 et plaque+4,6.
      L'échelle reste monotone (4,6 < ~7 kg d'écart entre deux plaques), donc snapToRack
      fonctionne sans modification. */
-  lb15: LB15_PLATES.flatMap(p => LB15_ADDONS.map(a => Math.round((p+a)*10)/10))
-                   .sort((a,b) => a-b)
+  lb15:  LB15_PLATES.flatMap(p => LB15_ADDONS.map(a  => Math.round((p+a)*10)/10)).sort((a,b) => a-b),
+  lb15f: LB15_PLATES.flatMap(p => LB15F_ADDONS.map(a => Math.round((p+a)*10)/10)).sort((a,b) => a-b)
 };
 function load() {
   try {
@@ -1629,7 +1633,12 @@ function recommend(exo, bloc){
     const step = isTimeMode(exo, bloc) ? (effort==="facile"?10:5) : (effort==="facile"?2:1);
     const base = pad(reps);
     const targets = effort==="limite" ? base : base.map(r=>r+step);
-    return { w: 0, targets, conseil: effort==="limite" ? "c'était limite : consolide au même niveau" : null };
+    const u = isTimeMode(exo, bloc) ? " sec" : " rep" + (step>1 ? "s" : "");
+    return { w: 0, targets,
+      conseil: effort==="limite"
+        ? "c'était limite : consolide au même niveau (" + base.join("·") + ")"
+        : "dernière fois " + pad(reps).join("·") + " : on ajoute " + step + u
+          + (effort==="facile" ? " (c'était facile)" : "") };
   }
 
   const [lo, hi] = parseRange(targetRange(exo, bloc));
@@ -1759,13 +1768,15 @@ function recommend(exo, bloc){
     const invite = "règle ton poids de corps dans ⚙️ Réglages pour que je pilote l'assistance";
     if (minR < lo) return { w, targets: orderTargets(pad(refReps).map(r=>Math.max(r,lo)), lo, plafond), conseil: "consolide — et "+invite };
     if (minR >= plafond) return { w, targets: orderTargets(pad(refReps).map(()=>plafond), lo, plafond), conseil: "⚠ prêt à monter, mais "+invite };
-    return { w, targets: buildTargets(r=>r+1), conseil: null };
+    return { w, targets: buildTargets(r=>r+1),
+             conseil: "dernière fois " + pad(refReps).join("·") + " à " + w + " kg d'assistance : on ajoute 1 rep — et " + invite };
   }
 
   /* --- Face pull & co (noRm) : jamais de montée automatique, léger par principe --- */
   if (exo.noRm){
     if (minR >= hi) return { w, targets: orderTargets(pad(refReps).map(()=>hi), lo, hi), conseil: "reste léger — c'est le but de cet exercice (monte un peu si tu veux, mais sans forcer)" };
-    return { w, targets: orderTargets(pad(refReps).map(r=>Math.min(hi, r+1)), lo, hi), conseil: null };
+    return { w, targets: orderTargets(pad(refReps).map(r=>Math.min(hi, r+1)), lo, hi),
+             conseil: "dernière fois " + pad(refReps).join("·") + " à " + w + " kg : on ajoute 1 rep, sans jamais forcer sur cet exercice" };
   }
 
   /* --- Échec : une série de référence sous le plancher -> consolider (jamais de baisse auto). --- */
@@ -1819,7 +1830,12 @@ function recommend(exo, bloc){
 
   /* --- "Correct" ou non renseigné, dans la fourchette : +1 rep par série (mécanisme d'origine). --- */
   const targets = buildTargets(r=>r+1);
-  return { w, targets, conseil: tonInfo(w, targets) };
+  /* Cas terminal (progression normale) : on rappelle TOUJOURS d'où l'on part, puis le volume
+     projeté quand il est calculable. Sans ce rappel, certaines cartes n'affichaient qu'un
+     pourcentage hors contexte — voire rien du tout. */
+  const rappel = "dernière fois " + pad(refReps).join("·") + " à " + w + (isAssist ? " kg d'assistance" : " kg");
+  const ton = tonInfo(w, targets);
+  return { w, targets, conseil: rappel + (ton ? " · " + ton : "") };
 }
 
 function targetLabel(exo, bloc) {
@@ -3358,7 +3374,8 @@ function renderPickerMat(p, sess, m) {
       <p style="color:var(--muted);font-size:13px;margin:0 0 6px;">Comment sont graduées les plaques de cette machine ?</p>
       <div class="pillbar" id="pkMachPills">
         <button class="pill on" data-mach="lb">Plaques 10 lb</button>
-        <button class="pill" data-mach="lb15">Plaques 15 lb</button>
+        <button class="pill" data-mach="lb15">15 lb (appoints 2,3 kg)</button>
+        <button class="pill" data-mach="lb15f">15 lb (+ petit poids 1,1 kg)</button>
         <button class="pill" data-mach="kgmach">Plaques en kg</button>
       </div>
     </div>
