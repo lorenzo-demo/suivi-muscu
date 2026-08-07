@@ -476,6 +476,16 @@ setTimeout(function(){
     </div>
   </div>
   <div class="setting">
+    <h3>Rattrapage automatique</h3>
+    <p>Quand ton 1RM estimé s'est stabilisé mais que ta charge de travail est restée en dessous de la zone du bloc (85 % en Force, 75 % en Hypertrophie, 55 % en Endurance), l'app remonte progressivement la charge — au maximum +10 % par séance. Désactive-le si tu préfères la progression strictement pas à pas.</p>
+    <div class="bw-row">
+      <label style="display:flex;align-items:center;gap:8px;font-size:14px;">
+        <input type="checkbox" id="catchupToggle" style="width:20px;height:20px;">
+        Rattrapage activé
+      </label>
+    </div>
+  </div>
+  <div class="setting">
     <h3>Recalcul du 1RM</h3>
     <p>Si vous voulez recalculer le 1RM à partir de votre historique, cliquez ici. Les estimations initiales sont remises à zéro et le 1RM de chaque exercice est reconstruit uniquement à partir de vos séances enregistrées (meilleure série de 1 à 15 reps). Un exercice sans aucune séance enregistrée conserve son estimation de départ.</p>
     <button class="btn" id="recalcBtn">Recalculer le 1RM depuis l'historique</button>
@@ -485,7 +495,7 @@ setTimeout(function(){
     <p>Efface tout l'historique et les réglages (le programme préchargé est conservé).</p>
     <button class="btn warn" id="resetBtn">Réinitialiser toutes les données</button>
   </div>
-  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-08-03-d</p>
+  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-08-03-e</p>
 </div>
 
 <!-- ================= CRÉATEUR DE PROGRAMMES (accessible depuis Réglages) ================= -->
@@ -939,6 +949,7 @@ function defaultState() {
     nameArchive: { sessions:{}, exos:{} }, // noms des séances/exos custom SUPPRIMÉS -> l'Historique reste lisible
     substitutions: {},   // programme par défaut : exoId seed -> { db, mat } (réappliqué après chaque reseed)
     unitPref: {},        // exoId -> "sec" | "reps" : choix de l'utilisateur, prioritaire sur l'unité du programme
+    autoCatchup: true,   // rattrapage automatique vers la zone du bloc quand la charge de travail décroche du 1RM
     programs: [           // liste de programmes (le seed + futurs programmes créés par l'utilisateur)
       /* sessionsPerWeek : nombre de séances effectuées par semaine — pilote l'avancement du
          cycle de 6 semaines (weekOfCycle) et, plus tard, le calcul du volume hebdomadaire par
@@ -973,6 +984,7 @@ function migrate(data) {
   if (!merged.nameArchive) merged.nameArchive = { sessions:{}, exos:{} };
   if (!merged.substitutions) merged.substitutions = {};
   if (!merged.unitPref) merged.unitPref = {};
+  if (merged.autoCatchup === undefined) merged.autoCatchup = true;
   // Renommage d'un mouvement de la base (build w -> x) : on reporte les substitutions existantes
   Object.values(merged.substitutions).forEach(sub => { if (sub && sub.db === "molletsmachdeb") sub.db = "molletshack"; });
   merged.programs = merged.programs.map(p => {
@@ -1457,6 +1469,10 @@ function computeTargetCharge(exo, bloc) {
 // Meilleure performance (reps, ou secondes pour un exo chronométré comme la planche) sur la
 // dernière séance loggée pour CE bloc précis (force/hyp/end ont des cibles de reps différentes
 // par nature, donc on ne mélange pas les blocs). Renvoie null si jamais loggé dans ce bloc.
+// Nombre de séances où cet exercice a été enregistré, tous blocs confondus.
+function sessionCountFor(exo) {
+  return S.logs.filter(l => l.entries[exo.id] && l.entries[exo.id].length).length;
+}
 function lastSessionBestReps(exo, bloc) {
   for (const log of S.logs) {
     if (log.bloc !== bloc) continue;
@@ -1782,6 +1798,35 @@ function recommend(exo, bloc){
   /* --- Échec : une série de référence sous le plancher -> consolider (jamais de baisse auto). --- */
   if (minR < lo)
     return { w, targets: orderTargets(pad(refReps).map(r=>Math.max(r, lo)), lo, plafond), conseil: "consolide : même poids, vise au moins "+lo+" partout" };
+
+  /* ===== RATTRAPAGE AUTOMATIQUE VERS LA ZONE DU BLOC =====
+     Pendant le calibrage, l'utilisateur tâtonne : les premières charges sont volontairement
+     basses. Une fois le 1RM stabilisé, la double progression seule reste ancrée sur ces
+     charges et ne rejoint jamais la zone théorique du bloc (85/75/55 %) — l'app conseillait
+     alors 200 kg là où le 1RM en justifiait 226. Ce rattrapage comble ce trou.
+     Conditions cumulatives : 1RM disponible et stabilisé (≥ 3 séances enregistrées), écart
+     supérieur à 7 % sous la zone, dernière séance sans échec (minR ≥ lo, garanti plus haut).
+     Il ne s'applique QU'EN ressenti "correct" ou absent : "limite" a consolidé plus haut,
+     "facile" a déjà rattrapé plus généreusement. Montée bornée à +10 %, jamais de baisse. */
+  if (S.autoCatchup !== false && !exo.noRm && !(isAssist && !S.bodyweight) && sessionCountFor(exo) >= 3){
+    const rmS = smoothedRm(exo);
+    const zoneEff = rmS ? rmS * BLOCS[bloc].pct : null;
+    const curEff = eff(w);
+    if (zoneEff && curEff > 0 && zoneEff > curEff * 1.07){
+      const wantedEff = Math.min(zoneEff, curEff * 1.10);      // borne des +10 % par montée
+      let w2 = isAssist ? Math.max(0, snapWeight(exo, S.bodyweight - wantedEff)) : snapWeight(exo, wantedEff);
+      if (eff(w2) > curEff + 1e-9){                             // uniquement si ça monte vraiment
+        const rTarget = clamp(predictReps(curEff, Math.round((minR+maxR)/2), eff(w2)), lo, hi);
+        const targets = buildTargets(()=>rTarget);
+        const pctZone = Math.round(BLOCS[bloc].pct*100);
+        const zoneAff = isAssist ? round05(S.bodyweight - zoneEff) : round05(zoneEff);
+        return { w: w2, targets,
+                 conseil: "ton 1RM estimé (" + round05(rmS) + " kg) place la zone " + BLOCS[bloc].label
+                          + " (" + pctZone + " %) à " + zoneAff + (isAssist ? " kg d'assistance" : " kg")
+                          + ", tu travailles à " + w + " : rattrapage progressif, borné à +10 % par séance." };
+      }
+    }
+  }
 
   /* --- Dépassement massif (≥ plafond+3) : montée immédiate, PLAFONNÉE STRICTEMENT à +10 %. --- */
   if (minR >= plafond + 3){
@@ -2460,7 +2505,14 @@ function renderReglages() {
     sel.appendChild(o);
   });
   $("#spwInput").value = sessionsPerWeek();
+  $("#catchupToggle").checked = S.autoCatchup !== false;
 }
+$("#catchupToggle").onchange = e => {
+  S.autoCatchup = e.target.checked;
+  save();
+  renderSeance(); // les cibles de la séance en cours suivent immédiatement
+  toast(S.autoCatchup ? "Rattrapage activé" : "Rattrapage désactivé");
+};
 /* Activation d'un programme : logique partagée entre le sélecteur des Réglages et le créateur.
    Retourne false si l'utilisateur renonce (séance en cours). */
 function activateProgram(id) {
