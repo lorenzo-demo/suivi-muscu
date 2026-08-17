@@ -495,7 +495,7 @@ setTimeout(function(){
     <p>Efface tout l'historique et les réglages (le programme préchargé est conservé).</p>
     <button class="btn warn" id="resetBtn">Réinitialiser toutes les données</button>
   </div>
-  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-08-03-e</p>
+  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-08-03-f</p>
 </div>
 
 <!-- ================= CRÉATEUR DE PROGRAMMES (accessible depuis Réglages) ================= -->
@@ -1473,6 +1473,17 @@ function computeTargetCharge(exo, bloc) {
 function sessionCountFor(exo) {
   return S.logs.filter(l => l.entries[exo.id] && l.entries[exo.id].length).length;
 }
+/* Dernier lest utilisé sur un exercice au poids du corps, tous blocs confondus (le lest ne
+   dépend pas du bloc, contrairement aux cibles de répétitions). 0 si jamais lesté. */
+function lastLest(exo, bloc) {
+  const sorted = S.logs.filter(l => l.entries[exo.id] && l.entries[exo.id].length)
+                       .sort((a,b) => new Date(b.date) - new Date(a.date));
+  for (const log of sorted) {
+    const mx = Math.max(0, ...log.entries[exo.id].map(s => s.w || 0));
+    if (mx > 0) return mx;
+  }
+  return 0;
+}
 function lastSessionBestReps(exo, bloc) {
   for (const log of S.logs) {
     if (log.bloc !== bloc) continue;
@@ -1644,16 +1655,21 @@ function recommend(exo, bloc){
   // de la première — cohérent avec le tri décroissant/fatigue).
   const pad = arr => Array.from({length:nS}, (_,i)=> arr[Math.min(i, arr.length-1)]);
 
-  /* --- Poids du corps : progression en reps (ou secondes) uniquement --- */
+  /* --- Poids du corps : progression en reps (ou secondes) uniquement.
+     Le LEST éventuel est conservé d'une séance à l'autre : beaucoup d'exercices "au poids du
+     corps" se font avec un disque ou un haltère (extension lombaire, crunch, dips lestés).
+     Auparavant la charge était remise à 0 à chaque séance, effaçant ce lest. --- */
   if (exo.type === "pdc"){
     const step = isTimeMode(exo, bloc) ? (effort==="facile"?10:5) : (effort==="facile"?2:1);
     const base = pad(reps);
     const targets = effort==="limite" ? base : base.map(r=>r+step);
     const u = isTimeMode(exo, bloc) ? " sec" : " rep" + (step>1 ? "s" : "");
-    return { w: 0, targets,
+    const lest = Math.max(0, ...last.sets.map(s => s.w || 0)); // lest de la dernière séance
+    const lestTxt = lest > 0 ? " avec " + lest + " kg" : "";
+    return { w: lest, targets,
       conseil: effort==="limite"
-        ? "c'était limite : consolide au même niveau (" + base.join("·") + ")"
-        : "dernière fois " + pad(reps).join("·") + " : on ajoute " + step + u
+        ? "c'était limite : consolide au même niveau (" + base.join("·") + lestTxt + ")"
+        : "dernière fois " + pad(reps).join("·") + lestTxt + " : on ajoute " + step + u
           + (effort==="facile" ? " (c'était facile)" : "") };
   }
 
@@ -1921,7 +1937,8 @@ function buildExoCard(exo) {
     if (rec) {
       cur.entries[exo.id] = Array.from({length:t.s}, (_,i)=>({w:rec.w, r:rec.targets[Math.min(i, rec.targets.length-1)], done:false}));
     } else {
-      const initW = exo.type==="pdc" ? 0 : (computeTargetCharge(exo, cur.bloc) ?? 0);
+      // pdc : on repart du dernier lest utilisé (0 s'il n'y en a jamais eu)
+      const initW = exo.type==="pdc" ? lastLest(exo, eb) : (computeTargetCharge(exo, cur.bloc) ?? 0);
       const initR = parseInt(targetRange(exo, eb))||10;
       cur.entries[exo.id] = Array.from({length:t.s}, ()=>({w:initW, r:initR, done:false}));
     }
