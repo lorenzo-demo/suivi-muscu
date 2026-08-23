@@ -290,6 +290,13 @@
     width:100%; max-height:82vh; overflow-y:auto; padding:16px 14px calc(env(safe-area-inset-bottom, 0px) + 16px); }
   .modal-card h3 { margin:0 0 10px; font-size:16px; }
   .modal-close { float:right; background:none; border:none; color:var(--muted); font-size:20px; padding:0 4px; }
+  .tip-btn { width:22px; height:22px; border-radius:50%; border:1px solid var(--line);
+    background:var(--surface2); color:var(--muted); font-size:12px; font-weight:700;
+    padding:0; margin-left:6px; vertical-align:middle; }
+  .tip-links { display:flex; flex-direction:column; gap:8px; }
+  .tip-link { display:block; text-align:center; padding:11px 12px; border-radius:10px;
+    border:1px solid var(--accent); color:var(--accent); text-decoration:none;
+    font-size:13.5px; font-weight:700; }
   .lev-tag { font-size:10px; font-weight:700; padding:2px 6px; border-radius:999px;
     border:1px solid currentColor; margin-left:4px; vertical-align:middle; }
   .lv1 { color:#3FA65C; } .lv2 { color:#d4a72c; } .lv3 { color:#E05445; }
@@ -495,12 +502,17 @@ setTimeout(function(){
     <p>Efface tout l'historique et les réglages (le programme préchargé est conservé).</p>
     <button class="btn warn" id="resetBtn">Réinitialiser toutes les données</button>
   </div>
-  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-08-03-f</p>
+  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-08-03-h</p>
 </div>
 
 <!-- ================= CRÉATEUR DE PROGRAMMES (accessible depuis Réglages) ================= -->
 <div class="screen" id="scr-builder">
   <div id="builderBody"></div>
+</div>
+
+<!-- Fiche d'exécution d'un exercice -->
+<div id="tipModal" class="modal-bg" style="display:none">
+  <div class="modal-card" id="tipCard"></div>
 </div>
 
 <!-- Modal du sélecteur d'exercices -->
@@ -1948,7 +1960,7 @@ function buildExoCard(exo) {
   const rest = getRest(exo);
   card.innerHTML = `
     <div class="exo-head">
-      <h3>${exo.name}</h3>
+      <h3>${exo.name}${tipsFor(exo) ? ` <button class="tip-btn" data-a="tip" title="Comment faire ?">?</button>` : ""}</h3>
       <div class="exo-target">
         <div class="charge num">${tl.main}</div>
         <div class="detail">${tl.sub}</div>
@@ -2010,6 +2022,8 @@ function buildExoCard(exo) {
     if (v<=0) { toast("Repos à 0:00 — augmente d'abord la durée"); return; }
     startRest(v);
   };
+  const tipBtn = card.querySelector('[data-a="tip"]');
+  if (tipBtn) tipBtn.onclick = () => openTip(exo);
   /* --- Répétitions / Temps : préférence par exercice, conservée d'une séance à l'autre --- */
   card.querySelectorAll('.unit-sel button').forEach(b => b.onclick = () => {
     const u = b.dataset.unit;
@@ -2885,6 +2899,150 @@ function seedRmBridge(dbId, mat, exo) {
   exo.oneRm = Math.round(rm * (sameMat ? 1 : 0.9) * 10) / 10;
 }
 
+/* ---- Consignes d'exécution ----
+   Deux ou trois repères par mouvement : placement, point clé, erreur fréquente. Affichées à la
+   demande (bouton « ? » sur la carte d'exercice) pour ne pas charger l'écran en séance.
+   Rédigées ici plutôt qu'importées : aucune dépendance, disponible hors ligne. */
+const TIPS = {
+  presse:"Dos et bassin plaqués contre le dossier. Pieds à mi-plateau, largeur d'épaules. Descends jusqu'à ~90° au genou sans que le bas du dos décolle : c'est ce décollement qui blesse, pas la profondeur.",
+  pressehoriz:"Même principe que la presse inclinée : dos plaqué, descente contrôlée, genoux dans l'axe des pieds. Ne verrouille pas les genoux en fin de poussée.",
+  hacksquat:"Dos plaqué contre le chariot, pieds légèrement avancés. Descends jusqu'à la cuisse parallèle, talons au sol du début à la fin.",
+  squat:"Barre sur les trapèzes, pieds largeur d'épaules, orteils légèrement ouverts. Assieds-toi entre les talons, poitrine haute, genoux dans l'axe des pieds. Inspire en haut, bloque, descends, remonte.",
+  squatgobelet:"Haltère tenu verticalement contre la poitrine, coudes à l'intérieur des genoux. Le poids devant sert de contrepoids : c'est la meilleure marche avant le squat barre.",
+  smithsquat:"Trajectoire imposée : place les pieds légèrement devant la barre pour rester aligné. Utile pour apprendre l'amplitude, mais les stabilisateurs travaillent moins.",
+  fentes:"Grand pas, buste droit, genou arrière qui descend vers le sol sans le toucher. Pousse sur le talon avant pour remonter.",
+  fentebulgare:"Pied arrière sur un banc, pas assez long pour que le genou avant reste au-dessus du pied. Buste légèrement penché pour cibler les fessiers.",
+  sdt:"Barre contre les tibias, dos neutre et gainé, épaules au-dessus de la barre. Pousse dans le sol avec les jambes avant d'ouvrir les hanches. Le dos ne s'arrondit jamais.",
+  sdtroumain:"Jambes quasi tendues, genoux légèrement déverrouillés. Recule les hanches, barre qui frôle les cuisses. Descends jusqu'à l'étirement des ischios, pas plus bas.",
+  hipthrust:"Omoplates sur le banc, menton rentré. Monte en serrant les fessiers jusqu'à l'alignement épaules-hanches-genoux. Ne cambre pas le bas du dos en haut.",
+  legext:"Axe de la machine aligné sur le genou. Monte en 1 seconde, tiens un instant en haut, redescends en 2-3 secondes. Ne claque jamais l'extension.",
+  legcurl:"Bassin plaqué, ne décolle pas les hanches pour aider. Contracte en fin de flexion, contrôle le retour.",
+  legcurldeb:"Une jambe à la fois, bassin fixe. Idéal pour repérer un déséquilibre entre les deux côtés.",
+  molletsdeb:"Amplitude complète : talon bas en étirement, monte le plus haut possible sur la pointe. Marque un temps d'arrêt en haut.",
+  molletsassis:"Genou fléchi : c'est le soléaire qui travaille, complémentaire des mollets debout. Amplitude complète, temps d'arrêt en haut.",
+  molletshack:"Épaules sous les épaulières, jambes tendues. Amplitude maximale, sans rebond dans le bas.",
+  abduction:"Buste droit, mouvement lent. Le fessier travaille en fin d'amplitude : marque un arrêt à l'écartement maximal.",
+  glutekick:"Bassin fixe, ne cambre pas pour monter plus haut. La jambe monte par la hanche, pas par le dos.",
+  pompes:"Corps en planche du talon à la tête, mains sous les épaules, coudes à ~45° du corps. Descends jusqu'à effleurer le sol.",
+  pompesgenoux:"Mêmes consignes, appui sur les genoux. Le corps reste aligné des genoux à la tête : pas de bassin qui casse.",
+  devcouche:"Omoplates serrées et basses, pieds au sol. Barre au niveau des mamelons, coudes à ~45°. Descente contrôlée, pas de rebond sur la poitrine.",
+  devinclineh:"Banc à 30-45°, pas plus : au-delà, ce sont les épaules qui prennent tout. Haltères qui descendent au niveau du haut des pectoraux.",
+  devmachine:"Poignées au niveau des mamelons, omoplates plaquées. Pousse sans verrouiller violemment les coudes.",
+  dips:"Buste légèrement penché en avant pour les pectoraux, vertical pour les triceps. Descends jusqu'à l'horizontale du bras, pas plus bas si l'épaule tire.",
+  ecartepoulie:"Léger fléchissement des coudes maintenu constant. Le mouvement vient de l'épaule, pas du coude. Cherche l'étirement puis la contraction.",
+  ecartehalt:"Coudes légèrement fléchis et figés. Descends jusqu'à l'étirement confortable — jamais le maxi sur cet exercice.",
+  pecdeck:"Dos plaqué, coudes à hauteur d'épaules. Serre les pectoraux 1 seconde au centre.",
+  devmilitaire:"Debout ou assis, gainage verrouillé. Barre qui passe près du visage, verrouillage au-dessus de la tête sans cambrer.",
+  devepmachine:"Poignées à hauteur d'épaules, dos plaqué. Pousse vers le haut sans hausser les épaules.",
+  elevlat:"Coudes légèrement fléchis, montée jusqu'à l'horizontale seulement. Sans élan : si tu balances, la charge est trop lourde.",
+  elevlatmach:"Trajectoire guidée : idéale pour sentir le deltoïde latéral. Monte jusqu'à l'horizontale, redescends lentement.",
+  elevfront:"Montée jusqu'à hauteur d'yeux, sans cambrer. Charge modeste.",
+  oiseau:"Buste penché à 45° ou plus, dos plat. Ouvre les bras sur les côtés en pensant à écarter les omoplates.",
+  facepull:"Corde à hauteur du visage, coudes hauts. Tire en écartant les mains vers les oreilles. Reste léger : c'est un exercice de santé d'épaule.",
+  tricepspoulie:"Coudes collés au corps et immobiles. Seul l'avant-bras bouge. Extension complète sans hyperextension.",
+  tricepsmach:"Coudes calés, extension complète et contrôlée. Pas d'à-coups.",
+  tricepsnuque:"Coude haut et fixe, près de la tête. Descends jusqu'à l'étirement du triceps, sans ouvrir le coude vers l'extérieur.",
+  barrefront:"Coudes fixes pointés vers le plafond. Descends la barre vers le front ou juste derrière. Charge modérée : les coudes sont sensibles.",
+  tractions:"Prise un peu plus large que les épaules. Pense à tirer les coudes vers les hanches plutôt qu'à monter le menton. Descends bras presque tendus.",
+  tractionselas:"Élastique sous les pieds ou les genoux : il aide surtout en bas, là où c'est le plus dur. Mêmes consignes que les tractions.",
+  tiragev:"Buste légèrement incliné en arrière, poitrine sortie. Tire la barre vers le haut de la poitrine, coudes vers le bas.",
+  tirageh:"Dos droit, poitrine sortie. Tire les coudes vers l'arrière en rapprochant les omoplates. Ne te balance pas d'avant en arrière.",
+  rowingmach:"Poitrine contre l'appui : c'est ce qui protège le bas du dos. Tire les coudes vers l'arrière, serre les omoplates.",
+  rowingbarre:"Buste penché à 45°, dos neutre et gainé. Tire vers le nombril. Aucun à-coup : si le dos bouge, allège.",
+  rowing1bras:"Un genou et une main sur le banc, dos plat. Tire le coude vers la hanche, sans rotation du buste.",
+  pullover:"Bras quasi tendus, mouvement d'arc de cercle. Cherche l'étirement du grand dorsal en position haute.",
+  shrugs:"Monte les épaules vers les oreilles, sans rouler. Marque un temps en haut, redescends contrôlé.",
+  curlpoulie:"Coudes collés au corps. Ne recule pas les coudes en fin de montée : le biceps doit rester sous tension.",
+  curlbarre:"Coudes fixes, pas de balancier des hanches. Descends bras presque tendus.",
+  curlhalt:"Supination progressive en montant (paume qui tourne vers le haut). Contrôle la descente.",
+  curlmarteau:"Prise neutre (pouces vers le haut) : cible le brachial et l'avant-bras. Coudes fixes.",
+  curlincline:"Sur un banc incliné, bras qui pendent en arrière : position très étirée, donc charge modérée.",
+  curlmachine:"Bras calés sur le coussin, amplitude complète. La machine évite tout balancier : idéal pour bien sentir le biceps.",
+  crunch:"Bas du dos plaqué au sol. Enroule le buste sans tirer sur la nuque : les mains accompagnent, elles ne tirent pas.",
+  crunchinv:"Ce sont les jambes et le bassin qui montent, pas le buste. Enroule le bassin vers le haut sans élan.",
+  vups:"Buste et jambes montent en même temps vers un V. Si le bas du dos décolle trop, plie les genoux.",
+  vsithold:"Position en V tenue, bras tendus vers les pieds. Respire normalement pendant le maintien.",
+  dragonflag:"Épaules et haut du dos seuls en appui, corps rigide comme une planche. Descends aussi bas que le bassin reste verrouillé — arrête la série dès que le bas du dos décolle.",
+  planchegenoux:"Appui sur les avant-bras et les genoux, corps aligné. Serre les fessiers et rentre le nombril.",
+  planche:"Coudes sous les épaules, corps parfaitement aligné. Ni bassin en l'air, ni bas du dos qui creuse.",
+  planchetouche:"En planche sur les mains, touche l'épaule opposée sans que le bassin ne tourne. Écarte un peu les pieds pour plus de stabilité.",
+  planchelat:"Coude sous l'épaule, corps en ligne vue de face. Bassin haut, hanches empilées.",
+  planchelatjambe:"Planche latérale, jambe du dessus levée. Le bassin ne recule pas.",
+  planchelatgenou:"Planche latérale, genou du dessus ramené vers la poitrine puis tendu. Mouvement lent et contrôlé.",
+  relevesbanc:"Assis au bord d'un banc, mains derrière. Ramène les genoux vers la poitrine en enroulant le bassin.",
+  relevesgenoux:"Suspendu, épaules actives (pas relâché sur les articulations). Monte les genoux en enroulant le bassin. Sans balancier.",
+  genouxbarre:"Genoux qui montent jusqu'à toucher la barre, bassin enroulé. Jambes fléchies : tendues, le bas du dos souffre.",
+  wipers:"Jambes relevées, rotation lente de gauche à droite. Garde les jambes fléchies tant que le contrôle n'est pas total.",
+  pallof:"De profil à la poulie, bras tendus devant le sternum. Résiste à la rotation : rien ne doit tourner.",
+  roulette:"Bassin verrouillé, abdos serrés. Avance seulement aussi loin que tu peux revenir sans creuser le dos.",
+  lsit:"En appui sur les mains, jambes tendues à l'horizontale. Très exigeant pour les triceps et les épaules : c'est un exercice de support.",
+  superman:"Allongé sur le ventre, lève bras et jambes sans forcer la nuque. Regard vers le sol.",
+  supermanalt:"Bras droit et jambe gauche, puis l'inverse. Le bassin ne bascule pas : c'est du travail anti-rotation.",
+  extlombaire:"Bassin calé, dos qui reste neutre. Remonte jusqu'à l'alignement du tronc, sans hyperextension.",
+  extlombairelest:"Même consigne, disque tenu contre la poitrine. Progression prudente sur cet exercice."
+};
+/* Démonstration vidéo : on ouvre une RECHERCHE ciblée sur la chaîne plutôt qu'un lien figé —
+   une URL de vidéo précise finit toujours par pourrir (vidéo retirée, chaîne réorganisée),
+   alors qu'une recherche reste valable et laisse voir plusieurs angles du même mouvement. */
+const VIDEO_SOURCES = [
+  { label: "Olymp'Fit",     q: "Olymp'Fit" },
+  { label: "Nassim Sahili", q: "Nassim Sahili" }
+];
+function videoSearchUrl(exoName, source) {
+  return "https://www.youtube.com/results?search_query=" + encodeURIComponent(source.q + " " + exoName);
+}
+function tipsFor(exo) {
+  const db = dbEntryForExo(exo.id);
+  return (db && TIPS[db.id]) || null;
+}
+
+/* ==================== MODÈLES DE PROGRAMMES ====================
+   Programmes prêts à l'emploi proposés dans le créateur. Contrairement au programme par
+   défaut (piloté par l'app et resynchronisé à chaque mise à jour), un modèle est COPIÉ :
+   la copie appartient à l'utilisateur, qui peut la modifier entièrement.
+   Chaque exercice est décrit par (mouvement EXODB, matériel) — cibles, paliers et
+   avertissements viennent donc de la base, sans duplication. */
+const MODELS = [
+  {
+    id: "reprise_fb_ab",
+    name: "Reprise — Full body A/B",
+    sub: "2 séances par semaine · matériel guidé · mixte",
+    desc: "Deux séances full body différentes, alternées (A, B, A, B…). Pensé pour une reprise après une pause : trajectoires guidées et machines en priorité, ni soulevé de terre ni squat barre. Le cycle de 6 semaines (Hypertrophie, Force, Endurance) s'applique normalement.",
+    sessionsPerWeek: 2,
+    sessions: [
+      { name: "Full body A — quadriceps & poussée", exos: [
+        { db:"presse",        mat:"lb"    },
+        { db:"devmachine",    mat:"lb"    },
+        { db:"tiragev",       mat:"lb"    },
+        { db:"devepmachine",  mat:"lb"    },
+        { db:"legcurl",       mat:"lb"    },
+        { db:"tricepspoulie", mat:"lb"    },
+        { db:"planche",       mat:"pdc"   }
+      ]},
+      { name: "Full body B — fessiers & tirage", exos: [
+        { db:"hacksquat",     mat:"plate" },
+        { db:"hipthrust",     mat:"plate" },
+        { db:"rowingmach",    mat:"lb"    },
+        { db:"elevlatmach",   mat:"lb"    },
+        { db:"molletsdeb",    mat:"lb"    },
+        { db:"curlmachine",   mat:"lb"    },
+        { db:"crunch",        mat:"pdc"   }
+      ]}
+    ]
+  }
+];
+function buildModelProgram(modelId) {
+  const m = MODELS.find(x => x.id === modelId);
+  if (!m) return null;
+  return {
+    id: uid("u"), name: m.name, sessionsPerWeek: m.sessionsPerWeek,
+    sessions: m.sessions.map(s => ({
+      id: uid("us"), name: s.name,
+      exos: s.exos.map(e => makeExoFromDb(e.db, e.mat, { incr: 1 })).filter(Boolean)
+    }))
+  };
+}
+
 /* ==================== ASSISTANT DE CRÉATION (étape 6) ====================
    Générateur DÉCLARATIF : structure choisie par (niveau, jours), séances remplies depuis
    EXODB selon le template rétro-ingéniéré du seed (poly -> iso -> gainage), matériel choisi
@@ -3071,6 +3229,7 @@ function renderBuilder() {
   if (builderView.mode === "session" && !builderSession()) builderView.mode = "program";
   if (builderView.mode === "programs") return renderBuilderPrograms(el);
   if (builderView.mode === "wizard") return renderBuilderWizard(el);
+  if (builderView.mode === "models") return renderBuilderModels(el);
   if (builderView.mode === "subs") return renderBuilderSubs(el);
   if (builderView.mode === "volume") return renderBuilderVolume(el);
   if (builderView.mode === "program") return renderBuilderProgram(el);
@@ -3080,7 +3239,8 @@ function renderBuilderPrograms(el) {
   el.innerHTML = `<button class="b-back" id="bBackReglages">← Réglages</button>
     <h2 style="margin:4px 0 12px;">Mes programmes</h2>
     <div id="bProgList"></div>
-    <button class="b-add" id="bWizardBtn">🧭 Assistant : composer un programme pour moi</button>
+    <button class="b-add" id="bModelsBtn">📋 Partir d'un modèle tout prêt</button>
+    <button class="b-add" id="bWizardBtn" style="margin-top:-6px;">🧭 Assistant : composer un programme pour moi</button>
     <div class="b-inline"><input type="text" id="bNewProgName" placeholder="Nom du nouveau programme" maxlength="60">
     <button class="btn" id="bNewProgBtn">Créer</button></div>
     <p style="color:var(--muted);font-size:12.5px;">Le programme par défaut n'est pas modifiable (il est resynchronisé par les mises à jour de l'app). Crée ton propre programme, puis compose ses séances depuis la base d'exercices.</p>`;
@@ -3110,12 +3270,35 @@ function renderBuilderPrograms(el) {
   });
   $("#bBackReglages").onclick = () => showScreen("reglages");
   $("#bWizardBtn").onclick = () => { builderView = { mode:"wizard", programId:null, sessionId:null }; renderBuilder(); };
+  $("#bModelsBtn").onclick = () => { builderView = { mode:"models", programId:null, sessionId:null }; renderBuilder(); };
   $("#bNewProgBtn").onclick = () => {
     const p = createProgram($("#bNewProgName").value);
     if (p) { builderView = { mode:"program", programId:p.id, sessionId:null }; renderBuilder(); }
   };
 }
 let wizardState = { level:null, days:null, priorities:[], structIdx:0, style:null };
+function renderBuilderModels(el) {
+  el.innerHTML = `<button class="b-back" id="bBackModels">← Mes programmes</button>
+    <h2 style="margin:4px 0 10px;">📋 Modèles</h2>
+    <p style="color:var(--muted);font-size:12.5px;margin:0 0 12px;">Un modèle est <b>copié</b> dans tes programmes : tu pourras ensuite en changer les exercices, le matériel et le rythme comme bon te semble.</p>
+    ${MODELS.map(m => `<div class="b-row" style="display:block;">
+      <div class="nm">${escHtml(m.name)}</div>
+      <div class="sub" style="margin-bottom:6px;">${escHtml(m.sub)} · ${m.sessions.length} séances</div>
+      <div style="color:var(--muted);font-size:12.5px;line-height:1.5;margin-bottom:8px;">${escHtml(m.desc)}</div>
+      ${m.sessions.map(s => `<div style="color:var(--muted);font-size:12px;margin-bottom:3px;"><b>${escHtml(s.name)}</b> : ${s.exos.map(e => escHtml((EXODB.find(x=>x.id===e.db)||{name:e.db}).name)).join(" · ")}</div>`).join("")}
+      <button class="btn" data-model="${m.id}" style="width:100%;margin-top:8px;">Créer ce programme</button>
+    </div>`).join("")}`;
+  $("#bBackModels").onclick = () => { builderView = { mode:"programs", programId:null, sessionId:null }; renderBuilder(); };
+  $$("#builderBody .btn[data-model]").forEach(b => b.onclick = () => {
+    const prog = buildModelProgram(b.dataset.model);
+    if (!prog) return;
+    S.programs.push(prog);
+    save();
+    toast("Programme créé — à toi de l'adapter");
+    builderView = { mode:"program", programId: prog.id, sessionId:null };
+    renderBuilder();
+  });
+}
 function renderBuilderWizard(el) {
   const lvlPills = Object.entries(WIZ_LEVELS).map(([k,v]) =>
     `<button class="pill ${wizardState.level===k?"on":""}" data-lvl="${k}">${v.label}</button>`).join("");
@@ -3378,6 +3561,25 @@ const LEVELS = {
   3: { label:"Exigeant",      short:"Libre",  desc:"Barre libre ou forte coordination : technique à maîtriser." }
 };
 let pickerFilter = { cat:null, muscle:null, lev:null };
+/* Fiche d'exécution : consignes rédigées + recherche vidéo ciblée sur une chaîne de référence.
+   En popup pour ne pas alourdir la carte pendant la séance. */
+function openTip(exo) {
+  const tips = tipsFor(exo);
+  if (!tips) return;
+  const db = dbEntryForExo(exo.id);
+  const nom = db ? db.name : exo.name;
+  const links = VIDEO_SOURCES.map(s =>
+    `<a class="tip-link" href="${videoSearchUrl(nom, s)}" target="_blank" rel="noopener">▶ Voir sur ${escHtml(s.label)}</a>`).join("");
+  $("#tipCard").innerHTML = `<button class="modal-close" id="tipClose">✕</button>
+    <h3>${escHtml(exo.name)}</h3>
+    <p style="font-size:13.5px;line-height:1.6;margin:0 0 10px;">${escHtml(tips)}</p>
+    ${exo.warn ? `<div class="exo-note" style="margin:0 0 10px;">⚠ ${escHtml(exo.warn)}</div>` : ""}
+    <p style="color:var(--muted);font-size:12px;margin:0 0 6px;">Voir le mouvement en vidéo :</p>
+    <div class="tip-links">${links}</div>
+    <p style="color:var(--muted);font-size:11px;line-height:1.45;margin-top:10px;">Ces liens ouvrent une recherche sur YouTube (connexion requise). Les consignes ci-dessus, elles, restent disponibles hors ligne.</p>`;
+  $("#tipModal").style.display = "flex";
+  $("#tipClose").onclick = () => $("#tipModal").style.display = "none";
+}
 function openPicker(p, sess) {
   pickerFilter = { cat:null, muscle:null, lev:null };
   $("#pickerModal").style.display = "flex";
@@ -3385,6 +3587,7 @@ function openPicker(p, sess) {
 }
 function closePicker() { $("#pickerModal").style.display = "none"; }
 $("#pickerModal").addEventListener("click", e => { if (e.target.id === "pickerModal") closePicker(); });
+$("#tipModal").addEventListener("click", e => { if (e.target.id === "tipModal") $("#tipModal").style.display = "none"; });
 function renderPickerList(p, sess) {
   const card = $("#pickerCard");
   const catPills = ["legs","push","pull","core"].map(c =>
