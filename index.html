@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Muscu Builder">
 
-<title>Suivi Muscu Builder — Cycle 6 semaines</title>
+<title>Suivi Muscu Builder — Cycle Hypertrophie / Force / Endurance</title>
 <style>
   :root {
     --bg: #14161A;
@@ -290,6 +290,11 @@
     width:100%; max-height:82vh; overflow-y:auto; padding:16px 14px calc(env(safe-area-inset-bottom, 0px) + 16px); }
   .modal-card h3 { margin:0 0 10px; font-size:16px; }
   .modal-close { float:right; background:none; border:none; color:var(--muted); font-size:20px; padding:0 4px; }
+  .phase-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:10px; }
+  .phase-grid label { display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--muted); }
+  .phase-grid input { height:44px; border:1px solid var(--line); border-radius:10px;
+    background:var(--surface2); color:var(--text); text-align:center; font-size:16px; font-weight:700; }
+  .phase-preview { font-size:12.5px; color:var(--muted); margin-bottom:10px; }
   .tip-btn { width:22px; height:22px; border-radius:50%; border:1px solid var(--line);
     background:var(--surface2); color:var(--muted); font-size:12px; font-weight:700;
     padding:0; margin-left:6px; vertical-align:middle; }
@@ -398,7 +403,8 @@ setTimeout(function(){
 <div class="screen" id="scr-guide">
   <div class="guide">
     <h2>📖 L'application en bref</h2>
-    <p>Suivi Muscu Builder est un carnet d'entraînement intelligent bâti sur un principe : un <b>cycle de 6 semaines</b> alternant trois blocs — <b>Force</b> (5-6 reps, lourd), <b>Hypertrophie</b> (8-12 reps) et <b>Endurance</b> (20-25 reps) — appliqué au programme de ton choix. Le <b>programme par défaut</b> est un split 3 séances (bas du corps, pectoraux/épaules, dos/bras) ; à terme tu pourras composer tes propres séances et programmes, et le cycle comme le moteur de progression s'y appliqueront exactement de la même façon. À chaque séance, l'app te propose un poids et un nombre de répétitions par série, calculés depuis tes séances précédentes — tu n'as plus qu'à exécuter, valider, et corriger si la réalité en décide autrement. Tout est stocké sur ton téléphone uniquement : pense à exporter tes données de temps en temps (onglet Réglages).</p>
+    <p>Suivi Muscu Builder est un carnet d'entraînement intelligent bâti sur un principe : un <b>cycle</b> alternant trois blocs — <b>Force</b> (5-6 reps, lourd), <b>Hypertrophie</b> (8-12 reps) et <b>Endurance</b> (20-25 reps) — appliqué au programme de ton choix. Par défaut chaque bloc dure 2 semaines, soit un cycle de 6 semaines, mais tu peux régler la durée de chaque phase par programme (⚙️ Réglages → Durée des phases). Le <b>programme par défaut</b> est un split 3 séances (bas du corps, pectoraux/épaules, dos/bras) ; tu peux aussi composer tes propres séances et programmes, auxquels le cycle et le moteur de progression s'appliquent exactement de la même façon. À chaque séance, l'app te propose un poids et un nombre de répétitions par série, calculés depuis tes séances précédentes — tu n'as plus qu'à exécuter, valider, et corriger si la réalité en décide autrement. Tout est stocké sur ton téléphone uniquement : pense à exporter tes données de temps en temps (onglet Réglages).</p>
+    <p><b>Pourquoi alterner les blocs ?</b> Par honnêteté : ce n'est pas un choix dicté à 100 % par la science. La recherche montre que l'hypertrophie s'obtient de façon comparable sur un large éventail de charges — alterner ne fait donc pas grossir plus vite. En revanche la force maximale, elle, exige des charges lourdes : c'est la vraie raison d'être du bloc Force. L'alternance est donc un choix de <b>diversité</b> : trois qualités travaillées plutôt qu'une seule, des articulations et des tendons soulagés entre deux périodes lourdes, et assez de variété pour tenir dans la durée. Les semaines d'Endurance jouent aussi le rôle de <b>décharge</b> après les semaines de Force. Aucune durée de bloc n'est scientifiquement supérieure à une autre : garde 2/2/2, ou allonge la Force si tu veux lui laisser plus de temps.</p>
     <p><b>Avant ta première séance :</b> ouvre l'onglet ⚙️ Réglages pour entrer <b>ton poids</b> et <b>ta date de début de cycle</b>. Le poids sert à calculer la charge réellement soulevée sur les exercices assistés (tractions, dips) ; la date lance la planification — à chaque « semaine » de séances enregistrées, l'app passe à la semaine suivante du cycle et t'indique le bloc conseillé en haut de l'écran Séance. Une semaine = le nombre de séances de ton rythme réel (3 par défaut, réglable via <b>Séances / semaine</b> dans Réglages — ex. un full body fait 2 fois par semaine → 2).</p>
 
     <h2>🧠 Sur quoi elle s'appuie</h2>
@@ -462,7 +468,7 @@ setTimeout(function(){
   </div>
   <div class="setting">
     <h3>Cycle</h3>
-    <p>Date de début du cycle de 6 semaines (sert à afficher la semaine en cours et à suggérer le bon bloc).</p>
+    <p>Date de début du cycle (sert à afficher la semaine en cours et à suggérer le bon bloc). La durée du cycle dépend des phases réglées ci-dessous.</p>
     <div class="bw-row">
       <input type="date" id="cycleStart" style="width:170px; font-size:15px;">
       <button class="btn" id="cycleSave">OK</button>
@@ -475,12 +481,24 @@ setTimeout(function(){
     <div class="btnrow" style="margin-top:10px;">
       <button class="btn" id="openBuilderBtn" style="width:100%;">✏️ Créer / modifier mes programmes</button>
     </div>
-    <p style="margin-top:12px;">Séances effectuées par semaine : rythme réel d'entraînement sur ce programme. Pilote l'avancement du cycle de 6 semaines (et bientôt le volume hebdomadaire par muscle). Ex. : full body d'1 séance faite 2 fois par semaine → 2.</p>
+    <p style="margin-top:12px;">Séances effectuées par semaine : rythme réel d'entraînement sur ce programme. Pilote l'avancement du cycle et le calcul du volume hebdomadaire par muscle. Ex. : full body d'1 séance faite 2 fois par semaine → 2.</p>
     <div class="bw-row">
       <input type="number" id="spwInput" inputmode="numeric" min="1" max="7" step="1">
       <span style="color:var(--muted)">séances / semaine</span>
       <button class="btn" id="spwSave">Enregistrer</button>
     </div>
+  </div>
+  <div class="setting">
+    <h3>Durée des phases</h3>
+    <p>Nombre de semaines passées dans chaque bloc, pour le programme actif. L'ordre reste Hypertrophie → Force → Endurance ; une phase à 0 est retirée du cycle.</p>
+    <div class="phase-grid">
+      <label>Hypertrophie<input type="number" id="phHyp" inputmode="numeric" min="0" max="6" step="1"></label>
+      <label>Force<input type="number" id="phForce" inputmode="numeric" min="0" max="6" step="1"></label>
+      <label>Endurance<input type="number" id="phEnd" inputmode="numeric" min="0" max="6" step="1"></label>
+    </div>
+    <div id="phPreview" class="phase-preview"></div>
+    <div class="btnrow"><button class="btn" id="phSave" style="width:100%;">Enregistrer les phases</button></div>
+    <p style="margin-top:12px;font-size:12px;line-height:1.55;">Pourquoi alterner ? La recherche est claire sur un point : l'hypertrophie s'obtient de façon comparable sur un large éventail de charges, alors que la force maximale exige du lourd. Alterner ne fait donc pas grossir plus vite — c'est un choix de <b>diversité</b> : trois qualités travaillées plutôt qu'une, des articulations soulagées, et de la variété pour tenir dans la durée. Les semaines d'Endurance servent aussi de <b>décharge</b> après les semaines lourdes de Force. Aucune durée n'est scientifiquement supérieure à une autre : 2/2/2 par défaut, 3/3/2 si tu veux laisser plus de temps à la force.</p>
   </div>
   <div class="setting">
     <h3>Rattrapage automatique</h3>
@@ -502,7 +520,7 @@ setTimeout(function(){
     <p>Efface tout l'historique et les réglages (le programme préchargé est conservé).</p>
     <button class="btn warn" id="resetBtn">Réinitialiser toutes les données</button>
   </div>
-  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-08-03-h</p>
+  <p style="text-align:center;color:var(--muted);font-size:11.5px;margin-top:14px;">Suivi Muscu Builder — build 2026-08-03-i</p>
 </div>
 
 <!-- ================= CRÉATEUR DE PROGRAMMES (accessible depuis Réglages) ================= -->
@@ -1390,7 +1408,8 @@ function weekOfCycle() {
   const n = sessionsSinceCycleStart();
   if (n === null) return null;
   const spw = sessionsPerWeek();
-  return (Math.floor(n/spw) % 6) + 1; // 1..6, boucle tous les 6×spw séances effectuées
+  const len = cycleLength();
+  return (Math.floor(n/spw) % len) + 1; // 1..len, boucle tous les len×spw séances effectuées
 }
 /* ---- Plan de cycle PAR PROGRAMME ----
    Par défaut : Hyp (sem. 1-2) / Force (3-4) / End (5-6) — le cycle historique de l'app.
@@ -1401,8 +1420,26 @@ function weekOfCycle() {
    (NSCA/ACSM : intensité modérée pour le novice). Les blocs ABSENTS du plan ne sont pas
    proposés dans le sélecteur de séance : pour retrouver le bloc Force, il suffit de passer
    sur un programme dont le plan l'inclut. */
+/* Durées des phases (en semaines) -> plan semaine par semaine, et l'inverse.
+   L'ordre des blocs est fixe : Hypertrophie, puis Force, puis Endurance. Une phase à 0 est
+   simplement absente du cycle (c'est ainsi que le cycle "grand débutant" se passe de Force). */
+function planFromPhases(ph) {
+  const plan = [];
+  for (let i = 0; i < (ph.hyp   || 0); i++) plan.push("hyp");
+  for (let i = 0; i < (ph.force || 0); i++) plan.push("force");
+  for (let i = 0; i < (ph.end   || 0); i++) plan.push("end");
+  return plan.length ? plan : [...CYCLE_DEFAULT];
+}
+function phasesOf(p) {
+  const plan = cyclePlanOf(p);
+  return { hyp:   plan.filter(b => b === "hyp").length,
+           force: plan.filter(b => b === "force").length,
+           end:   plan.filter(b => b === "end").length };
+}
+function cycleLength(p) { return cyclePlanOf(p || activeProgram()).length; }
 function cyclePlanOf(p) {
-  if (p.cyclePlan && p.cyclePlan.length === 6 && p.cyclePlan.every(b => BLOCS[b])) return p.cyclePlan;
+  // Longueur libre : un cycle peut durer 3, 6, 9 semaines... selon les phases réglées.
+  if (p.cyclePlan && p.cyclePlan.length >= 1 && p.cyclePlan.every(b => BLOCS[b])) return p.cyclePlan;
   if (p.noForce) return CYCLE_GD; // compat : programmes GD générés avant l'introduction de cyclePlan
   return CYCLE_DEFAULT;
 }
@@ -1462,7 +1499,7 @@ function renderSeanceSelectors() {
   $("#blocHint").textContent = BLOCS[cur.bloc].hint;
   $("#cycleInfo").textContent = (!S.bodyweight || !S.cycleStart)
     ? "⚙️ Règle ton poids et ta date de début de cycle dans Réglages"
-    : "Semaine "+weekOfCycle()+"/6 · bloc conseillé : "+BLOCS[suggestedBloc()].label;
+    : "Semaine "+weekOfCycle()+"/"+cycleLength()+" · bloc conseillé : "+BLOCS[suggestedBloc()].label;
 }
 
 // Charge cible dynamique (kg), calculée depuis le 1RM courant (initial ou recalculé) et le
@@ -2537,7 +2574,31 @@ function renderReglages() {
   });
   $("#spwInput").value = sessionsPerWeek();
   $("#catchupToggle").checked = S.autoCatchup !== false;
+  const ph = phasesOf(activeProgram());
+  $("#phHyp").value = ph.hyp; $("#phForce").value = ph.force; $("#phEnd").value = ph.end;
+  renderPhasePreview();
 }
+function renderPhasePreview() {
+  const ph = { hyp:+$("#phHyp").value||0, force:+$("#phForce").value||0, end:+$("#phEnd").value||0 };
+  const plan = planFromPhases(ph);
+  const tot = ph.hyp + ph.force + ph.end;
+  $("#phPreview").innerHTML = tot < 3
+    ? `<span style="color:var(--danger)">Cycle trop court : vise au moins 3 semaines au total.</span>`
+    : `Cycle de <b>${plan.length} semaines</b> : ` + plan.map(b => BLOCS[b].label.slice(0,3)).join(" · ");
+}
+["phHyp","phForce","phEnd"].forEach(id => $("#"+id).oninput = renderPhasePreview);
+$("#phSave").onclick = () => {
+  const ph = { hyp:+$("#phHyp").value||0, force:+$("#phForce").value||0, end:+$("#phEnd").value||0 };
+  if (ph.hyp + ph.force + ph.end < 3) { toast("Cycle trop court : au moins 3 semaines au total."); return; }
+  if ([ph.hyp,ph.force,ph.end].some(v => v < 0 || v > 6)) { toast("Chaque phase doit tenir entre 0 et 6 semaines."); return; }
+  const p = activeProgram();
+  p.cyclePlan = planFromPhases(ph);
+  delete p.noForce; // le plan explicite prime désormais sur cet ancien drapeau
+  save();
+  cur.bloc = suggestedBloc(); // le bloc conseillé peut changer immédiatement
+  renderSeance(); renderReglages();
+  toast("Cycle de " + p.cyclePlan.length + " semaines enregistré");
+};
 $("#catchupToggle").onchange = e => {
   S.autoCatchup = e.target.checked;
   save();
